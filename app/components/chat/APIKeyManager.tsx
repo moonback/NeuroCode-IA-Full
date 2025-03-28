@@ -95,17 +95,17 @@ export const APIKeyManager: React.FC<APIKeyManagerProps> = ({ provider, apiKey, 
               {apiKey ? (
                 <>
                   <div className="i-ph:check-circle-fill text-green-500 w-4 h-4" />
-                  <span className="text-xs text-green-500">Set via UI</span>
+                  <span className="text-xs text-green-500">Défini via l'interface</span>
                 </>
               ) : isEnvKeySet ? (
                 <>
                   <div className="i-ph:check-circle-fill text-green-500 w-4 h-4" />
-                  <span className="text-xs text-green-500">Set via environment variable</span>
+                  <span className="text-xs text-green-500">Défini via variable d'environnement</span>
                 </>
               ) : (
                 <>
                   <div className="i-ph:x-circle-fill text-red-500 w-4 h-4" />
-                  <span className="text-xs text-red-500">Not Set (Please set via UI or ENV_VAR)</span>
+                  <span className="text-xs text-red-500">Non défini (Veuillez définir via l'interface ou ENV_VAR)</span>
                 </>
               )}
             </div>
@@ -127,14 +127,14 @@ export const APIKeyManager: React.FC<APIKeyManagerProps> = ({ provider, apiKey, 
             />
             <IconButton
               onClick={handleSave}
-              title="Save API Key"
+              title="Enregistrer la clé API"
               className="bg-green-500/10 hover:bg-green-500/20 text-green-500"
             >
               <div className="i-ph:check w-4 h-4" />
             </IconButton>
             <IconButton
               onClick={() => setIsEditing(false)}
-              title="Cancel"
+              title="Annuler"
               className="bg-red-500/10 hover:bg-red-500/20 text-red-500"
             >
               <div className="i-ph:x w-4 h-4" />
@@ -145,7 +145,7 @@ export const APIKeyManager: React.FC<APIKeyManagerProps> = ({ provider, apiKey, 
             {
               <IconButton
                 onClick={() => setIsEditing(true)}
-                title="Edit API Key"
+                title="Modifier la clé API"
                 className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-500"
               >
                 <div className="i-ph:pencil-simple w-4 h-4" />
@@ -154,10 +154,10 @@ export const APIKeyManager: React.FC<APIKeyManagerProps> = ({ provider, apiKey, 
             {provider?.getApiKeyLink && !apiKey && (
               <IconButton
                 onClick={() => window.open(provider?.getApiKeyLink)}
-                title="Get API Key"
+                title="Obtenir une clé API"
                 className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 flex items-center gap-2"
               >
-                <span className="text-xs whitespace-nowrap">{provider?.labelForGetApiKey || 'Get API Key'}</span>
+                <span className="text-xs whitespace-nowrap">{provider?.labelForGetApiKey || 'Obtenir une clé API'}</span>
                 <div className={`${provider?.icon || 'i-ph:key'} w-4 h-4`} />
               </IconButton>
             )}
