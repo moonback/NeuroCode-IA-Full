@@ -21,18 +21,18 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
   const isConnected = !!(connection.token && connection.selectedProjectId);
 
   // Set title and description based on connection state
-  const title = isConnected ? 'Supabase Query' : 'Supabase Connection Required';
-  const description = isConnected ? 'Execute database query' : 'Supabase connection required';
+  const title = isConnected ? 'Requête Supabase' : 'Connexion Supabase Requise';
+  const description = isConnected ? 'Exécuter une requête de base de données' : 'Connexion Supabase requise';
   const message = isConnected
-    ? 'Please review the proposed changes and apply them to your database.'
-    : 'Please connect to Supabase to continue with this operation.';
+    ? 'Veuillez examiner les modifications proposées et les appliquer à votre base de données.'
+    : 'Veuillez vous connecter à Supabase pour continuer cette opération.';
 
   const handleConnectClick = () => {
     // Dispatch an event to open the Supabase connection dialog
     document.dispatchEvent(new CustomEvent('open-supabase-connection'));
   };
 
-  // Determine if we should show the Connect button or Apply Changes button
+  // Determine if we should show the Connect button or Appliquer les modifications button
   const showConnectButton = !isConnected;
 
   const executeSupabaseAction = async (sql: string) => {
@@ -114,7 +114,7 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
           {!isConnected ? (
             <div className="p-3 rounded-md bg-bolt-elements-background-depth-3">
               <span className="text-sm text-bolt-elements-textPrimary">
-                You must first connect to Supabase and select a project.
+                Vous devez d'abord vous connecter à Supabase et sélectionner un projet.
               </span>
             </div>
           ) : (
@@ -158,7 +158,7 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
                   'flex items-center gap-1.5',
                 )}
               >
-                Connect to Supabase
+                Se connecter à Supabase
               </button>
             ) : (
               <button
@@ -174,7 +174,7 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
                   isExecuting ? 'opacity-70 cursor-not-allowed' : '',
                 )}
               >
-                {isExecuting ? 'Applying...' : 'Apply Changes'}
+                {isExecuting ? 'Application en cours...' : 'Appliquer les modifications'}
               </button>
             )}
             <button
