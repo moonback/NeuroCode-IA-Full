@@ -119,7 +119,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
     const [apiKeys, setApiKeys] = useState<Record<string, string>>(getApiKeysFromCookies());
     const [modelList, setModelList] = useState<ModelInfo[]>([]);
-    const [isModelSettingsCollapsed, setIsModelSettingsCollapsed] = useState(false);
+    const [isModelSettingsCollapsed, setIsModelSettingsCollapsed] = useState(true);
     const [isListening, setIsListening] = useState(false);
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
     const [transcript, setTranscript] = useState('');
@@ -324,10 +324,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             {!chatStarted && (
               <div id="intro" className="mt-[16vh] max-w-chat mx-auto text-center px-4 lg:px-0">
                 <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
-                  Where ideas begin
+                  NeuroCode Assistant
                 </h1>
                 <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
-                  Bring ideas to life in seconds or get help on existing projects.
+                  Transformez vos idées en solutions concrètes.
                 </p>
               </div>
             )}
@@ -534,7 +534,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         minHeight: TEXTAREA_MIN_HEIGHT,
                         maxHeight: TEXTAREA_MAX_HEIGHT,
                       }}
-                      placeholder="How can Bolt help you today?"
+                      placeholder="Comment NeuroCode peut-il vous aider aujourd'hui ?"
                       translate="no"
                     />
                     <ClientOnly>
@@ -562,12 +562,12 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           <div className="i-ph:paperclip text-xl"></div>
                         </IconButton>
                         <IconButton
-                          title="Enhance prompt"
+                          title="Améliorer l'invite"
                           disabled={input.length === 0 || enhancingPrompt}
                           className={classNames('transition-all', enhancingPrompt ? 'opacity-100' : '')}
                           onClick={() => {
                             enhancePrompt?.();
-                            toast.success('Prompt enhanced!');
+                            toast.success('Prompt amélioré !');
                           }}
                         >
                           {enhancingPrompt ? (
@@ -600,10 +600,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         </IconButton>
                       </div>
                       {input.length > 3 ? (
-                        <div className="text-xs text-bolt-elements-textTertiary">
-                          Use <kbd className="kdb px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2">Shift</kbd>{' '}
-                          + <kbd className="kdb px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2">Return</kbd>{' '}
-                          a new line
+                        <div className="text-xs text-bolt-elements-textTertiary flex items-center">
+                          <kbd className="px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2 font-mono border-bolt-elements-borderColor">⇧</kbd>
+                          <span className="mx-1">+</span>
+                          <kbd className="px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2 font-mono border-bolt-elements-borderColor">↵</kbd>
+                          <span className="ml-1">pour saut de ligne</span>
                         </div>
                       ) : null}
                       <SupabaseConnection />

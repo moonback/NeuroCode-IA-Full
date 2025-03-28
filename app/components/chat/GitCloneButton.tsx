@@ -155,7 +155,7 @@ ${escapeBoltTags(file.content)}
     <>
       <Button
         onClick={() => setIsDialogOpen(true)}
-        title="Clone a Git Repo"
+        title="Cloner un dépôt Git"
         variant="outline"
         size="lg"
         className={classNames(
@@ -170,12 +170,12 @@ ${escapeBoltTags(file.content)}
         disabled={!ready || loading}
       >
         <span className="i-ph:git-branch w-4 h-4" />
-        Clone a Git Repo
+        Cloner un dépôt Git
       </Button>
 
       <RepositorySelectionDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} onSelect={handleClone} />
 
-      {loading && <LoadingOverlay message="Please wait while we clone the repository..." />}
+      {loading && <LoadingOverlay message="Veuillez patienter pendant le clonage du dépôt..." />}
     </>
   );
 }

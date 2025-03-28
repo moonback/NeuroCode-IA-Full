@@ -203,7 +203,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                 </div>
                 {type === 'file' ? (
                   <div>
-                    Create{' '}
+                    Créer {' '}
                     <code
                       className="bg-bolt-elements-artifacts-inlineCode-background text-bolt-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-bolt-elements-item-contentAccent hover:underline cursor-pointer"
                       onClick={() => openArtifactInWorkbench(action.filePath)}
@@ -213,7 +213,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                   </div>
                 ) : type === 'shell' ? (
                   <div className="flex items-center w-full min-h-[28px]">
-                    <span className="flex-1">Run command</span>
+                    <span className="flex-1">Exécuter la commande</span>
                   </div>
                 ) : type === 'start' ? (
                   <a
@@ -223,7 +223,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                     }}
                     className="flex items-center w-full min-h-[28px]"
                   >
-                    <span className="flex-1">Start Application</span>
+                    <span className="flex-1">Démarrer l'application</span>
                   </a>
                 ) : null}
               </div>
