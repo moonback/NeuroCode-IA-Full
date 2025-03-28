@@ -8,6 +8,7 @@ interface AppContext {
   env?: {
     GITHUB_ACCESS_TOKEN?: string;
     NETLIFY_TOKEN?: string;
+    VERCEL_TOKEN?: string;
   };
 }
 
@@ -16,6 +17,7 @@ export const loader: LoaderFunction = async ({ request, context }: LoaderFunctio
   const envVars = {
     hasGithubToken: Boolean(process.env.GITHUB_ACCESS_TOKEN || context.env?.GITHUB_ACCESS_TOKEN),
     hasNetlifyToken: Boolean(process.env.NETLIFY_TOKEN || context.env?.NETLIFY_TOKEN),
+    hasVercelToken: Boolean(process.env.VERCEL_TOKEN || context.env?.VERCEL_TOKEN),
     nodeEnv: process.env.NODE_ENV,
   };
 
@@ -37,12 +39,14 @@ export const loader: LoaderFunction = async ({ request, context }: LoaderFunctio
   const hasGithubTokenCookie = Boolean(cookies.githubToken);
   const hasGithubUsernameCookie = Boolean(cookies.githubUsername);
   const hasNetlifyCookie = Boolean(cookies.netlifyToken);
+  const hasVercelCookie = Boolean(cookies.vercelToken);
 
   // Get local storage status (this can only be checked client-side)
   const localStorageStatus = {
     explanation: 'Local storage can only be checked on the client side. Use browser devtools to check.',
     githubKeysToCheck: ['github_connection'],
     netlifyKeysToCheck: ['netlify_connection'],
+    vercelKeysToCheck: ['vercel_connection'],
   };
 
   // Check if CORS might be an issue
@@ -106,6 +110,29 @@ export const loader: LoaderFunction = async ({ request, context }: LoaderFunctio
     };
   }
 
+  // Test Vercel API connectivity
+  let vercelApiStatus;
+
+  try {
+    const vercelResponse = await fetch('https://api.vercel.com/v9/user', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    vercelApiStatus = {
+      isReachable: vercelResponse.ok,
+      status: vercelResponse.status,
+      statusText: vercelResponse.statusText,
+    };
+  } catch (error) {
+    vercelApiStatus = {
+      isReachable: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
   // Provide technical details about the environment
   const technicalDetails = {
     serverTimestamp: new Date().toISOString(),
@@ -125,12 +152,14 @@ export const loader: LoaderFunction = async ({ request, context }: LoaderFunctio
         hasGithubTokenCookie,
         hasGithubUsernameCookie,
         hasNetlifyCookie,
+        hasVercelCookie,
       },
       localStorage: localStorageStatus,
       apiEndpoints,
       externalApis: {
         github: githubApiStatus,
         netlify: netlifyApiStatus,
+        vercel: vercelApiStatus,
       },
       corsStatus,
       technicalDetails,
