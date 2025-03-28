@@ -48,7 +48,7 @@ const sliderOptions: SliderOptions<WorkbenchViewType> = {
   },
   right: {
     value: 'preview',
-    text: 'Preview',
+    text: 'Aperçu',
   },
 };
 
@@ -91,7 +91,7 @@ const FileModifiedDropdown = memo(
           {({ open }: { open: boolean }) => (
             <>
               <Popover.Button className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-bolt-elements-background-depth-2 hover:bg-bolt-elements-background-depth-3 transition-colors text-bolt-elements-textPrimary border border-bolt-elements-borderColor">
-                <span className="font-medium">File Changes</span>
+                <span className="font-medium">Fichiers Modifier</span>
                 {hasChanges && (
                   <span className="w-5 h-5 rounded-full bg-accent-500/20 text-accent-500 text-xs flex items-center justify-center border border-accent-500/30">
                     {modifiedFiles.length}
@@ -112,7 +112,7 @@ const FileModifiedDropdown = memo(
                     <div className="relative mx-2 mb-2">
                       <input
                         type="text"
-                        placeholder="Search files..."
+                        placeholder="Rechercher des fichiers..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -240,10 +240,10 @@ const FileModifiedDropdown = memo(
                             <div className="i-ph:file-dashed" />
                           </div>
                           <p className="text-sm font-medium text-bolt-elements-textPrimary">
-                            {searchQuery ? 'No matching files' : 'No modified files'}
+                            {searchQuery ? 'Aucun fichier correspondant' : 'Aucun fichier modifié'}
                           </p>
                           <p className="text-xs text-bolt-elements-textTertiary mt-1">
-                            {searchQuery ? 'Try another search' : 'Changes will appear here as you edit'}
+                            {searchQuery ? 'Essayez une autre recherche' : 'Les modifications apparaîtront ici au fur et à mesure que vous les éditez'}
                           </p>
                         </div>
                       )}
@@ -255,13 +255,13 @@ const FileModifiedDropdown = memo(
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(filteredFiles.map(([filePath]) => filePath).join('\n'));
-                          toast('File list copied to clipboard', {
+                          toast('Liste des fichiers copiée dans le presse-papiers', {
                             icon: <div className="i-ph:check-circle text-accent-500" />,
                           });
                         }}
                         className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-bolt-elements-background-depth-1 hover:bg-bolt-elements-background-depth-3 transition-colors text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary"
                       >
-                        Copy File List
+                      Copier la liste des fichiers                      
                       </button>
                     </div>
                   )}
@@ -384,11 +384,11 @@ export const Workbench = memo(
                         }}
                       >
                         <div className="i-ph:code" />
-                        Download Code
+                        Télécharger
                       </PanelHeaderButton>
                       <PanelHeaderButton className="mr-1 text-sm" onClick={handleSyncFiles} disabled={isSyncing}>
                         {isSyncing ? <div className="i-ph:spinner" /> : <div className="i-ph:cloud-arrow-down" />}
-                        {isSyncing ? 'Syncing...' : 'Sync Files'}
+                        {isSyncing ? 'Synchronisation...' : 'Synchroniser les fichiers'}
                       </PanelHeaderButton>
                       <PanelHeaderButton
                         className="mr-1 text-sm"
@@ -397,11 +397,11 @@ export const Workbench = memo(
                         }}
                       >
                         <div className="i-ph:terminal" />
-                        Toggle Terminal
+                        Terminal
                       </PanelHeaderButton>
                       <PanelHeaderButton className="mr-1 text-sm" onClick={() => setIsPushDialogOpen(true)}>
                         <div className="i-ph:git-branch" />
-                        Push to GitHub
+                        Envoyer vers GitHub
                       </PanelHeaderButton>
                     </div>
                   )}
