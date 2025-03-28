@@ -56,12 +56,12 @@ export function HistoryItem({ item, onDelete, onDuplicate, exportChat }: History
           <div
             className={classNames(
               'absolute right-0 top-0 bottom-0 flex items-center bg-white dark:bg-gray-950 group-hover:bg-gray-50/80 dark:group-hover:bg-gray-800/30 px-2',
-              { 'bg-gray-50/80 dark:bg-gray-800/30': isActiveChat },
+              { 'bg-gray-50/80 dark:bg-gray-900/10': isActiveChat },
             )}
           >
-            <div className="flex items-center gap-2.5 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-2.5 text-gray-400 dark:text-gray-500 opacity-0  group-hover:opacity-100 transition-opacity">
               <ChatActionButton
-                toolTipContent="Export"
+                toolTipContent="Exporter"
                 icon="i-ph:download-simple h-4 w-4"
                 onClick={(event) => {
                   event.preventDefault();
@@ -70,13 +70,13 @@ export function HistoryItem({ item, onDelete, onDuplicate, exportChat }: History
               />
               {onDuplicate && (
                 <ChatActionButton
-                  toolTipContent="Duplicate"
+                  toolTipContent="Dupliquer"
                   icon="i-ph:copy h-4 w-4"
                   onClick={() => onDuplicate?.(item.id)}
                 />
               )}
               <ChatActionButton
-                toolTipContent="Rename"
+                toolTipContent="Renommer"
                 icon="i-ph:pencil-fill h-4 w-4"
                 onClick={(event) => {
                   event.preventDefault();
@@ -85,7 +85,7 @@ export function HistoryItem({ item, onDelete, onDuplicate, exportChat }: History
               />
               <Dialog.Trigger asChild>
                 <ChatActionButton
-                  toolTipContent="Delete"
+                  toolTipContent="Supprimer"
                   icon="i-ph:trash h-4 w-4"
                   className="hover:text-red-500"
                   onClick={(event) => {
