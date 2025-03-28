@@ -13,7 +13,7 @@ export default function ProfileTab() {
   const debouncedUpdate = useCallback(
     debounce((field: 'username' | 'bio', value: string) => {
       updateProfile({ [field]: value });
-      toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`);
+      toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} mis à jour`);
     }, 1000),
     [],
   );
@@ -35,19 +35,19 @@ export default function ProfileTab() {
         const base64String = reader.result as string;
         updateProfile({ avatar: base64String });
         setIsUploading(false);
-        toast.success('Profile picture updated');
+        toast.success('Photo de profil mise à jour');
       };
 
       reader.onerror = () => {
-        console.error('Error reading file:', reader.error);
+        console.error('Erreur lors de la lecture du fichier :', reader.error);
         setIsUploading(false);
-        toast.error('Failed to update profile picture');
+        toast.error('Échec de la mise à jour de la photo de profil');
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      console.error('Erreur lors du téléchargement de l\'avatar :', error);
       setIsUploading(false);
-      toast.error('Failed to update profile picture');
+      toast.error('Échec de la mise à jour de la photo de profil');
     }
   };
 
@@ -81,7 +81,7 @@ export default function ProfileTab() {
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
-                  alt="Profile"
+                  alt="Profil"
                   className={classNames(
                     'w-full h-full object-cover',
                     'transition-all duration-300 ease-out',
@@ -118,15 +118,15 @@ export default function ProfileTab() {
 
             <div className="flex-1 pt-1">
               <label className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-1">
-                Profile Picture
+                Photo de profil
               </label>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Upload a profile picture or avatar</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Téléchargez une photo de profil ou un avatar</p>
             </div>
           </div>
 
           {/* Username Input */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Username</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Nom d'utilisateur</label>
             <div className="relative group">
               <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
                 <div className="i-ph:user-circle-fill w-5 h-5 text-gray-400 dark:text-gray-500 transition-colors group-focus-within:text-purple-500" />
@@ -144,7 +144,7 @@ export default function ProfileTab() {
                   'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50',
                   'transition-all duration-300 ease-out',
                 )}
-                placeholder="Enter your username"
+                placeholder="Entrez votre nom d'utilisateur"
               />
             </div>
           </div>
@@ -170,7 +170,7 @@ export default function ProfileTab() {
                   'resize-none',
                   'h-32',
                 )}
-                placeholder="Tell us about yourself"
+                placeholder="Parlez-nous de vous"
               />
             </div>
           </div>

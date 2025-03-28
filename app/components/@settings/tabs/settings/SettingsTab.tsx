@@ -28,7 +28,7 @@ export default function SettingsTab() {
       ? JSON.parse(saved)
       : {
           notifications: true,
-          language: 'en',
+          language: 'fr',
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         };
   });
@@ -52,16 +52,16 @@ export default function SettingsTab() {
       };
 
       localStorage.setItem('bolt_user_profile', JSON.stringify(updatedProfile));
-      toast.success('Settings updated');
+      toast.success('Paramètres mis à jour');
     } catch (error) {
-      console.error('Error saving settings:', error);
-      toast.error('Failed to update settings');
+      console.error('Erreur lors de la sauvegarde des paramètres :', error);
+      toast.error('Échec de la mise à jour des paramètres');
     }
   }, [settings]);
 
   return (
     <div className="space-y-4">
-      {/* Language & Notifications */}
+      {/* Langue & Notifications */}
       <motion.div
         className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4 space-y-4"
         initial={{ opacity: 0, y: 20 }}
@@ -70,13 +70,13 @@ export default function SettingsTab() {
       >
         <div className="flex items-center gap-2 mb-4">
           <div className="i-ph:palette-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Preferences</span>
+          <span className="text-sm font-medium text-bolt-elements-textPrimary">Préférences</span>
         </div>
 
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="i-ph:translate-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Language</label>
+            <label className="block text-sm text-bolt-elements-textSecondary">Langue</label>
           </div>
           <select
             value={settings.language}
@@ -90,16 +90,16 @@ export default function SettingsTab() {
               'transition-all duration-200',
             )}
           >
-            <option value="en">English</option>
-            <option value="es">Español</option>
+            <option value="en">Anglais</option>
+            <option value="es">Espagnol</option>
             <option value="fr">Français</option>
-            <option value="de">Deutsch</option>
-            <option value="it">Italiano</option>
-            <option value="pt">Português</option>
-            <option value="ru">Русский</option>
-            <option value="zh">中文</option>
-            <option value="ja">日本語</option>
-            <option value="ko">한국어</option>
+            <option value="de">Allemand</option>
+            <option value="it">Italien</option>
+            <option value="pt">Portugais</option>
+            <option value="ru">Russe</option>
+            <option value="zh">Chinois</option>
+            <option value="ja">Japonais</option>
+            <option value="ko">Coréen</option>
           </select>
         </div>
 
@@ -110,7 +110,7 @@ export default function SettingsTab() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-bolt-elements-textSecondary">
-              {settings.notifications ? 'Notifications are enabled' : 'Notifications are disabled'}
+              {settings.notifications ? 'Les notifications sont activées' : 'Les notifications sont désactivées'}
             </span>
             <Switch
               checked={settings.notifications}
@@ -134,14 +134,14 @@ export default function SettingsTab() {
                   }),
                 );
 
-                toast.success(`Notifications ${checked ? 'enabled' : 'disabled'}`);
+                toast.success(`Notifications ${checked ? 'activées' : 'désactivées'}`);
               }}
             />
           </div>
         </div>
       </motion.div>
 
-      {/* Timezone */}
+      {/* Fuseau horaire */}
       <motion.div
         className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4"
         initial={{ opacity: 0, y: 20 }}
@@ -150,13 +150,13 @@ export default function SettingsTab() {
       >
         <div className="flex items-center gap-2 mb-4">
           <div className="i-ph:clock-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Time Settings</span>
+          <span className="text-sm font-medium text-bolt-elements-textPrimary">Paramètres horaires</span>
         </div>
 
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="i-ph:globe-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Timezone</label>
+            <label className="block text-sm text-bolt-elements-textSecondary">Fuseau horaire</label>
           </div>
           <select
             value={settings.timezone}
@@ -175,7 +175,7 @@ export default function SettingsTab() {
         </div>
       </motion.div>
 
-      {/* Simplified Keyboard Shortcuts */}
+      {/* Raccourcis clavier simplifiés */}
       <motion.div
         className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4"
         initial={{ opacity: 0, y: 20 }}
@@ -184,14 +184,14 @@ export default function SettingsTab() {
       >
         <div className="flex items-center gap-2 mb-4">
           <div className="i-ph:keyboard-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Keyboard Shortcuts</span>
+          <span className="text-sm font-medium text-bolt-elements-textPrimary">Raccourcis clavier</span>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1A1A1A]">
             <div className="flex flex-col">
-              <span className="text-sm text-bolt-elements-textPrimary">Toggle Theme</span>
-              <span className="text-xs text-bolt-elements-textSecondary">Switch between light and dark mode</span>
+              <span className="text-sm text-bolt-elements-textPrimary">Changer de thème</span>
+              <span className="text-xs text-bolt-elements-textSecondary">Basculer entre le mode clair et sombre</span>
             </div>
             <div className="flex items-center gap-1">
               <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">

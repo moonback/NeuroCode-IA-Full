@@ -49,11 +49,11 @@ const FeatureCard = memo(
             <div className="flex items-center gap-2">
               <h4 className="font-medium text-bolt-elements-textPrimary">{feature.title}</h4>
               {feature.beta && (
-                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-500 font-medium">Beta</span>
+                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-500 font-medium">Bêta</span>
               )}
               {feature.experimental && (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-orange-500/10 text-orange-500 font-medium">
-                  Experimental
+                  Expérimental
                 </span>
               )}
             </div>
@@ -148,25 +148,25 @@ export default function FeaturesTab() {
       switch (id) {
         case 'latestBranch': {
           enableLatestBranch(enabled);
-          toast.success(`Main branch updates ${enabled ? 'enabled' : 'disabled'}`);
+          toast.success(`Mises à jour de la branche principale ${enabled ? 'activées' : 'désactivées'}`);
           break;
         }
 
         case 'autoSelectTemplate': {
           setAutoSelectTemplate(enabled);
-          toast.success(`Auto select template ${enabled ? 'enabled' : 'disabled'}`);
+          toast.success(`Sélection automatique des modèles ${enabled ? 'activée' : 'désactivée'}`);
           break;
         }
 
         case 'contextOptimization': {
           enableContextOptimization(enabled);
-          toast.success(`Context optimization ${enabled ? 'enabled' : 'disabled'}`);
+          toast.success(`Optimisation du contexte ${enabled ? 'activée' : 'désactivée'}`);
           break;
         }
 
         case 'eventLogs': {
           setEventLogs(enabled);
-          toast.success(`Event logging ${enabled ? 'enabled' : 'disabled'}`);
+          toast.success(`Journalisation des événements ${enabled ? 'activée' : 'désactivée'}`);
           break;
         }
 
@@ -181,35 +181,35 @@ export default function FeaturesTab() {
     stable: [
       {
         id: 'latestBranch',
-        title: 'Main Branch Updates',
-        description: 'Get the latest updates from the main branch',
+        title: 'Mises à jour de la branche principale',
+        description: 'Obtenez les dernières mises à jour de la branche principale',
         icon: 'i-ph:git-branch',
         enabled: isLatestBranch,
-        tooltip: 'Enabled by default to receive updates from the main development branch',
+        tooltip: 'Activé par défaut pour recevoir les mises à jour de la branche de développement principale',
       },
       {
         id: 'autoSelectTemplate',
-        title: 'Auto Select Template',
-        description: 'Automatically select starter template',
+        title: 'Sélection automatique des modèles',
+        description: 'Sélectionne automatiquement le modèle de démarrage',
         icon: 'i-ph:selection',
         enabled: autoSelectTemplate,
-        tooltip: 'Enabled by default to automatically select the most appropriate starter template',
+        tooltip: 'Activé par défaut pour sélectionner automatiquement le modèle de démarrage le plus approprié',
       },
       {
         id: 'contextOptimization',
-        title: 'Context Optimization',
-        description: 'Optimize context for better responses',
+        title: 'Optimisation du contexte',
+        description: 'Optimise le contexte pour de meilleures réponses',
         icon: 'i-ph:brain',
         enabled: contextOptimizationEnabled,
-        tooltip: 'Enabled by default for improved AI responses',
+        tooltip: 'Activé par défaut pour améliorer les réponses de l\'IA',
       },
       {
         id: 'eventLogs',
-        title: 'Event Logging',
-        description: 'Enable detailed event logging and history',
+        title: 'Journalisation des événements',
+        description: 'Active la journalisation détaillée des événements et de l\'historique',
         icon: 'i-ph:list-bullets',
         enabled: eventLogs,
-        tooltip: 'Enabled by default to record detailed logs of system events and user actions',
+        tooltip: 'Activé par défaut pour enregistrer des journaux détaillés des événements système et des actions utilisateur',
       },
     ],
     beta: [],
@@ -218,19 +218,19 @@ export default function FeaturesTab() {
   return (
     <div className="flex flex-col gap-8">
       <FeatureSection
-        title="Core Features"
+        title="Fonctionnalités principales"
         features={features.stable}
         icon="i-ph:check-circle"
-        description="Essential features that are enabled by default for optimal performance"
+        description="Fonctionnalités essentielles activées par défaut pour des performances optimales"
         onToggleFeature={handleToggleFeature}
       />
 
       {features.beta.length > 0 && (
         <FeatureSection
-          title="Beta Features"
+          title="Fonctionnalités Bêta"
           features={features.beta}
           icon="i-ph:test-tube"
-          description="New features that are ready for testing but may have some rough edges"
+          description="Nouvelles fonctionnalités prêtes à être testées mais pouvant présenter des imperfections"
           onToggleFeature={handleToggleFeature}
         />
       )}
@@ -261,17 +261,17 @@ export default function FeaturesTab() {
           </div>
           <div className="flex-1">
             <h4 className="text-sm font-medium text-bolt-elements-textPrimary group-hover:text-purple-500 transition-colors">
-              Prompt Library
+              Bibliothèque de prompts
             </h4>
             <p className="text-xs text-bolt-elements-textSecondary mt-0.5">
-              Choose a prompt from the library to use as the system prompt
+              Choisissez un prompt dans la bibliothèque à utiliser comme prompt système
             </p>
           </div>
           <select
             value={promptId}
             onChange={(e) => {
               setPromptId(e.target.value);
-              toast.success('Prompt template updated');
+              toast.success('Modèle de prompt mis à jour');
             }}
             className={classNames(
               'p-2 rounded-lg text-sm min-w-[200px]',

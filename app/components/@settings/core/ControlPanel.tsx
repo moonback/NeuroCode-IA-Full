@@ -67,20 +67,20 @@ interface AnimatedSwitchProps {
 }
 
 const TAB_DESCRIPTIONS: Record<TabType, string> = {
-  profile: 'Manage your profile and account settings',
-  settings: 'Configure application preferences',
-  notifications: 'View and manage your notifications',
-  features: 'Explore new and upcoming features',
-  data: 'Manage your data and storage',
-  'cloud-providers': 'Configure cloud AI providers and models',
-  'local-providers': 'Configure local AI providers and models',
-  'service-status': 'Monitor cloud LLM service status',
-  connection: 'Check connection status and settings',
-  debug: 'Debug tools and system information',
-  'event-logs': 'View system events and logs',
-  update: 'Check for updates and release notes',
-  'task-manager': 'Monitor system resources and processes',
-  'tab-management': 'Configure visible tabs and their order',
+  profile: 'Gérez votre profil et les paramètres de votre compte',
+  settings: 'Configurez les préférences de l\'application',
+  notifications: 'Consultez et gérez vos notifications',
+  features: 'Découvrez les nouvelles fonctionnalités et celles à venir',
+  data: 'Gérez vos données et votre stockage',
+  'cloud-providers': 'Configurez les fournisseurs et modèles d\'IA Cloud',
+  'local-providers': 'Configurez les fournisseurs et modèles d\'IA locaux',
+  'service-status': 'Surveillez l\'état des services LLM Cloud',
+  connection: 'Vérifiez l\'état de la connexion et les paramètres',
+  debug: 'Outils de débogage et informations système',
+  'event-logs': 'Consultez les événements et journaux système',
+  update: 'Vérifiez les mises à jour et les notes de version',
+  'task-manager': 'Surveillez les ressources système et les processus',
+  'tab-management': 'Configurez les onglets visibles et leur ordre',
 };
 
 // Beta status for experimental features
@@ -88,7 +88,7 @@ const BETA_TABS = new Set<TabType>(['task-manager', 'service-status', 'update', 
 
 const BetaLabel = () => (
   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-purple-500/10 dark:bg-purple-500/20">
-    <span className="text-[10px] font-medium text-purple-600 dark:text-purple-400">BETA</span>
+    <span className="text-[10px] font-medium text-purple-600 dark:text-purple-400">BÊTA</span>
   </div>
 );
 
@@ -138,7 +138,7 @@ const AnimatedSwitch = ({ checked, onCheckedChange, id, label }: AnimatedSwitchP
             transition={{ duration: 0.2 }}
           />
         </motion.span>
-        <span className="sr-only">Toggle {label}</span>
+        <span className="sr-only">Basculer {label}</span>
       </Switch>
       <div className="flex items-center gap-2">
         <label
@@ -460,7 +460,7 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
                       </button>
                     )}
                     <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {showTabManagement ? 'Tab Management' : activeTab ? TAB_LABELS[activeTab] : 'Control Panel'}
+                      {showTabManagement ? 'Gestion des onglets' : activeTab ? TAB_LABELS[activeTab] : 'Panneau de contrôle'}
                     </DialogTitle>
                   </div>
 
@@ -471,7 +471,7 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
                         id="developer-mode"
                         checked={developerMode}
                         onCheckedChange={handleDeveloperModeChange}
-                        label={developerMode ? 'Developer Mode' : 'User Mode'}
+                        label={developerMode ? 'Mode Développeur' : 'Mode Utilisateur'}
                       />
                     </div>
 

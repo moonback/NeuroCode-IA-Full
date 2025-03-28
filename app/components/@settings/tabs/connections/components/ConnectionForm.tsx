@@ -14,7 +14,7 @@ interface ConnectionFormProps {
 }
 
 export function ConnectionForm({ authState, setAuthState, onSave, onDisconnect }: ConnectionFormProps) {
-  // Check for saved token on mount
+  // Vérifier le token sauvegardé au montage
   useEffect(() => {
     const savedToken = Cookies.get(GITHUB_TOKEN_KEY) || getLocalStorage(GITHUB_TOKEN_KEY);
 
@@ -42,8 +42,8 @@ export function ConnectionForm({ authState, setAuthState, onSave, onDisconnect }
               <div className="i-ph:plug-fill text-bolt-elements-textTertiary" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-bolt-elements-textPrimary">Connection Settings</h3>
-              <p className="text-sm text-bolt-elements-textSecondary">Configure your GitHub connection</p>
+              <h3 className="text-lg font-medium text-bolt-elements-textPrimary">Paramètres de connexion</h3>
+              <p className="text-sm text-bolt-elements-textSecondary">Configurez votre connexion GitHub</p>
             </div>
           </div>
         </div>
@@ -51,7 +51,7 @@ export function ConnectionForm({ authState, setAuthState, onSave, onDisconnect }
         <form onSubmit={onSave} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-bolt-elements-textSecondary mb-2">
-              GitHub Username
+              Nom d'utilisateur GitHub
             </label>
             <input
               id="username"
@@ -65,14 +65,14 @@ export function ConnectionForm({ authState, setAuthState, onSave, onDisconnect }
                 'focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500',
                 'transition-all duration-200',
               )}
-              placeholder="e.g., octocat"
+              placeholder="ex. octocat"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label htmlFor="token" className="block text-sm font-medium text-bolt-elements-textSecondary">
-                Personal Access Token
+                Jeton d'accès personnel
               </label>
               <a
                 href="https://github.com/settings/tokens/new?scopes=repo,user,read:org,workflow,delete_repo,write:packages,read:packages"

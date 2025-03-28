@@ -7,7 +7,7 @@ import type { TabType, Profile } from './types';
 
 const BetaLabel = () => (
   <span className="px-1.5 py-0.5 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-[10px] font-medium text-purple-600 dark:text-purple-400 ml-2">
-    BETA
+    BÊTA
   </span>
 );
 
@@ -29,7 +29,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
           {profile?.avatar ? (
             <img
               src={profile.avatar}
-              alt={profile?.username || 'Profile'}
+              alt={profile?.username || 'Profil'}
               className="w-full h-full rounded-full object-cover"
               loading="eager"
               decoding="sync"
@@ -65,7 +65,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
               {profile?.avatar ? (
                 <img
                   src={profile.avatar}
-                  alt={profile?.username || 'Profile'}
+                  alt={profile?.username || 'Profil'}
                   className={classNames('w-full h-full', 'object-cover', 'transform-gpu', 'image-rendering-crisp')}
                   loading="eager"
                   decoding="sync"
@@ -78,7 +78,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                {profile?.username || 'Guest User'}
+                {profile?.username || 'Utilisateur Invité'}
               </div>
               {profile?.bio && <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{profile.bio}</div>}
             </div>
@@ -97,7 +97,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             onClick={() => onSelectTab('profile')}
           >
             <div className="i-ph:user-circle w-4 h-4 text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
-            Edit Profile
+            Modifier le Profil
           </DropdownMenu.Item>
 
           <DropdownMenu.Item
@@ -113,7 +113,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             onClick={() => onSelectTab('settings')}
           >
             <div className="i-ph:gear-six w-4 h-4 text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
-            Settings
+            Paramètres
           </DropdownMenu.Item>
 
           <div className="my-1 border-t border-gray-200/50 dark:border-gray-800/50" />
@@ -131,7 +131,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             onClick={() => onSelectTab('task-manager')}
           >
             <div className="i-ph:activity w-4 h-4 text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
-            Task Manager
+            Gestionnaire de Tâches
             <BetaLabel />
           </DropdownMenu.Item>
 
@@ -148,7 +148,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             onClick={() => onSelectTab('service-status')}
           >
             <div className="i-ph:heartbeat w-4 h-4 text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
-            Service Status
+            État du Service
             <BetaLabel />
           </DropdownMenu.Item>
         </DropdownMenu.Content>

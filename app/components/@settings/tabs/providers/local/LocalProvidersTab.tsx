@@ -27,9 +27,9 @@ const PROVIDER_ICONS: Record<ProviderName, IconType> = {
 
 // Update PROVIDER_DESCRIPTIONS to use the same type
 const PROVIDER_DESCRIPTIONS: Record<ProviderName, string> = {
-  Ollama: 'Run open-source models locally on your machine',
-  LMStudio: 'Local model inference with LM Studio',
-  OpenAILike: 'Connect to OpenAI-compatible API endpoints',
+  Ollama: 'Exécutez des modèles open-source localement sur votre machine',
+  LMStudio: 'Inférence de modèle locale avec LM Studio',
+  OpenAILike: 'Connectez-vous aux points de terminaison API compatibles OpenAI',
 };
 
 // Add a constant for the Ollama API base URL
@@ -239,7 +239,7 @@ export default function LocalProvidersTab() {
       filteredProviders.forEach((provider) => {
         updateProviderSettings(provider.name, { ...provider.settings, enabled });
       });
-      toast(enabled ? 'All local providers enabled' : 'All local providers disabled');
+      toast(enabled ? 'Tous les fournisseurs locaux activés' : 'Tous les fournisseurs locaux désactivés');
     },
     [filteredProviders, updateProviderSettings],
   );
@@ -384,7 +384,7 @@ export default function LocalProvidersTab() {
         'transition-all duration-200',
       )}
       role="region"
-      aria-label="Local Providers Configuration"
+      aria-label="Configuration des fournisseurs locaux"
     >
       <motion.div
         className="space-y-6"
@@ -408,16 +408,16 @@ export default function LocalProvidersTab() {
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-bolt-elements-textPrimary">Local AI Models</h2>
               </div>
-              <p className="text-sm text-bolt-elements-textSecondary">Configure and manage your local AI providers</p>
+              <p className="text-sm text-bolt-elements-textSecondary">Configurez et gérez vos fournisseurs d'IA locaux</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-bolt-elements-textSecondary">Enable All</span>
+            <span className="text-sm text-bolt-elements-textSecondary">Activer tout</span>
             <Switch
               checked={categoryEnabled}
               onCheckedChange={handleToggleCategory}
-              aria-label="Toggle all local providers"
+              aria-label="Basculer tous les fournisseurs locaux"
             />
           </div>
         </div>
@@ -629,7 +629,7 @@ export default function LocalProvidersTab() {
 
         {/* Other Providers Section */}
         <div className="border-t border-bolt-elements-borderColor pt-6 mt-8">
-          <h3 className="text-lg font-semibold text-bolt-elements-textPrimary mb-4">Other Local Providers</h3>
+          <h3 className="text-lg font-semibold text-bolt-elements-textPrimary mb-4">Autres fournisseurs locaux</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredProviders
               .filter((provider) => provider.name !== 'Ollama')
@@ -734,7 +734,7 @@ export default function LocalProvidersTab() {
                             >
                               <div className="flex items-center gap-2 text-bolt-elements-textSecondary">
                                 <div className="i-ph:link text-sm" />
-                                <span>{provider.settings.baseUrl || 'Click to set base URL'}</span>
+                                <span>{provider.settings.baseUrl || 'Cliquez pour définir l\'URL de base'}</span>
                               </div>
                             </div>
                           )}
