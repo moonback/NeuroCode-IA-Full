@@ -176,7 +176,7 @@ export const Menu = () => {
           <div className="text-gray-900 dark:text-white font-medium"></div>
           <div className="flex items-center gap-3">
             <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
-              {profile?.username || 'Guest User'}
+              {profile?.username || 'Invité'}
             </span>
             <div className="flex items-center justify-center w-[32px] h-[32px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0">
               {profile?.avatar ? (
@@ -201,7 +201,7 @@ export const Menu = () => {
               className="flex gap-2 items-center bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg px-4 py-2 transition-colors"
             >
               <span className="inline-block i-lucide:message-square h-4 w-4" />
-              <span className="text-sm font-medium">Start new chat</span>
+              <span className="text-sm font-medium">Démarrer une nouvelle discussion</span>
             </a>
             <div className="relative w-full">
               <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -210,17 +210,17 @@ export const Menu = () => {
               <input
                 className="w-full bg-gray-50 dark:bg-gray-900 relative pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 border border-gray-200 dark:border-gray-800"
                 type="search"
-                placeholder="Search chats..."
+                placeholder="Rechercher des discussions..."
                 onChange={handleSearchChange}
-                aria-label="Search chats"
+                aria-label="Rechercher des chats"
               />
             </div>
           </div>
-          <div className="text-gray-600 dark:text-gray-400 text-sm font-medium px-4 py-2">Your Chats</div>
+          <div className="text-gray-600 dark:text-gray-400 text-sm font-medium px-4 py-2">Vos discussions</div>
           <div className="flex-1 overflow-auto px-3 pb-3">
             {filteredList.length === 0 && (
               <div className="px-4 text-gray-500 dark:text-gray-400 text-sm">
-                {list.length === 0 ? 'No previous conversations' : 'No matches found'}
+                {list.length === 0 ? 'Aucune conversation antérieure' : 'Aucune correspondance trouvée'}
               </div>
             )}
             <DialogRoot open={dialogContent !== null}>
@@ -249,17 +249,17 @@ export const Menu = () => {
                       <DialogTitle className="text-gray-900 dark:text-white">Delete Chat?</DialogTitle>
                       <DialogDescription className="mt-2 text-gray-600 dark:text-gray-400">
                         <p>
-                          You are about to delete{' '}
+                        Vous êtes sur le point de supprimer {' '}
                           <span className="font-medium text-gray-900 dark:text-white">
                             {dialogContent.item.description}
                           </span>
                         </p>
-                        <p className="mt-2">Are you sure you want to delete this chat?</p>
+                        <p className="mt-2">Êtes-vous sûr de vouloir supprimer cette discussion ?</p>
                       </DialogDescription>
                     </div>
                     <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
                       <DialogButton type="secondary" onClick={closeDialog}>
-                        Cancel
+                      Annuler
                       </DialogButton>
                       <DialogButton
                         type="danger"
@@ -268,7 +268,7 @@ export const Menu = () => {
                           closeDialog();
                         }}
                       >
-                        Delete
+                        Supprimer
                       </DialogButton>
                     </div>
                   </>
