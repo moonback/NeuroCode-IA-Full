@@ -66,7 +66,7 @@ export function useSupabaseConnection() {
         stats: data.stats,
       });
 
-      toast.success('Successfully connected to Supabase');
+      toast.success('Connexion à Supabase réussie');
 
       setIsProjectsExpanded(true);
 
@@ -74,7 +74,7 @@ export function useSupabaseConnection() {
     } catch (error) {
       console.error('Connection error:', error);
       logStore.logError('Failed to authenticate with Supabase', { error });
-      toast.error(error instanceof Error ? error.message : 'Failed to connect to Supabase');
+      toast.error(error instanceof Error ? error.message : 'Échec de la connexion à Supabase');
       updateSupabaseConnection({ user: null, token: '' });
 
       return false;
@@ -85,7 +85,7 @@ export function useSupabaseConnection() {
 
   const handleDisconnect = () => {
     updateSupabaseConnection({ user: null, token: '' });
-    toast.success('Disconnected from Supabase');
+    toast.success('Déconnecté de Supabase');
     setIsDropdownOpen(false);
   };
 
@@ -105,13 +105,13 @@ export function useSupabaseConnection() {
     if (projectId && currentState.token) {
       try {
         await fetchProjectApiKeys(projectId, currentState.token);
-        toast.success('Project selected successfully');
+        toast.success('Projet sélectionné avec succès');
       } catch (error) {
         console.error('Failed to fetch API keys:', error);
-        toast.error('Selected project but failed to fetch API keys');
+        toast.error('Projet sélectionné mais échec de la récupération des clés API');
       }
     } else {
-      toast.success('Project selected successfully');
+      toast.success('Projet sélectionné avec succès');
     }
 
     setIsDropdownOpen(false);
