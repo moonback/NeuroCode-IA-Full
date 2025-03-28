@@ -24,6 +24,7 @@ export default function ConnectionDiagnostics() {
       const localStorageChecks = {
         githubConnection: localStorage.getItem('github_connection'),
         netlifyConnection: localStorage.getItem('netlify_connection'),
+        vercelConnection: localStorage.getItem('vercel_connection'),
       };
 
       // Get diagnostic data from server
@@ -101,21 +102,52 @@ export default function ConnectionDiagnostics() {
       }
 
       // Compile results
+      // Check if Vercel token works
+      let vercelUserCheck = null;
+      const vercelToken = localStorageChecks.vercelConnection
+        ? JSON.parse(localStorageChecks.vercelConnection || '{"token":""}').token
+        : '';
+
+      if (vercelToken) {
+        try {
+          const vercelResp = await fetch('https://api.vercel.com/v2/user', {
+            headers: {
+              Authorization: `Bearer ${vercelToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          vercelUserCheck = {
+            status: vercelResp.status,
+            ok: vercelResp.ok,
+          };
+        } catch (error) {
+          vercelUserCheck = {
+            error: error instanceof Error ? error.message : String(error),
+            ok: false,
+          };
+        }
+      }
+
       const results = {
         timestamp: new Date().toISOString(),
         localStorage: {
           hasGithubConnection: Boolean(localStorageChecks.githubConnection),
           hasNetlifyConnection: Boolean(localStorageChecks.netlifyConnection),
+          hasVercelConnection: Boolean(localStorageChecks.vercelConnection),
           githubConnectionParsed: localStorageChecks.githubConnection
             ? JSON.parse(localStorageChecks.githubConnection)
             : null,
           netlifyConnectionParsed: localStorageChecks.netlifyConnection
             ? JSON.parse(localStorageChecks.netlifyConnection)
             : null,
+          vercelConnectionParsed: localStorageChecks.vercelConnection
+            ? JSON.parse(localStorageChecks.vercelConnection)
+            : null,
         },
         apiEndpoints: {
           github: githubResults,
           netlify: netlifyUserCheck,
+          vercel: vercelUserCheck,
         },
         serverDiagnostics,
       };
@@ -124,19 +156,23 @@ export default function ConnectionDiagnostics() {
 
       // Display simple results
       if (results.localStorage.hasGithubConnection && results.apiEndpoints.github.some((r: { ok: boolean }) => !r.ok)) {
-        toast.error('GitHub API connections are failing. Try reconnecting.');
+        toast.error('Les connexions à l\'API GitHub échouent. Essayez de vous reconnecter.');
       }
 
       if (results.localStorage.hasNetlifyConnection && netlifyUserCheck && !netlifyUserCheck.ok) {
-        toast.error('Netlify API connection is failing. Try reconnecting.');
+        toast.error('La connexion à l\'API Netlify échoue. Essayez de vous reconnecter.');
       }
 
-      if (!results.localStorage.hasGithubConnection && !results.localStorage.hasNetlifyConnection) {
-        toast.info('No connection data found in browser storage.');
+      if (results.localStorage.hasVercelConnection && vercelUserCheck && !vercelUserCheck.ok) {
+        toast.error('La connexion à l\'API Vercel échoue. Essayez de vous reconnecter.');
+      }
+
+      if (!results.localStorage.hasGithubConnection && !results.localStorage.hasNetlifyConnection && !results.localStorage.hasVercelConnection) {
+        toast.info('Aucune donnée de connexion trouvée dans le stockage du navigateur.');
       }
     } catch (error) {
-      console.error('Diagnostics error:', error);
-      toast.error('Error running diagnostics');
+      console.error('Erreur de diagnostic:', error);
+      toast.error('Erreur lors de l\'exécution des diagnostics');
       setDiagnosticResults({ error: error instanceof Error ? error.message : String(error) });
     } finally {
       setIsRunning(false);
@@ -162,10 +198,22 @@ export default function ConnectionDiagnostics() {
     try {
       localStorage.removeItem('netlify_connection');
       document.cookie = 'netlifyToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      toast.success('Netlify connection data cleared. Please refresh the page and reconnect.');
+      toast.success('Les données de connexion Netlify ont été effacées. Veuillez actualiser la page et vous reconnecter.');
     } catch (error) {
-      console.error('Error clearing Netlify data:', error);
-      toast.error('Failed to clear Netlify connection data');
+      console.error('Erreur lors de l\'effacement des données Netlify:', error);
+      toast.error('Échec de l\'effacement des données de connexion Netlify');
+    }
+  };
+
+  // Helper to reset Vercel connection
+  const resetVercelConnection = () => {
+    try {
+      localStorage.removeItem('vercel_connection');
+      document.cookie = 'vercelToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      toast.success('Les données de connexion Vercel ont été effacées. Veuillez actualiser la page et vous reconnecter.');
+    } catch (error) {
+      console.error('Erreur lors de l\'effacement des données Vercel:', error);
+      toast.error('Échec de l\'effacement des données de connexion Vercel');
     }
   };
 
@@ -178,7 +226,7 @@ export default function ConnectionDiagnostics() {
           <div className="flex items-center gap-2">
             <div className="i-ph:github-logo text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent w-4 h-4" />
             <div className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-              GitHub Connection
+            Connexion GitHub
             </div>
           </div>
           {diagnosticResults ? (
@@ -192,7 +240,7 @@ export default function ConnectionDiagnostics() {
                       : 'text-red-500 dark:text-red-400',
                   )}
                 >
-                  {diagnosticResults.localStorage.hasGithubConnection ? 'Connected' : 'Not Connected'}
+                  {diagnosticResults.localStorage.hasGithubConnection ? 'Connecté' : 'Non Connecté'}
                 </span>
               </div>
               {diagnosticResults.localStorage.hasGithubConnection && (
@@ -225,7 +273,7 @@ export default function ConnectionDiagnostics() {
                   className="mt-auto self-start hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:bg-bolt-elements-item-backgroundActive/10 dark:hover:text-bolt-elements-textPrimary transition-colors"
                 >
                   <div className="i-ph:plug w-3.5 h-3.5 mr-1" />
-                  Connect Now
+                  Connectez-vous maintenant
                 </Button>
               )}
             </>
@@ -233,7 +281,7 @@ export default function ConnectionDiagnostics() {
             <div className="flex items-center justify-center h-full">
               <div className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary flex items-center gap-2">
                 <div className="i-ph:info w-4 h-4" />
-                Run diagnostics to check connection status
+                Exécutez des diagnostics pour vérifier l'état de la connexion
               </div>
             </div>
           )}
@@ -244,7 +292,7 @@ export default function ConnectionDiagnostics() {
           <div className="flex items-center gap-2">
             <div className="i-si:netlify text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent w-4 h-4" />
             <div className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-              Netlify Connection
+            Connexion Netlify
             </div>
           </div>
           {diagnosticResults ? (
@@ -258,7 +306,7 @@ export default function ConnectionDiagnostics() {
                       : 'text-red-500 dark:text-red-400',
                   )}
                 >
-                  {diagnosticResults.localStorage.hasNetlifyConnection ? 'Connected' : 'Not Connected'}
+                  {diagnosticResults.localStorage.hasNetlifyConnection ? 'Connecté' : 'Non Connecté'}
                 </span>
               </div>
               {diagnosticResults.localStorage.hasNetlifyConnection && (
@@ -290,7 +338,7 @@ export default function ConnectionDiagnostics() {
                   className="mt-auto self-start hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:bg-bolt-elements-item-backgroundActive/10 dark:hover:text-bolt-elements-textPrimary transition-colors"
                 >
                   <div className="i-ph:plug w-3.5 h-3.5 mr-1" />
-                  Connect Now
+                  Connectez-vous maintenant
                 </Button>
               )}
             </>
@@ -298,7 +346,72 @@ export default function ConnectionDiagnostics() {
             <div className="flex items-center justify-center h-full">
               <div className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary flex items-center gap-2">
                 <div className="i-ph:info w-4 h-4" />
-                Run diagnostics to check connection status
+                Exécutez des diagnostics pour vérifier l'état de la connexion
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Vercel Connection Card */}
+        <div className="p-4 rounded-lg bg-bolt-elements-background dark:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive/70 dark:hover:border-bolt-elements-borderColorActive/70 transition-all duration-200 h-[180px] flex flex-col">
+          <div className="flex items-center gap-2">
+            <div className="i-si:vercel text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent w-4 h-4" />
+            <div className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+            Connexion Vercel
+            </div>
+          </div>
+          {diagnosticResults ? (
+            <>
+              <div className="flex items-center gap-2 mt-2">
+                <span
+                  className={classNames(
+                    'text-xl font-semibold',
+                    diagnosticResults.localStorage.hasVercelConnection
+                      ? 'text-green-500 dark:text-green-400'
+                      : 'text-red-500 dark:text-red-400',
+                  )}
+                >
+                  {diagnosticResults.localStorage.hasVercelConnection ? 'Connecté' : 'Non Connecté'}
+                </span>
+              </div>
+              {diagnosticResults.localStorage.hasVercelConnection && (
+                <>
+                  <div className="text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary mt-2 flex items-center gap-1.5">
+                    <div className="i-ph:user w-3.5 h-3.5 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                    User:{' '}
+                    {diagnosticResults.localStorage.vercelConnectionParsed?.user?.name ||
+                      diagnosticResults.localStorage.vercelConnectionParsed?.user?.email ||
+                      'N/A'}
+                  </div>
+                  <div className="text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary mt-2 flex items-center gap-1.5">
+                    <div className="i-ph:check-circle w-3.5 h-3.5 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                    API Status:{' '}
+                    <Badge
+                      variant={diagnosticResults.apiEndpoints.vercel?.ok ? 'default' : 'destructive'}
+                      className="ml-1"
+                    >
+                      {diagnosticResults.apiEndpoints.vercel?.ok ? 'OK' : 'Failed'}
+                    </Badge>
+                  </div>
+                </>
+              )}
+              {!diagnosticResults.localStorage.hasVercelConnection && (
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  size="sm"
+                  className="mt-auto self-start hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:bg-bolt-elements-item-backgroundActive/10 dark:hover:text-bolt-elements-textPrimary transition-colors"
+                >
+                  <div className="i-ph:plug w-3.5 h-3.5 mr-1" />
+                  Connectez-vous maintenant
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary flex items-center gap-2">
+                <div className="i-ph:info w-4 h-4" />
+                Exécutez des diagnostics pour vérifier l'état de la connexion
               </div>
             </div>
           )}
@@ -318,7 +431,7 @@ export default function ConnectionDiagnostics() {
           ) : (
             <div className="i-ph:activity w-4 h-4" />
           )}
-          {isRunning ? 'Running Diagnostics...' : 'Run Diagnostics'}
+          {isRunning ? 'Exécution des diagnostics...' : 'Exécuter les diagnostics'}
         </Button>
 
         <Button
@@ -328,7 +441,7 @@ export default function ConnectionDiagnostics() {
           className="flex items-center gap-2 hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:bg-bolt-elements-item-backgroundActive/10 dark:hover:text-bolt-elements-textPrimary transition-colors"
         >
           <div className="i-ph:github-logo w-4 h-4" />
-          Reset GitHub Connection
+          Réinitialiser la connexion GitHub
         </Button>
 
         <Button
@@ -338,7 +451,17 @@ export default function ConnectionDiagnostics() {
           className="flex items-center gap-2 hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:bg-bolt-elements-item-backgroundActive/10 dark:hover:text-bolt-elements-textPrimary transition-colors"
         >
           <div className="i-si:netlify w-4 h-4" />
-          Reset Netlify Connection
+          Réinitialiser la connexion Netlify
+        </Button>
+
+        <Button
+          onClick={resetVercelConnection}
+          disabled={isRunning}
+          variant="outline"
+          className="flex items-center gap-2 hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:bg-bolt-elements-item-backgroundActive/10 dark:hover:text-bolt-elements-textPrimary transition-colors"
+        >
+          <div className="i-si:vercel w-4 h-4" />
+          Réinitialiser la connexion Vercel
         </Button>
       </div>
 
@@ -351,7 +474,7 @@ export default function ConnectionDiagnostics() {
                 <div className="flex items-center gap-2">
                   <CodeBracketIcon className="w-4 h-4 text-blue-500" />
                   <span className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-                    Diagnostic Details
+                  Détails du diagnostic
                   </span>
                 </div>
                 <ChevronDownIcon
