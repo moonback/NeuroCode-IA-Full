@@ -427,26 +427,26 @@ function FileContextMenu({
               <ContextMenuItem onSelect={() => setIsCreatingFile(true)}>
                 <div className="flex items-center gap-2">
                   <div className="i-ph:file-plus" />
-                  New File
+                  Nouveau fichier
                 </div>
               </ContextMenuItem>
               <ContextMenuItem onSelect={() => setIsCreatingFolder(true)}>
                 <div className="flex items-center gap-2">
                   <div className="i-ph:folder-plus" />
-                  New Folder
+                  Nouveau dossier
                 </div>
               </ContextMenuItem>
             </ContextMenu.Group>
             <ContextMenu.Group className="p-1">
-              <ContextMenuItem onSelect={onCopyPath}>Copy path</ContextMenuItem>
-              <ContextMenuItem onSelect={onCopyRelativePath}>Copy relative path</ContextMenuItem>
+              <ContextMenuItem onSelect={onCopyPath}>Copier le chemin</ContextMenuItem>
+              <ContextMenuItem onSelect={onCopyRelativePath}>Copier le chemin relatif</ContextMenuItem>
             </ContextMenu.Group>
             {/* Add delete option in a new group */}
             <ContextMenu.Group className="p-1 border-t-px border-solid border-bolt-elements-borderColor">
               <ContextMenuItem onSelect={handleDelete}>
                 <div className="flex items-center gap-2 text-red-500">
                   <div className="i-ph:trash" />
-                  Delete {isFolder ? 'Folder' : 'File'}
+                  Supprimer {isFolder ? 'Dossier' : 'Fichier'}
                 </div>
               </ContextMenuItem>
             </ContextMenu.Group>
@@ -456,7 +456,7 @@ function FileContextMenu({
       {isCreatingFile && (
         <InlineInput
           depth={depth}
-          placeholder="Enter file name..."
+          placeholder="Entrez le nom du fichier..."
           onSubmit={handleCreateFile}
           onCancel={() => setIsCreatingFile(false)}
         />
@@ -464,7 +464,7 @@ function FileContextMenu({
       {isCreatingFolder && (
         <InlineInput
           depth={depth}
-          placeholder="Enter folder name..."
+          placeholder="Entrez le nom du dossier..."
           onSubmit={handleCreateFolder}
           onCancel={() => setIsCreatingFolder(false)}
         />
