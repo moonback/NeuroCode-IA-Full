@@ -88,13 +88,13 @@ export function DataTab() {
 
   // State for settings categories and available chats
   const [settingsCategories] = useState<SettingsCategory[]>([
-    { id: 'core', label: 'Core Settings', description: 'User profile and main settings' },
-    { id: 'providers', label: 'Providers', description: 'API keys and provider configurations' },
-    { id: 'features', label: 'Features', description: 'Feature flags and settings' },
-    { id: 'ui', label: 'UI', description: 'UI configuration and preferences' },
-    { id: 'connections', label: 'Connections', description: 'External service connections' },
-    { id: 'debug', label: 'Debug', description: 'Debug settings and logs' },
-    { id: 'updates', label: 'Updates', description: 'Update settings and notifications' },
+    { id: 'core', label: 'Paramètres principaux', description: 'Profil utilisateur et paramètres principaux' },
+    { id: 'providers', label: 'Fournisseurs', description: 'Clés API et configurations des fournisseurs' },
+    { id: 'features', label: 'Fonctionnalités', description: 'Fonctionnalités et paramètres des fonctionnalités' },
+    { id: 'ui', label: 'Interface utilisateur', description: 'Configuration et préférences de l\'interface utilisateur' },
+    { id: 'connections', label: 'Connexions', description: 'Connexions aux services externes' },
+    { id: 'debug', label: 'Débogage', description: 'Paramètres de débogage et journaux' },
+    { id: 'updates', label: 'Mises à jour', description: 'Paramètres de mise à jour et notifications' },
   ]);
 
   const [availableChats, setAvailableChats] = useState<ExtendedChat[]>([]);
@@ -498,9 +498,161 @@ export function DataTab() {
                 <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <div className="i-ph-download-duotone w-5 h-5" />
                 </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">Exporter les clés API</CardTitle>
+                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
+                  Exporter tous les paramètres
+                </CardTitle>
               </div>
-              <CardDescription>Exportez vos clés API vers un fichier JSON.</CardDescription>
+              <CardDescription>Exportez tous vos paramètres vers un fichier JSON.</CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                <Button
+                  onClick={handleExportSettings}
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                  className={classNames(
+                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    isExporting ? 'cursor-not-allowed' : '',
+                  )}
+                >
+                  {isExporting ? (
+                    <>
+                      <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                      Exportation en cours...
+                    </>
+                  ) : (
+                    'Tout exporter'
+                  )}
+                </Button>
+              </motion.div>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center mb-2">
+                <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <div className="i-ph-filter-duotone w-5 h-5" />
+                </motion.div>
+                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
+                  Exporter les paramètres sélectionnés
+                </CardTitle>
+              </div>
+              <CardDescription>Choisissez des paramètres spécifiques à exporter.</CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                <Button
+                  onClick={() => setShowSettingsSelection(true)}
+                  disabled={isExporting || settingsCategories.length === 0}
+                  variant="outline"
+                  size="sm"
+                  className={classNames(
+                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    isExporting || settingsCategories.length === 0 ? 'cursor-not-allowed' : '',
+                  )}
+                >
+                  {isExporting ? (
+                    <>
+                      <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                      Exportation en cours...
+                    </>
+                  ) : (
+                    'Sélectionner les paramètres'
+                  )}
+                </Button>
+              </motion.div>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center mb-2">
+                <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <div className="i-ph-upload-duotone w-5 h-5" />
+                </motion.div>
+                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">Import Chats</CardTitle>
+              </div>
+              <CardDescription>Importer des chats à partir d'un fichier JSON.</CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                <Button
+                  onClick={() => chatFileInputRef.current?.click()}
+                  disabled={isImporting}
+                  variant="outline"
+                  size="sm"
+                  className={classNames(
+                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    isImporting ? 'cursor-not-allowed' : '',
+                  )}
+                >
+                  {isImporting ? (
+                    <>
+                      <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                      Importing...
+                    </>
+                  ) : (
+                    'Importer des discussions'
+                  )}
+                </Button>
+              </motion.div>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center mb-2">
+                <motion.div className="text-red-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <div className="i-ph-arrow-counter-clockwise-duotone w-5 h-5" />
+                </motion.div>
+                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
+                  Réinitialiser tous les paramètres
+                </CardTitle>
+              </div>
+              <CardDescription>Réinitialisez tous les paramètres à leurs valeurs par défaut.</CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                <Button
+                  onClick={() => setShowResetInlineConfirm(true)}
+                  disabled={isResetting}
+                  variant="outline"
+                  size="sm"
+                  className={classNames(
+                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    isResetting ? 'cursor-not-allowed' : '',
+                  )}
+                >
+                  {isResetting ? (
+                    <>
+                      <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                      Réinitialisation en cours...
+                    </>
+                  ) : (
+                    'Tout réinitialiser'
+                  )}
+                </Button>
+              </motion.div>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+
+      {/* API Keys Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">API Keys</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center mb-2">
+                <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <div className="i-ph-download-duotone w-5 h-5" />
+                </motion.div>
+                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">Export API Keys</CardTitle>
+              </div>
+              <CardDescription>Export your API keys to a JSON file.</CardDescription>
             </CardHeader>
             <CardFooter>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
@@ -517,10 +669,10 @@ export function DataTab() {
                   {isExporting ? (
                     <>
                       <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                      Exportation en cours...
+                      Exporting...
                     </>
                   ) : (
-                    'Exporter les clés'
+                    'Export Keys'
                   )}
                 </Button>
               </motion.div>
@@ -534,7 +686,7 @@ export function DataTab() {
                   <div className="i-ph-file-text-duotone w-5 h-5" />
                 </motion.div>
                 <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                  Télécharger le modèle
+                  Download Template
                 </CardTitle>
               </div>
               <CardDescription>Download a template file for your API keys.</CardDescription>
