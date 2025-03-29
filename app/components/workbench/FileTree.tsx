@@ -8,6 +8,7 @@ import { diffLines, type Change } from 'diff';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { toast } from 'react-toastify';
 import { path } from '~/utils/path';
+import { addTargetedFile } from '~/utils/fileUtils';
 
 const logger = createScopedLogger('FileTree');
 
@@ -440,6 +441,27 @@ function FileContextMenu({
             <ContextMenu.Group className="p-1">
               <ContextMenuItem onSelect={onCopyPath}>Copier le chemin</ContextMenuItem>
               <ContextMenuItem onSelect={onCopyRelativePath}>Copier le chemin relatif</ContextMenuItem>
+              {!isFolder && (
+                <ContextMenuItem onSelect={() => {
+                  const textarea = document.querySelector('textarea[data-targeted-files]');
+                  if (textarea) {
+                    const success = addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                    if (success) {
+                      toast.success(`Fichier ciblé : ${fileName}`);
+                      (textarea as HTMLTextAreaElement).focus();
+                    } else {
+                      toast.info(`Le fichier ${fileName} est déjà ciblé`);
+                    }
+                  } else {
+                    toast.error('Impossible de trouver la zone de texte du chat');
+                  }
+                }}>
+                  <div className="flex items-center gap-2">
+                    <div className="i-ph:target" />
+                    Cibler le fichier
+                  </div>
+                </ContextMenuItem>
+              )}
             </ContextMenu.Group>
             {/* Add delete option in a new group */}
             <ContextMenu.Group className="p-1 border-t-px border-solid border-bolt-elements-borderColor">
