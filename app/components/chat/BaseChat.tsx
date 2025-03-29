@@ -473,7 +473,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       data-targeted-files="[]"
                       ref={textareaRef}
                       className={classNames(
-                        'w-full pl-4 pt-4 pr-16 outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent text-sm',
+                        'w-full px-6 py-5 rounded-2xl outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary/60 bg-bolt-elements-background-depth-3 text-base transition-all duration-300 focus:ring-2 focus:ring-bolt-elements-focus ring-offset-2',
                         'transition-all duration-200',
                         'hover:border-bolt-elements-focus',
                       )}
@@ -605,9 +605,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       </div>
                       {input.length > 3 ? (
                         <div className="text-xs text-bolt-elements-textTertiary flex items-center">
-                          <kbd className="px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2 font-mono border-bolt-elements-borderColor">⇧</kbd>
+                          <kbd className="px-2.5 py-1 rounded-lg bg-bolt-elements-background-depth-1 font-medium border border-bolt-elements-borderColor text-bolt-elements-textSecondary transition-colors duration-200">⇧</kbd>
                           <span className="mx-1">+</span>
-                          <kbd className="px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2 font-mono border-bolt-elements-borderColor">↵</kbd>
+                          <kbd className="px-2.5 py-1 rounded-lg bg-bolt-elements-background-depth-1 font-medium border border-bolt-elements-borderColor text-bolt-elements-textSecondary transition-colors duration-200">↵</kbd>
                           <span className="ml-1">pour saut de ligne</span>
                         </div>
                       ) : null}
