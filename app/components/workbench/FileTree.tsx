@@ -213,11 +213,18 @@ interface FolderContextMenuProps {
   children: ReactNode;
 }
 
-function ContextMenuItem({ onSelect, children }: { onSelect?: () => void; children: ReactNode }) {
+function ContextMenuItem({ onSelect, children, className }: { 
+  onSelect?: () => void; 
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <ContextMenu.Item
       onSelect={onSelect}
-      className="flex items-center gap-2 px-2 py-1.5 outline-0 text-sm text-bolt-elements-textPrimary cursor-pointer ws-nowrap text-bolt-elements-item-contentDefault hover:text-bolt-elements-item-contentActive hover:bg-bolt-elements-item-backgroundActive rounded-md"
+      className={classNames(
+        'flex items-center gap-2 px-2 py-1.5 outline-0 text-sm text-bolt-elements-textPrimary cursor-pointer ws-nowrap text-bolt-elements-item-contentDefault hover:text-bolt-elements-item-contentActive hover:bg-bolt-elements-item-backgroundActive rounded-md',
+        className
+      )}
     >
       <span className="size-4 shrink-0"></span>
       <span>{children}</span>
@@ -378,98 +385,133 @@ function FileContextMenu({
     setIsCreatingFolder(false);
   };
 
-  const handleDelete = async () => {
-    try {
-      if (!confirm(`Are you sure you want to delete ${isFolder ? 'folder' : 'file'}: ${fileName}?`)) {
-        return;
-      }
-
-      let success;
-
-      if (isFolder) {
-        success = await workbenchStore.deleteFolder(fullPath);
-      } else {
-        success = await workbenchStore.deleteFile(fullPath);
-      }
-
-      if (success) {
-        toast.success(`${isFolder ? 'Folder' : 'File'} deleted successfully`);
-      } else {
-        toast.error(`Failed to delete ${isFolder ? 'folder' : 'file'}`);
-      }
-    } catch (error) {
-      toast.error(`Error deleting ${isFolder ? 'folder' : 'file'}`);
-      logger.error(error);
+const handleDelete = async () => {
+  try {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${isFolder ? 'le dossier' : 'le fichier'} : ${fileName} ?`)) {
+      return;
     }
-  };
+
+    let success;
+
+    if (isFolder) {
+      success = await workbenchStore.deleteFolder(fullPath);
+    } else {
+      success = await workbenchStore.deleteFile(fullPath);
+    }
+
+    if (success) {
+      toast.success(`${isFolder ? 'Dossier' : 'Fichier'} supprimé avec succès`);
+    } else {
+      toast.error(`Échec de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
+    }
+  } catch (error) {
+    toast.error(`Erreur lors de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
+    logger.error(error);
+  }
+};
 
   return (
     <>
       <ContextMenu.Root>
-        <ContextMenu.Trigger>
+        <ContextMenu.Trigger asChild>
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={classNames('relative', {
-              'bg-bolt-elements-background-depth-2 border border-dashed border-bolt-elements-item-contentAccent rounded-md':
+            className={classNames('relative transition-all duration-200', {
+              'bg-bolt-elements-background-depth-2 border-2 border-dashed border-bolt-elements-item-contentAccent rounded-md scale-[0.98]':
                 isDragging,
+              'hover:bg-bolt-elements-background-depth-1': !isDragging,
             })}
           >
             {children}
+            {isDragging && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-md">
+                <div className="flex flex-col items-center gap-2 text-bolt-elements-textPrimary">
+                  <div className="i-ph:upload-simple text-2xl" />
+                  <span className="text-sm">Déposer ici</span>
+                </div>
+              </div>
+            )}
           </div>
         </ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content
             style={{ zIndex: 998 }}
-            className="border border-bolt-elements-borderColor rounded-md z-context-menu bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-2 data-[state=open]:animate-in animate-duration-100 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98 w-56"
+            className="border border-bolt-elements-borderColor rounded-md z-context-menu bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-2 data-[state=open]:animate-in animate-duration-100 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98 w-56 shadow-lg"
           >
             <ContextMenu.Group className="p-1 border-b-px border-solid border-bolt-elements-borderColor">
-            {!isFolder && (
-                <ContextMenuItem onSelect={() => {
-                  const textarea = document.querySelector('textarea[data-targeted-files]');
-                  if (textarea) {
-                    const success = addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
-                    if (success) {
-                      toast.success(`Fichier ciblé : ${fileName}`);
-                      (textarea as HTMLTextAreaElement).focus();
+              {!isFolder && (
+                <ContextMenuItem 
+                  onSelect={() => {
+                    const textarea = document.querySelector('textarea[data-targeted-files]');
+                    if (textarea) {
+                      const success = addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                      if (success) {
+                        toast.success(`Fichier ciblé : ${fileName}`);
+                        (textarea as HTMLTextAreaElement).focus();
+                      } else {
+                        toast.info(`Le fichier ${fileName} est déjà ciblé`);
+                      }
                     } else {
-                      toast.info(`Le fichier ${fileName} est déjà ciblé`);
+                      toast.error('Impossible de trouver la zone de texte du chat');
                     }
-                  } else {
-                    toast.error('Impossible de trouver la zone de texte du chat');
-                  }
-                }}>
+                  }}
+                  className="hover:bg-green-500/10"
+                >
                   <div className="flex items-center gap-2">
-                    <div className="i-ph:target" />
-                    Cibler le fichier
+                    <div className="i-ph:target text-green-500" />
+                    <span className="text-green-500">Cibler le fichier</span>
                   </div>
                 </ContextMenuItem>
               )}
-              <ContextMenuItem onSelect={() => setIsCreatingFile(true)}>
+              <ContextMenuItem 
+                onSelect={() => setIsCreatingFile(true)}
+                className="hover:bg-blue-500/10"
+              >
                 <div className="flex items-center gap-2">
-                  <div className="i-ph:file-plus" />
-                  Nouveau fichier
+                  <div className="i-ph:file-plus text-blue-500" />
+                  <span className="text-blue-500">Nouveau fichier</span>
                 </div>
               </ContextMenuItem>
-              <ContextMenuItem onSelect={() => setIsCreatingFolder(true)}>
+              <ContextMenuItem 
+                onSelect={() => setIsCreatingFolder(true)}
+                className="hover:bg-purple-500/10"
+              >
                 <div className="flex items-center gap-2">
-                  <div className="i-ph:folder-plus" />
-                  Nouveau dossier
+                  <div className="i-ph:folder-plus text-purple-500" />
+                  <span className="text-purple-500">Nouveau dossier</span>
                 </div>
               </ContextMenuItem>
             </ContextMenu.Group>
             <ContextMenu.Group className="p-1">
-              <ContextMenuItem onSelect={onCopyPath}>Copier le chemin</ContextMenuItem>
-              <ContextMenuItem onSelect={onCopyRelativePath}>Copier le chemin relatif</ContextMenuItem>
-              
+              <ContextMenuItem 
+                onSelect={onCopyPath}
+                className="hover:bg-gray-500/10"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="i-ph:copy text-gray-500" />
+                  <span className="text-gray-500">Copier le chemin</span>
+                </div>
+              </ContextMenuItem>
+              <ContextMenuItem 
+                onSelect={onCopyRelativePath}
+                className="hover:bg-gray-500/10"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="i-ph:copy-simple text-gray-500" />
+                  <span className="text-gray-500">Copier le chemin relatif</span>
+                </div>
+              </ContextMenuItem>
             </ContextMenu.Group>
-            {/* Add delete option in a new group */}
             <ContextMenu.Group className="p-1 border-t-px border-solid border-bolt-elements-borderColor">
-              <ContextMenuItem onSelect={handleDelete}>
-                <div className="flex items-center gap-2 text-red-500">
-                  <div className="i-ph:trash" />
-                  Supprimer {isFolder ? 'Dossier' : 'Fichier'}
+              <ContextMenuItem 
+                onSelect={handleDelete}
+                className="hover:bg-red-500/10"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="i-ph:trash text-red-500" />
+                  <span className="text-red-500">Supprimer {isFolder ? 'Dossier' : 'Fichier'}</span>
                 </div>
               </ContextMenuItem>
             </ContextMenu.Group>
@@ -507,8 +549,8 @@ function Folder({ folder, collapsed, selected = false, onCopyPath, onCopyRelativ
         })}
         depth={folder.depth}
         iconClasses={classNames({
-          'i-ph:caret-right scale-98': collapsed,
-          'i-ph:caret-down scale-98': !collapsed,
+          'i-ph:folder-simple': !collapsed,
+          'i-ph:folder-simple-dashed': collapsed,
         })}
         onClick={onClick}
       >
@@ -526,6 +568,59 @@ interface FileProps {
   onCopyPath: () => void;
   onCopyRelativePath: () => void;
   onClick: () => void;
+}
+
+function getFileIcon(fileName: string) {
+  const extension = path.extname(fileName).toLowerCase();
+  
+  switch (extension) {
+    case '.ts':
+    case '.tsx':
+      return 'i-ph:file-ts';
+    case '.js':
+    case '.jsx':
+      return 'i-ph:file-js';
+    case '.json':
+      return 'i-ph:file';
+    case '.html':
+      return 'i-ph:file-html';
+    case '.css':
+    case '.scss':
+      return 'i-ph:file-css';
+    case '.md':
+      return 'i-ph:file-md';
+    case '.py':
+      return 'i-ph:file-py';
+    case '.java':
+      return 'i-ph:file-java';
+    case '.php':
+      return 'i-ph:file-php';
+    case '.txt':
+      return 'i-ph:file-text';
+    case '.csv':
+      return 'i-ph:file-csv';
+    case '.xml':
+      return 'i-ph:file-xml';
+    case '.yaml':
+    case '.yml':
+      return 'i-ph:file-yaml';
+    case '.svg':
+      return 'i-ph:file-svg';
+    case '.png':
+    case '.jpg':
+    case '.jpeg':
+    case '.gif':
+      return 'i-ph:file-image';
+    case '.mp3':
+    case '.wav':
+      return 'i-ph:file-audio';
+    case '.mp4':
+    case '.mov':
+      return 'i-ph:file-video';
+    
+    default:
+      return 'i-ph:file';
+  }
 }
 
 function File({
@@ -587,7 +682,7 @@ function File({
           'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent': selected,
         })}
         depth={depth}
-        iconClasses={classNames('i-ph:file-duotone scale-98', {
+        iconClasses={classNames(getFileIcon(name), {
           'group-hover:text-bolt-elements-item-contentActive': !selected,
         })}
         onClick={onClick}
