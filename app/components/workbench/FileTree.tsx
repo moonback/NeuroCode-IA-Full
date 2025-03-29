@@ -385,30 +385,30 @@ function FileContextMenu({
     setIsCreatingFolder(false);
   };
 
-  const handleDelete = async () => {
-    try {
-      if (!confirm(`Are you sure you want to delete ${isFolder ? 'folder' : 'file'}: ${fileName}?`)) {
-        return;
-      }
-
-      let success;
-
-      if (isFolder) {
-        success = await workbenchStore.deleteFolder(fullPath);
-      } else {
-        success = await workbenchStore.deleteFile(fullPath);
-      }
-
-      if (success) {
-        toast.success(`${isFolder ? 'Folder' : 'File'} deleted successfully`);
-      } else {
-        toast.error(`Failed to delete ${isFolder ? 'folder' : 'file'}`);
-      }
-    } catch (error) {
-      toast.error(`Error deleting ${isFolder ? 'folder' : 'file'}`);
-      logger.error(error);
+const handleDelete = async () => {
+  try {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${isFolder ? 'le dossier' : 'le fichier'} : ${fileName} ?`)) {
+      return;
     }
-  };
+
+    let success;
+
+    if (isFolder) {
+      success = await workbenchStore.deleteFolder(fullPath);
+    } else {
+      success = await workbenchStore.deleteFile(fullPath);
+    }
+
+    if (success) {
+      toast.success(`${isFolder ? 'Dossier' : 'Fichier'} supprimé avec succès`);
+    } else {
+      toast.error(`Échec de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
+    }
+  } catch (error) {
+    toast.error(`Erreur lors de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
+    logger.error(error);
+  }
+};
 
   return (
     <>
