@@ -165,21 +165,21 @@ function FileListHeader({
       className="relative flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-bolt-elements-item-backgroundHover/40 rounded-t-md transition-all duration-200 group"
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <span className={classNames(
-          'transition-transform duration-200 ease-in-out',
+          'transition-transform duration-300 ease-in-out',
           isExpanded ? 'rotate-90' : 'rotate-0'
         )}>
-          <span className="i-ph:caret-right text-[13px] text-bolt-elements-textSecondary/80 group-hover:text-bolt-elements-accent transition-all duration-200" />
+          <span className="i-ph:caret-right text-[14px] text-bolt-elements-textSecondary/80 group-hover:text-bolt-elements-accent transition-all duration-300" />
         </span>
-        <h3 className="text-[13px] font-medium text-bolt-elements-textSecondary flex items-center gap-2">
-          <span className="i-ph:files-duotone text-[13px] text-bolt-elements-textSecondary/80 hover:text-bolt-elements-textSecondary transition-colors" />
-          <span className="relative">
+        <h3 className="text-[13px] font-medium text-bolt-elements-textSecondary flex items-center gap-2.5">
+          <span className="i-ph:files-duotone text-[14px] text-bolt-elements-textSecondary/80 hover:text-bolt-elements-textSecondary transition-colors duration-300" />
+          <span className="relative flex items-center">
             Fichiers ciblés
-            <span className="absolute -top-1 -right-2 w-2 h-2 bg-bolt-elements-accent rounded-full animate-ping" />
-            <span className="absolute -top-1 -right-2 w-2 h-2 bg-bolt-elements-accent rounded-full animate-pulse" />
+            <span className="absolute -top-1 -right-2.5 w-2 h-2 bg-bolt-elements-accent rounded-full animate-ping opacity-75" />
+            <span className="absolute -top-1 -right-2.5 w-2 h-2 bg-bolt-elements-accent rounded-full animate-pulse opacity-90" />
           </span>
-          <span className="px-2 py-0.5 bg-green-500/20 text-white rounded-full text-[11px] font-semibold group-hover:bg-bolt-elements-background-depth-4 group-hover:text-bolt-elements-accent transition-all duration-200 border border-bolt-elements-borderColor/20">
+          <span className="px-2.5 py-1 bg-green-500/20 text-white rounded-full text-[11px] font-semibold group-hover:bg-bolt-elements-background-depth-4 group-hover:text-bolt-elements-accent transition-all duration-300 border border-bolt-elements-borderColor/30 hover:border-bolt-elements-borderColor/50 shadow-sm">
             {targetedFiles.length}
           </span>
         </h3>
