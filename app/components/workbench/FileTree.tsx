@@ -425,23 +425,7 @@ function FileContextMenu({
             className="border border-bolt-elements-borderColor rounded-md z-context-menu bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-2 data-[state=open]:animate-in animate-duration-100 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98 w-56"
           >
             <ContextMenu.Group className="p-1 border-b-px border-solid border-bolt-elements-borderColor">
-              <ContextMenuItem onSelect={() => setIsCreatingFile(true)}>
-                <div className="flex items-center gap-2">
-                  <div className="i-ph:file-plus" />
-                  Nouveau fichier
-                </div>
-              </ContextMenuItem>
-              <ContextMenuItem onSelect={() => setIsCreatingFolder(true)}>
-                <div className="flex items-center gap-2">
-                  <div className="i-ph:folder-plus" />
-                  Nouveau dossier
-                </div>
-              </ContextMenuItem>
-            </ContextMenu.Group>
-            <ContextMenu.Group className="p-1">
-              <ContextMenuItem onSelect={onCopyPath}>Copier le chemin</ContextMenuItem>
-              <ContextMenuItem onSelect={onCopyRelativePath}>Copier le chemin relatif</ContextMenuItem>
-              {!isFolder && (
+            {!isFolder && (
                 <ContextMenuItem onSelect={() => {
                   const textarea = document.querySelector('textarea[data-targeted-files]');
                   if (textarea) {
@@ -462,6 +446,23 @@ function FileContextMenu({
                   </div>
                 </ContextMenuItem>
               )}
+              <ContextMenuItem onSelect={() => setIsCreatingFile(true)}>
+                <div className="flex items-center gap-2">
+                  <div className="i-ph:file-plus" />
+                  Nouveau fichier
+                </div>
+              </ContextMenuItem>
+              <ContextMenuItem onSelect={() => setIsCreatingFolder(true)}>
+                <div className="flex items-center gap-2">
+                  <div className="i-ph:folder-plus" />
+                  Nouveau dossier
+                </div>
+              </ContextMenuItem>
+            </ContextMenu.Group>
+            <ContextMenu.Group className="p-1">
+              <ContextMenuItem onSelect={onCopyPath}>Copier le chemin</ContextMenuItem>
+              <ContextMenuItem onSelect={onCopyRelativePath}>Copier le chemin relatif</ContextMenuItem>
+              
             </ContextMenu.Group>
             {/* Add delete option in a new group */}
             <ContextMenu.Group className="p-1 border-t-px border-solid border-bolt-elements-borderColor">
