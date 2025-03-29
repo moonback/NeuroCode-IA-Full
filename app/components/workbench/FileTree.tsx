@@ -549,8 +549,8 @@ function Folder({ folder, collapsed, selected = false, onCopyPath, onCopyRelativ
         })}
         depth={folder.depth}
         iconClasses={classNames({
-          'i-ph:caret-right scale-98': collapsed,
-          'i-ph:caret-down scale-98': !collapsed,
+          'i-ph:folder-simple': !collapsed,
+          'i-ph:folder-simple-dashed': collapsed,
         })}
         onClick={onClick}
       >
@@ -568,6 +568,59 @@ interface FileProps {
   onCopyPath: () => void;
   onCopyRelativePath: () => void;
   onClick: () => void;
+}
+
+function getFileIcon(fileName: string) {
+  const extension = path.extname(fileName).toLowerCase();
+  
+  switch (extension) {
+    case '.ts':
+    case '.tsx':
+      return 'i-ph:file-ts';
+    case '.js':
+    case '.jsx':
+      return 'i-ph:file-js';
+    case '.json':
+      return 'i-ph:file';
+    case '.html':
+      return 'i-ph:file-html';
+    case '.css':
+    case '.scss':
+      return 'i-ph:file-css';
+    case '.md':
+      return 'i-ph:file-md';
+    case '.py':
+      return 'i-ph:file-py';
+    case '.java':
+      return 'i-ph:file-java';
+    case '.php':
+      return 'i-ph:file-php';
+    case '.txt':
+      return 'i-ph:file-text';
+    case '.csv':
+      return 'i-ph:file-csv';
+    case '.xml':
+      return 'i-ph:file-xml';
+    case '.yaml':
+    case '.yml':
+      return 'i-ph:file-yaml';
+    case '.svg':
+      return 'i-ph:file-svg';
+    case '.png':
+    case '.jpg':
+    case '.jpeg':
+    case '.gif':
+      return 'i-ph:file-image';
+    case '.mp3':
+    case '.wav':
+      return 'i-ph:file-audio';
+    case '.mp4':
+    case '.mov':
+      return 'i-ph:file-video';
+    
+    default:
+      return 'i-ph:file';
+  }
 }
 
 function File({
@@ -629,7 +682,7 @@ function File({
           'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent': selected,
         })}
         depth={depth}
-        iconClasses={classNames('i-ph:file-duotone scale-98', {
+        iconClasses={classNames(getFileIcon(name), {
           'group-hover:text-bolt-elements-item-contentActive': !selected,
         })}
         onClick={onClick}
