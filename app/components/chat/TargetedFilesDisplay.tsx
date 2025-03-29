@@ -125,10 +125,11 @@ export function TargetedFilesDisplay({ textareaRef, className }: TargetedFilesDi
 
   return (
     <div className={classNames(
-      'mt-1.5 mx-2 mb-2 rounded-md bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor/30 shadow-lg hover:shadow-xl backdrop-blur-sm transition-all duration-300',
+      'mt-1.5 mx-2 mb-2 rounded-md bg-bolt-elements-background-depth-2/90 border border-bolt-elements-borderColor/30 shadow-lg hover:shadow-xl backdrop-blur-sm transition-all duration-300 relative overflow-hidden group',
       className
     )}>
-      <div className="absolute inset-0 bg-gradient-to-br from-bolt-elements-accent/5 to-transparent rounded-md opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-bolt-elements-accent/10 to-transparent rounded-md opacity-50" />
+      <div className="absolute inset-0 bg-bolt-elements-background-depth-1/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <FileListHeader 
         isExpanded={isExpanded} 
         setIsExpanded={setIsExpanded} 
@@ -136,7 +137,7 @@ export function TargetedFilesDisplay({ textareaRef, className }: TargetedFilesDi
       />
       
       {isExpanded && (
-        <div className="relative">
+        <div className="relative transform-gpu transition-all duration-300 ease-out">
           <FileList 
             targetedFiles={targetedFiles} 
             removeTargetedFile={removeTargetedFile} 
@@ -162,24 +163,24 @@ function FileListHeader({
 }) {
   return (
     <div 
-      className="relative flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-bolt-elements-item-backgroundHover/40 rounded-t-md transition-all duration-200 group"
+      className="relative flex items-center justify-between px-3.5 py-3 cursor-pointer hover:bg-bolt-elements-item-backgroundHover/40 rounded-t-md transition-all duration-200 group"
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <span className={classNames(
-          'transition-transform duration-300 ease-in-out',
+          'transition-transform duration-300 ease-in-out transform-gpu',
           isExpanded ? 'rotate-90' : 'rotate-0'
         )}>
           <span className="i-ph:caret-right text-[14px] text-bolt-elements-textSecondary/80 group-hover:text-bolt-elements-accent transition-all duration-300" />
         </span>
         <h3 className="text-[13px] font-medium text-bolt-elements-textSecondary flex items-center gap-2.5">
-          <span className="i-ph:files-duotone text-[14px] text-bolt-elements-textSecondary/80 hover:text-bolt-elements-textSecondary transition-colors duration-300" />
+          <span className="i-ph:target-duotone text-[15px] text-bolt-elements-accent animate-pulse" />
           <span className="relative flex items-center">
             Fichiers ciblés
             <span className="absolute -top-1 -right-2.5 w-2 h-2 bg-bolt-elements-accent rounded-full animate-ping opacity-75" />
-            <span className="absolute -top-1 -right-2.5 w-2 h-2 bg-bolt-elements-accent rounded-full animate-pulse opacity-90" />
+            <span className="absolute -top-1 -right-2.5 w-2 h-2 bg-bolt-elements-accent rounded-full" />
           </span>
-          <span className="px-2.5 py-1 bg-green-500/20 text-white rounded-full text-[11px] font-semibold group-hover:bg-bolt-elements-background-depth-4 group-hover:text-bolt-elements-accent transition-all duration-300 border border-bolt-elements-borderColor/30 hover:border-bolt-elements-borderColor/50 shadow-sm">
+          <span className="px-2.5 py-1 bg-bolt-elements-accent/20 text-bolt-elements-accent rounded-full text-[11px] font-semibold group-hover:bg-bolt-elements-accent/30 transition-all duration-300 border border-bolt-elements-accent/30 hover:border-bolt-elements-accent/50 shadow-sm">
             {targetedFiles.length}
           </span>
         </h3>
@@ -195,13 +196,13 @@ function FileListHeader({
 // Collapsed file preview component
 function CollapsedFilePreview({ file, count }: { file: string; count: number }) {
   return (
-    <div className="flex items-center gap-2 text-[11px] text-bolt-elements-textSecondary bg-bolt-elements-background-depth-3/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-bolt-elements-borderColor/20 shadow-sm hover:shadow-md transition-all duration-200">
-      <span className={classNames(getFileIcon(file), "flex-shrink-0 text-[12px]")} />
-      <span className="font-mono truncate max-w-[120px]">
+    <div className="flex items-center gap-2 text-[11px] text-bolt-elements-textSecondary bg-bolt-elements-background-depth-3/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-bolt-elements-borderColor/20 shadow-sm hover:shadow-md transition-all duration-200 group/preview">
+      <span className={classNames(getFileIcon(file), "flex-shrink-0 text-[13px] group-hover/preview:scale-110 transition-transform duration-200")} />
+      <span className="font-mono truncate max-w-[120px] group-hover/preview:text-bolt-elements-accent transition-colors duration-200">
         {file.split('/').pop()}
       </span>
       {count > 1 && (
-        <span className="text-bolt-elements-textSecondary/70 bg-bolt-elements-background-depth-4 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
+        <span className="text-bolt-elements-textSecondary/70 bg-bolt-elements-background-depth-4/80 px-2 py-0.5 rounded-full text-[10px] font-medium group-hover/preview:bg-bolt-elements-accent/20 group-hover/preview:text-bolt-elements-accent transition-all duration-200">
           +{count - 1}
         </span>
       )}
@@ -243,18 +244,18 @@ function FileListItem({
   
   return (
     <div 
-      className="flex items-center justify-between group py-2 px-3 rounded-md hover:bg-bolt-elements-item-backgroundHover/80 hover:shadow-sm transition-all duration-200 backdrop-blur-sm border border-transparent hover:border-bolt-elements-borderColor/20"
+      className="flex items-center justify-between group/item py-2 px-3 rounded-md hover:bg-bolt-elements-item-backgroundHover/80 hover:shadow-sm transition-all duration-200 backdrop-blur-sm border border-transparent hover:border-bolt-elements-borderColor/20"
       role="listitem"
       aria-label={`Fichier: ${fileName}`}
     >
-      <div className="flex items-center gap-2 text-[11px] text-bolt-elements-textPrimary overflow-hidden">
+      <div className="flex items-center gap-2.5 text-[11px] text-bolt-elements-textPrimary overflow-hidden">
         <span 
-          className={classNames(getFileIcon(filePath), "flex-shrink-0 text-[13px]")}
+          className={classNames(getFileIcon(filePath), "flex-shrink-0 text-[14px] group-hover/item:scale-110 transition-transform duration-200")}
           aria-hidden="true"
         />
         <div className="flex flex-col min-w-0">
           <span 
-            className="font-mono font-medium truncate"
+            className="font-mono font-medium truncate group-hover/item:text-bolt-elements-accent transition-colors duration-200"
             title={fileName}
             aria-label={`Nom du fichier: ${fileName}`}
           >
@@ -262,7 +263,7 @@ function FileListItem({
           </span>
           {folderPath && (
             <span 
-              className="text-[10px] text-bolt-elements-textSecondary/70 truncate"
+              className="text-[10px] text-bolt-elements-textSecondary/70 truncate group-hover/item:text-bolt-elements-textSecondary/90 transition-colors duration-200"
               title={folderPath}
               aria-label={`Dossier: ${folderPath}`}
             >
@@ -276,7 +277,7 @@ function FileListItem({
           e.stopPropagation();
           onRemove(filePath);
         }}
-        className="opacity-0 group-hover:opacity-100 text-bolt-elements-textSecondary hover:text-white px-2.5 py-1 rounded-md bg-red-500/10 hover:bg-red-500 transition-all duration-200 text-[11px] font-medium flex items-center gap-1.5 backdrop-blur-sm hover:shadow-md"
+        className="opacity-0 group-hover/item:opacity-100 text-bolt-elements-textSecondary hover:text-white px-2.5 py-1 rounded-md bg-red-500/10 hover:bg-red-500 transition-all duration-200 text-[11px] font-medium flex items-center gap-1.5 backdrop-blur-sm hover:shadow-md transform-gpu hover:scale-105 active:scale-95"
         title="Retirer ce fichier"
         aria-label={`Retirer ${filePath} des fichiers ciblés`}
       >
