@@ -298,6 +298,16 @@ export const ChatImpl = memo(
 
     const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
       const messageContent = messageInput || input;
+      const textarea = textareaRef.current;
+      let targetedFiles = [];
+      
+      if (textarea) {
+        try {
+          targetedFiles = JSON.parse(textarea.getAttribute('data-targeted-files') || '[]');
+        } catch (e) {
+          console.error('Error parsing targeted files:', e);
+        }
+      }
 
       if (!messageContent?.trim()) {
         return;
@@ -419,12 +429,13 @@ export const ChatImpl = memo(
 
       if (modifiedFiles !== undefined) {
         const userUpdateArtifact = filesToArtifacts(modifiedFiles, `${Date.now()}`);
+        const targetedFilesPrefix = targetedFiles.length > 0 ? `[FILES: ${targetedFiles.join(', ')}]\n\n` : '';
         append({
           role: 'user',
           content: [
             {
               type: 'text',
-              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userUpdateArtifact}${messageContent}`,
+              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${targetedFilesPrefix}${userUpdateArtifact}${messageContent}`,
             },
             ...imageDataList.map((imageData) => ({
               type: 'image',
@@ -435,12 +446,13 @@ export const ChatImpl = memo(
 
         workbenchStore.resetAllFileModifications();
       } else {
+        const targetedFilesPrefix = targetedFiles.length > 0 ? `[FILES: ${targetedFiles.join(', ')}]\n\n` : '';
         append({
           role: 'user',
           content: [
             {
               type: 'text',
-              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${messageContent}`,
+              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${targetedFilesPrefix}${messageContent}`,
             },
             ...imageDataList.map((imageData) => ({
               type: 'image',
@@ -448,6 +460,11 @@ export const ChatImpl = memo(
             })),
           ] as any,
         });
+      }
+
+      // Reset targeted files after sending the message
+      if (textarea) {
+        textarea.setAttribute('data-targeted-files', '[]');
       }
 
       setInput('');

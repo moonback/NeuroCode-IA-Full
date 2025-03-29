@@ -38,6 +38,7 @@ import type { ActionRunner } from '~/lib/runtime/action-runner';
 import { LOCAL_PROVIDERS } from '~/lib/stores/settings';
 import { SupabaseChatAlert } from '~/components/chat/SupabaseAlert';
 import { SupabaseConnection } from './SupabaseConnection';
+import { TargetedFilesDisplay } from './TargetedFilesDisplay';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -468,6 +469,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     )}
                   >
                     <textarea
+                      id="chat-textarea"
+                      data-targeted-files="[]"
                       ref={textareaRef}
                       className={classNames(
                         'w-full pl-4 pt-4 pr-16 outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent text-sm',
@@ -556,7 +559,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         />
                       )}
                     </ClientOnly>
-                    <div className="flex justify-between items-center text-sm p-4 pt-2">
+                    <TargetedFilesDisplay textareaRef={textareaRef} className="mt-2" />
+                  <div className="flex justify-between items-center text-sm p-4 pt-2">
                       <div className="flex gap-1 items-center">
                         <IconButton title="Upload file" className="transition-all" onClick={() => handleFileUpload()}>
                           <div className="i-ph:paperclip text-xl"></div>
