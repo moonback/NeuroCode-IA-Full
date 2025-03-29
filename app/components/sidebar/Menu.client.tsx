@@ -15,6 +15,7 @@ import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
 import { useSettings } from '~/lib/hooks/useSettings';
+import { PromptLibrary } from '~/lib/common/prompt-library';
 
 const menuVariants = {
   closed: {
@@ -62,7 +63,7 @@ function CurrentDateTime() {
 }
 
 export const Menu = () => {
-  const { contextOptimizationEnabled, enableContextOptimization, autoSelectTemplate, setAutoSelectTemplate } = useSettings();
+  const { contextOptimizationEnabled, enableContextOptimization, autoSelectTemplate, setAutoSelectTemplate, promptId, setPromptId } = useSettings();
   const { duplicateCurrentChat, exportChat } = useChatHistory();
   const menuRef = useRef<HTMLDivElement>(null);
   const [list, setList] = useState<ChatHistoryItem[]>([]);
@@ -305,6 +306,17 @@ export const Menu = () => {
               >
                 <span className="i-ph:sparkle-duotone text-lg" />
               </button>
+              <select
+                value={promptId}
+                onChange={(e) => setPromptId(e.target.value)}
+                className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+              >
+                {PromptLibrary.getList().map((prompt) => (
+                  <option key={prompt.id} value={prompt.id}>
+                    {prompt.label}
+                  </option>
+                ))}
+              </select>
               <ThemeSwitch />
             </div>
           </div>
