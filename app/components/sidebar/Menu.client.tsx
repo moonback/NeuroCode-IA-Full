@@ -14,6 +14,7 @@ import { useSearchFilter } from '~/lib/hooks/useSearchFilter';
 import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
+import { useSettings } from '~/lib/hooks/useSettings';
 
 const menuVariants = {
   closed: {
@@ -61,6 +62,7 @@ function CurrentDateTime() {
 }
 
 export const Menu = () => {
+  const { contextOptimizationEnabled, enableContextOptimization, autoSelectTemplate, setAutoSelectTemplate } = useSettings();
   const { duplicateCurrentChat, exportChat } = useChatHistory();
   const menuRef = useRef<HTMLDivElement>(null);
   const [list, setList] = useState<ChatHistoryItem[]>([]);
@@ -278,7 +280,33 @@ export const Menu = () => {
           </div>
           <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-4 py-3">
             <SettingsButton onClick={handleSettingsClick} />
-            <ThemeSwitch />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setAutoSelectTemplate(!autoSelectTemplate)}
+                className={classNames(
+                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+                  autoSelectTemplate
+                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                )}
+                title={`Sélection automatique des modèles ${autoSelectTemplate ? 'activée' : 'désactivée'}`}
+              >
+                <span className="i-ph:robot-duotone text-lg" />
+              </button>
+              <button
+                onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
+                className={classNames(
+                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+                  contextOptimizationEnabled
+                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                )}
+                title={`Optimisation du contexte ${contextOptimizationEnabled ? 'activée' : 'désactivée'}`}
+              >
+                <span className="i-ph:sparkle-duotone text-lg" />
+              </button>
+              <ThemeSwitch />
+            </div>
           </div>
         </div>
       </motion.div>
