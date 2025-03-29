@@ -126,7 +126,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
     labels: Object.keys(chatsByDate),
     datasets: [
       {
-        label: 'Chats Created',
+        label: 'Chats créés',
         data: Object.values(chatsByDate),
         backgroundColor: barColor,
         borderColor: barBorderColor,
@@ -139,7 +139,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
     labels: Object.keys(messagesByRole),
     datasets: [
       {
-        label: 'Messages by Role',
+        label: 'Messages par rôle',
         data: Object.values(messagesByRole),
         backgroundColor: [
           'rgba(255, 99, 132, 0.7)',
@@ -162,7 +162,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
     labels: apiKeyUsage.map((item) => item.provider),
     datasets: [
       {
-        label: 'API Usage',
+        label: 'Utilisation de l\'API',
         data: apiKeyUsage.map((item) => item.count),
         backgroundColor: [
           'rgba(153, 102, 255, 0.7)',
@@ -196,7 +196,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
       },
       title: {
         display: true,
-        text: 'Chat History',
+        text: 'Historique des discussions',
         color: textColor,
       },
     },
@@ -232,7 +232,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
       },
       title: {
         display: true,
-        text: 'Message Distribution',
+        text: 'Distribution des messages',
         color: textColor,
       },
     },
@@ -242,9 +242,9 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
     return (
       <div className="text-center py-8">
         <div className="i-ph-chart-line-duotone w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Data Available</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucune donnée disponible</h3>
         <p className="text-gray-600 dark:text-gray-400">
-          Start creating chats to see your usage statistics and data visualization.
+        Commencez à créer des chats pour voir vos statistiques d'utilisation et la visualisation des données.
         </p>
       </div>
     );
@@ -254,7 +254,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Total Chats</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Total Conversations</h3>
           <div className="flex items-center">
             <div className="i-ph-chats-duotone w-8 h-8 text-purple-500 mr-3" />
             <span className="text-3xl font-bold text-gray-900 dark:text-white">{chats.length}</span>
@@ -262,7 +262,8 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Total Messages</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nombre total de messages
+          </h3>
           <div className="flex items-center">
             <div className="i-ph-chat-text-duotone w-8 h-8 text-blue-500 mr-3" />
             <span className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -272,7 +273,8 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Avg. Messages/Chat</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Moyenne des messages/discussions
+          </h3>
           <div className="flex items-center">
             <div className="i-ph-chart-bar-duotone w-8 h-8 text-green-500 mr-3" />
             <span className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -284,14 +286,14 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Chat History</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Historique des discussions</h3>
           <div className="h-64">
             <Bar data={chatHistoryData} options={chartOptions} />
           </div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Message Distribution</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Distribution des messages</h3>
           <div className="h-64">
             <Pie data={messageRoleData} options={pieOptions} />
           </div>
@@ -300,7 +302,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
 
       {apiKeyUsage.length > 0 && (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">API Usage by Provider</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Utilisation de l'API par le fournisseur</h3>
           <div className="h-64">
             <Pie data={apiUsageData} options={pieOptions} />
           </div>
