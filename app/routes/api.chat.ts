@@ -70,7 +70,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
   try {
     const totalMessageContent = messages.reduce((acc, message) => acc + message.content, '');
-    logger.debug(`Total message length: ${totalMessageContent.split(' ').length}, words`);
+    logger.debug(`Longueur totale du message : ${totalMessageContent.split(' ').length}, mots`);
 
     let lastChunk: string | undefined = undefined;
 
@@ -86,17 +86,17 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         }
 
         if (filePaths.length > 0 && contextOptimization) {
-          logger.debug('Generating Chat Summary');
+          logger.debug('Génération d\'un résumé de discussion');
           dataStream.writeData({
             type: 'progress',
             label: 'summary',
             status: 'in-progress',
             order: progressCounter++,
-            message: 'Analysing Request',
+            message: 'Analyse de la demande',
           } satisfies ProgressAnnotation);
 
           // Create a summary of the chat
-          console.log(`Messages count: ${messages.length}`);
+          console.log(`Nombre de messages : ${messages.length}`);
 
           summary = await createSummary({
             messages: [...messages],
@@ -107,7 +107,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             contextOptimization,
             onFinish(resp) {
               if (resp.usage) {
-                logger.debug('createSummary token usage', JSON.stringify(resp.usage));
+                logger.debug('utilisation des jetons pour le résumer', JSON.stringify(resp.usage));
                 cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
                 cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
                 cumulativeUsage.totalTokens += resp.usage.totalTokens || 0;
@@ -119,7 +119,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             label: 'summary',
             status: 'complete',
             order: progressCounter++,
-            message: 'Analysis Complete',
+            message: 'Analyse terminée',
           } satisfies ProgressAnnotation);
 
           dataStream.writeMessageAnnotation({
@@ -129,17 +129,17 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           } as ContextAnnotation);
 
           // Update context buffer
-          logger.debug('Updating Context Buffer');
+          logger.debug('Mise à jour du tampon de contexte');
           dataStream.writeData({
             type: 'progress',
             label: 'context',
             status: 'in-progress',
             order: progressCounter++,
-            message: 'Determining Files to Read',
+            message: 'Déterminer les fichiers pertinants',
           } satisfies ProgressAnnotation);
 
           // Select context files
-          console.log(`Messages count: ${messages.length}`);
+          console.log(`Nombre de messages :${messages.length}`);
           filteredFiles = await selectContext({
             messages: [...messages],
             env: context.cloudflare?.env,
@@ -151,7 +151,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             summary,
             onFinish(resp) {
               if (resp.usage) {
-                logger.debug('selectContext token usage', JSON.stringify(resp.usage));
+                logger.debug('Utilisation du jeton selectContext', JSON.stringify(resp.usage));
                 cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
                 cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
                 cumulativeUsage.totalTokens += resp.usage.totalTokens || 0;
@@ -160,7 +160,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           });
 
           if (filteredFiles) {
-            logger.debug(`files in context : ${JSON.stringify(Object.keys(filteredFiles))}`);
+            logger.debug(`fichiers en contexte: ${JSON.stringify(Object.keys(filteredFiles))}`);
           }
 
           dataStream.writeMessageAnnotation({
@@ -213,7 +213,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                 label: 'response',
                 status: 'complete',
                 order: progressCounter++,
-                message: 'Response Generated',
+                message: 'Réponse Généré',
               } satisfies ProgressAnnotation);
               await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -222,12 +222,12 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             }
 
             if (stream.switches >= MAX_RESPONSE_SEGMENTS) {
-              throw Error('Cannot continue message: Maximum segments reached');
+              throw Error('Impossible de continuer le message : nombre maximal de segments atteint');
             }
 
             const switchesLeft = MAX_RESPONSE_SEGMENTS - stream.switches;
 
-            logger.info(`Reached max token limit (${MAX_TOKENS}): Continuing message (${switchesLeft} switches left)`);
+            logger.info(`Limite maximale de jetons atteinte (${MAX_TOKENS}): Message continu (${switchesLeft} bascule vers la gauche)`);
 
             const lastUserMessage = messages.filter((x) => x.role == 'user').slice(-1)[0];
             const { model, provider } = extractPropertiesFromMessage(lastUserMessage);
@@ -274,7 +274,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           label: 'response',
           status: 'in-progress',
           order: progressCounter++,
-          message: 'Generating Response',
+          message: 'Réponse en cour de génération',
         } satisfies ProgressAnnotation);
 
         const result = await streamText({
