@@ -210,97 +210,8 @@ export function DataTab() {
   }, [handleResetChats]);
 
   return (
+    
     <div className="space-y-12">
-      {/* Hidden file inputs */}
-      <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileInputChange} className="hidden" />
-      <input
-        ref={apiKeyFileInputRef}
-        type="file"
-        accept=".json"
-        onChange={handleAPIKeyFileInputChange}
-        className="hidden"
-      />
-      <input
-        ref={chatFileInputRef}
-        type="file"
-        accept=".json"
-        onChange={handleChatFileInputChange}
-        className="hidden"
-      />
-
-      {/* Reset Settings Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showResetInlineConfirm}
-        onClose={() => setShowResetInlineConfirm(false)}
-        title="Reset All Settings?"
-        description="This will reset all your settings to their default values. This action cannot be undone."
-        confirmLabel="Reset Settings"
-        cancelLabel="Cancel"
-        variant="destructive"
-        isLoading={isResetting}
-        onConfirm={handleResetSettings}
-      />
-
-      {/* Delete Chats Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showDeleteInlineConfirm}
-        onClose={() => setShowDeleteInlineConfirm(false)}
-        title="Delete All Chats?"
-        description="This will permanently delete all your chat history. This action cannot be undone."
-        confirmLabel="Delete All"
-        cancelLabel="Cancel"
-        variant="destructive"
-        isLoading={isDeleting}
-        onConfirm={handleResetChatsWithState}
-      />
-
-      {/* Settings Selection Dialog */}
-      <SelectionDialog
-        isOpen={showSettingsSelection}
-        onClose={() => setShowSettingsSelection(false)}
-        title="Select Settings to Export"
-        items={settingsCategories}
-        onConfirm={(selectedIds) => {
-          handleExportSelectedSettings(selectedIds);
-          setShowSettingsSelection(false);
-        }}
-        confirmLabel="Export Selected"
-      />
-
-      {/* Chats Selection Dialog */}
-      <SelectionDialog
-        isOpen={showChatsSelection}
-        onClose={() => setShowChatsSelection(false)}
-        title="Select Chats to Export"
-        items={chatItems}
-        onConfirm={(selectedIds) => {
-          handleExportSelectedChats(selectedIds);
-          setShowChatsSelection(false);
-        }}
-        confirmLabel="Export Selected"
-      />
-{/* Data Visualization */}
-<div>
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Utilisation des données
-        </h2>
-        <Card>
-          <CardContent className="p-5">
-            <DataVisualization chats={availableChats} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Undo Last Operation */}
-      {lastOperation && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg flex items-center gap-3 z-50">
-          <div className="text-sm">
-            <span className="font-medium">Last action:</span> {lastOperation.type}
-          </div>
-          <Button onClick={handleUndo} variant="outline" size="sm" className="border-white/20 text-white">
-          annuler
-          </Button>
-        </div>
-      )}
       {/* Chats Section */}
       <div>
         
@@ -487,6 +398,97 @@ export function DataTab() {
           </div>
         )}
       </div>
+      {/* Hidden file inputs */}
+      <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileInputChange} className="hidden" />
+      <input
+        ref={apiKeyFileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleAPIKeyFileInputChange}
+        className="hidden"
+      />
+      <input
+        ref={chatFileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleChatFileInputChange}
+        className="hidden"
+      />
+
+      {/* Reset Settings Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showResetInlineConfirm}
+        onClose={() => setShowResetInlineConfirm(false)}
+        title="Reset All Settings?"
+        description="This will reset all your settings to their default values. This action cannot be undone."
+        confirmLabel="Reset Settings"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={isResetting}
+        onConfirm={handleResetSettings}
+      />
+
+      {/* Delete Chats Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteInlineConfirm}
+        onClose={() => setShowDeleteInlineConfirm(false)}
+        title="Delete All Chats?"
+        description="This will permanently delete all your chat history. This action cannot be undone."
+        confirmLabel="Delete All"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={isDeleting}
+        onConfirm={handleResetChatsWithState}
+      />
+
+      {/* Settings Selection Dialog */}
+      <SelectionDialog
+        isOpen={showSettingsSelection}
+        onClose={() => setShowSettingsSelection(false)}
+        title="Select Settings to Export"
+        items={settingsCategories}
+        onConfirm={(selectedIds) => {
+          handleExportSelectedSettings(selectedIds);
+          setShowSettingsSelection(false);
+        }}
+        confirmLabel="Export Selected"
+      />
+
+      {/* Chats Selection Dialog */}
+      <SelectionDialog
+        isOpen={showChatsSelection}
+        onClose={() => setShowChatsSelection(false)}
+        title="Select Chats to Export"
+        items={chatItems}
+        onConfirm={(selectedIds) => {
+          handleExportSelectedChats(selectedIds);
+          setShowChatsSelection(false);
+        }}
+        confirmLabel="Export Selected"
+      />
+{/* Data Visualization */}
+<div>
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Utilisation des données
+        </h2>
+        <Card>
+          <CardContent className="p-5">
+            <DataVisualization chats={availableChats} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Undo Last Operation */}
+      {lastOperation && (
+        <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg flex items-center gap-3 z-50">
+          <div className="text-sm">
+            <span className="font-medium">Last action:</span> {lastOperation.type}
+          </div>
+          <Button onClick={handleUndo} variant="outline" size="sm" className="border-white/20 text-white">
+          annuler
+          </Button>
+        </div>
+      )}
+      
 
       {/* Settings Section */}
       <div>
