@@ -118,7 +118,7 @@ export default function ChatAlert({ alert, clearAlert, postMessage }: Props) {
                   <div className="flex justify-end mb-1">
                     <button 
                       onClick={() => copyToClipboard(description)}
-                      className="text-xs text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary flex items-center gap-1 px-2 py-1 rounded-md hover:bg-bolt-elements-background-depth-3 transition-colors"
+                      className="text-xs bg-bolt-elements-background-depth-4 text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary flex items-center gap-1 px-2 py-1 rounded-md hover:bg-bolt-elements-background-depth-3 transition-colors"
                     >
                       <div className={isCopied ? "i-ph:check-circle-duotone" : "i-ph:copy-duotone"}></div>
                       {isCopied ? "Copier" : "Copie"}
@@ -144,7 +144,7 @@ export default function ChatAlert({ alert, clearAlert, postMessage }: Props) {
                       </div>
                       <button 
                         onClick={() => copyToClipboard(content)}
-                        className="text-xs text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary flex items-center gap-1 px-2 py-1 rounded-md hover:bg-bolt-elements-background-depth-3 transition-colors"
+                        className="text-xs bg-bolt-elements-background-depth-4 text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary flex items-center gap-1 px-2 py-1 rounded-md hover:bg-bolt-elements-background-depth-3 transition-colors"
                       >
                         <div className={isCopied ? "i-ph:check-circle-duotone" : "i-ph:copy-duotone"}></div>
                         {isCopied ? "Copier" : "Copie"}
