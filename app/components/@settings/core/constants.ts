@@ -15,6 +15,8 @@ export const TAB_ICONS: Record<TabType, string> = {
   update: 'i-ph:arrow-clockwise-fill',
   'task-manager': 'i-ph:chart-line-fill',
   'tab-management': 'i-ph:squares-four-fill',
+  'custom-prompt': 'i-ph:pencil-fill'
+  
 };
 
 export const TAB_LABELS: Record<TabType, string> = {
@@ -32,6 +34,7 @@ export const TAB_LABELS: Record<TabType, string> = {
   update: 'Mises à jour',
   'task-manager': 'Gestionnaire de tâches',
   'tab-management': 'Gestion des onglets',
+  'custom-prompt': 'Prompt personnalisé'
 };
 
 export const TAB_DESCRIPTIONS: Record<TabType, string> = {
@@ -49,6 +52,7 @@ export const TAB_DESCRIPTIONS: Record<TabType, string> = {
   update: 'Vérifiez les mises à jour et les notes de version',
   'task-manager': 'Surveillez les ressources système et les processus',
   'tab-management': 'Configurez les onglets visibles et leur ordre',
+  'custom-prompt': 'Personnalisez les prompts pour les modèles d\'IA'
 };
 
 export const DEFAULT_TAB_CONFIG = [
@@ -60,6 +64,7 @@ export const DEFAULT_TAB_CONFIG = [
   { id: 'connection', visible: true, window: 'user' as const, order: 4 },
   { id: 'notifications', visible: true, window: 'user' as const, order: 5 },
   { id: 'event-logs', visible: true, window: 'user' as const, order: 6 },
+  { id: 'custom-prompt', visible: true, window: 'user' as const, order: 7 },
 
   // User Window Tabs (In dropdown, initially hidden)
   { id: 'profile', visible: false, window: 'user' as const, order: 7 },

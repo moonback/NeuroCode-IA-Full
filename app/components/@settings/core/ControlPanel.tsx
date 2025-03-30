@@ -38,7 +38,7 @@ import CloudProvidersTab from '~/components/@settings/tabs/providers/cloud/Cloud
 import ServiceStatusTab from '~/components/@settings/tabs/providers/status/ServiceStatusTab';
 import LocalProvidersTab from '~/components/@settings/tabs/providers/local/LocalProvidersTab';
 import TaskManagerTab from '~/components/@settings/tabs/task-manager/TaskManagerTab';
-
+import { CustomPromptSettings } from './CustomPromptSettings';
 interface ControlPanelProps {
   open: boolean;
   onClose: () => void;
@@ -81,6 +81,7 @@ const TAB_DESCRIPTIONS: Record<TabType, string> = {
   update: 'Vérifiez les mises à jour et les notes de version',
   'task-manager': 'Surveillez les ressources système et les processus',
   'tab-management': 'Configurez les onglets visibles et leur ordre',
+  'custom-prompt': 'Configurez les instructions système personnalisées',
 };
 
 // Beta status for experimental features
@@ -335,6 +336,8 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
         return <TaskManagerTab />;
       case 'service-status':
         return <ServiceStatusTab />;
+        case 'custom-prompt':
+        return <CustomPromptSettings open={activeTab === 'custom-prompt'} onClose={handleBack} />;
       default:
         return null;
     }
