@@ -13,6 +13,7 @@ import { getFilePaths } from './select-context';
 export type Messages = Message[];
 
 export interface StreamingOptions extends Omit<Parameters<typeof _streamText>[0], 'model'> {
+  customPrompt?: string;
   supabaseConnection?: {
     isConnected: boolean;
     hasSelectedProject: boolean;
@@ -111,6 +112,7 @@ export async function streamText(props: {
         hasSelectedProject: options?.supabaseConnection?.hasSelectedProject || false,
         credentials: options?.supabaseConnection?.credentials || undefined,
       },
+      customPrompt: options?.customPrompt, // Add this line
     }) ?? getSystemPrompt();
 
   if (files && contextFiles && contextOptimization) {

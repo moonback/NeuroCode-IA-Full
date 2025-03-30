@@ -33,15 +33,17 @@ function parseCookies(cookieHeader: string): Record<string, string> {
     }
   });
 
+  
   return cookies;
 }
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
-  const { messages, files, promptId, contextOptimization, supabase } = await request.json<{
+  const { messages, files, promptId, contextOptimization, customPrompt, supabase } = await request.json<{
     messages: Messages;
     files: any;
     promptId?: string;
     contextOptimization: boolean;
+    customPrompt?: string;
     supabase?: {
       isConnected: boolean;
       hasSelectedProject: boolean;
@@ -51,6 +53,11 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       };
     };
   }>();
+
+  // Add validation and persistence for customPrompt
+  const validatedCustomPrompt = typeof customPrompt === 'string' && customPrompt.trim() !== '' 
+    ? customPrompt.trim() 
+    : undefined;
 
   const cookieHeader = request.headers.get('Cookie');
   const apiKeys = JSON.parse(parseCookies(cookieHeader || '').apiKeys || '{}');
@@ -187,11 +194,23 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           // logger.debug('Code Files Selected');
         }
 
+        // Add validation for customPrompt
+        const validatedCustomPrompt = typeof customPrompt === 'string' ? customPrompt : undefined;
+
         const options: StreamingOptions = {
           supabaseConnection: supabase,
           toolChoice: 'none',
+          customPrompt: validatedCustomPrompt, // Use the validated custom prompt
           onFinish: async ({ text: content, finishReason, usage }) => {
             logger.debug('usage', JSON.stringify(usage));
+
+            // Add custom prompt to usage annotation if it exists
+            if (validatedCustomPrompt) {
+              dataStream.writeMessageAnnotation({
+                type: 'customPrompt',
+                value: validatedCustomPrompt
+              });
+            }
 
             if (usage) {
               cumulativeUsage.completionTokens += usage.completionTokens || 0;

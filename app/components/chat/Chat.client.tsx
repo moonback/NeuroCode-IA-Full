@@ -27,6 +27,8 @@ import { logStore } from '~/lib/stores/logs';
 import { streamingState } from '~/lib/stores/streaming';
 import { filesToArtifacts } from '~/utils/fileUtils';
 import { supabaseConnection } from '~/lib/stores/supabase';
+import { getSystemPrompt } from '~/lib/common/prompts/prompts';
+import { promptStore } from '~/lib/stores/promptStore';
 
 const toastAnimation = cssTransition({
   enter: 'animated fadeInRight',
@@ -145,7 +147,8 @@ export const ChatImpl = memo(
     const [animationScope, animate] = useAnimate();
 
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
-
+    const customPrompt = useStore(promptStore);
+    // logger.debug('Custom prompt loaded:', customPrompt);
     const {
       messages,
       isLoading,
@@ -166,6 +169,7 @@ export const ChatImpl = memo(
         files,
         promptId,
         contextOptimization: contextOptimizationEnabled,
+        customPrompt: customPrompt || undefined,
         supabase: {
           isConnected: supabaseConn.isConnected,
           hasSelectedProject: !!selectedProject,
@@ -188,6 +192,8 @@ export const ChatImpl = memo(
         );
       },
       onFinish: (message, response) => {
+        logger.debug('Chat response finished. Custom prompt used:', customPrompt);
+
         const usage = response.usage;
         setData(undefined);
 
@@ -208,6 +214,10 @@ export const ChatImpl = memo(
       initialMessages,
       initialInput: Cookies.get(PROMPT_COOKIE_KEY) || '',
     });
+    useEffect(() => {
+      logger.debug('Custom prompt changed:', customPrompt);
+    }, [customPrompt]);
+
     useEffect(() => {
       const prompt = searchParams.get('prompt');
 

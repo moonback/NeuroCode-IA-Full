@@ -5,6 +5,7 @@ export interface PromptOptions {
   cwd: string;
   allowedHtmlElements: string[];
   modificationTagName: string;
+  customPrompt?: string;
   supabase?: {
     isConnected: boolean;
     hasSelectedProject: boolean;
@@ -27,7 +28,7 @@ export class PromptLibrary {
     default: {
       label: 'Officiel',
       description: 'This is the battle tested default system Prompt',
-      get: (options) => getSystemPrompt(options.cwd, options.supabase),
+      get: (options) => getSystemPrompt(options.cwd, options.customPrompt,options.supabase),
     },
     optimized: {
       label: 'Optimiser ',
@@ -51,7 +52,9 @@ export class PromptLibrary {
     if (!prompt) {
       throw 'Prompt Now Found';
     }
-
+    if (options.customPrompt) {
+      return options.customPrompt;
+    }
     return this.library[promptId]?.get(options);
   }
 }
