@@ -198,7 +198,7 @@ async function handleButtonAction(action: ButtonAction) {
   const userMessage: Message = {
     role: 'user',
     id: generateId(),
-    content: value.startsWith('proceed') ? 'Yes, setup and start.' : "No, I'll skip for now.",
+    content: value.startsWith('proceed') ? 'Oui, installez et démarrez.' : "Non, je vais sauter pour l'instant.",
     createdAt: new Date(),
   };
 
@@ -271,22 +271,43 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                 transition={{ duration: 0.2, ease: cubicEasingFn }}
               >
                 {!isButtonClicked ? (
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-4 flex gap-3 justify-center">
                     <button
                       onClick={() => handleButtonClick(buttonAction)}
                       className={classNames(
-                        'px-3 py-1.5 rounded-md text-sm font-medium hover:brightness-95',
+                        'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
                         displayValue === 'proceed'
-                          ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent'
-                          : 'bg-bolt-elements-artifacts-background',
+                          ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent hover:brightness-110'
+                          : 'bg-bolt-elements-artifacts-background text-bolt-elements-textPrimary hover:bg-bolt-elements-artifacts-backgroundHover',
+                        'flex items-center gap-2'
                       )}
                     >
-                      {displayValue === 'proceed' ? 'Yes, setup and start' : 'No, skip for now'}
+                      {displayValue === 'proceed' ? (
+                        <>
+                          <div className="i-ph:check-circle-bold"></div>
+                          Oui, installez et démarrez
+                        </>
+                      ) : (
+                        <>
+                          <div className="i-ph:x-circle-bold"></div>
+                          Non, je vais sauter pour l'instant
+                        </>
+                      )}
                     </button>
                   </div>
                 ) : (
-                  <div className="mt-2 text-sm text-bolt-elements-textSecondary italic">
-                    {displayValue === 'proceed' ? 'Setup initiated...' : 'Setup skipped'}
+                  <div className="mt-3 text-sm font-medium flex items-center gap-2 justify-center">
+                    {displayValue === 'proceed' ? (
+                      <>
+                        <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-item-contentAccent"></div>
+                        <span className="text-bolt-elements-item-contentAccent">Setup en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="i-ph:info text-bolt-elements-textSecondary"></div>
+                        <span className="text-bolt-elements-textSecondary">Setup ignoré</span>
+                      </>
+                    )}
                   </div>
                 )}
               </motion.li>
