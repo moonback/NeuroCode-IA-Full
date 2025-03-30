@@ -27,7 +27,7 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       const packageJson = JSON.parse(packageJsonFile.content);
       const scripts = packageJson?.scripts || {};
 
-      // Check for preferred commands in priority order
+      // Vérifie les commandes préférées par ordre de priorité
       const preferredCommands = ['dev', 'start', 'preview'];
       const availableCommand = preferredCommands.find((cmd) => scripts[cmd]);
 
@@ -36,7 +36,7 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
           type: 'Node.js',
           setupCommand: `npm install`,
           startCommand: `npm run ${availableCommand}`,
-          followupMessage: `Found "${availableCommand}" script in package.json. Running "npm run ${availableCommand}" after installation.`,
+          followupMessage: `J'ai trouvé le script "${availableCommand}" dans package.json. Je vais exécuter "npm run ${availableCommand}" après l'installation.`,
         };
       }
 
@@ -44,17 +44,17 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
         type: 'Node.js',
         setupCommand: 'npm install',
         followupMessage:
-          'Would you like me to inspect package.json to determine the available scripts for running this project?',
+          'Voulez-vous que j\'inspecte le package.json pour déterminer les scripts disponibles pour exécuter ce projet ?',
       };
     } catch (error) {
-      console.error('Error parsing package.json:', error);
+      console.error('Erreur lors de l\'analyse du package.json :', error);
       return { type: '', setupCommand: '', followupMessage: '' };
     }
   }
 
   if (hasFile('index.html')) {
     return {
-      type: 'Static',
+      type: 'Statique',
       startCommand: 'npx --yes serve',
       followupMessage: '',
     };
@@ -75,21 +75,21 @@ export function createCommandsMessage(commands: ProjectCommands): Message | null
 const artifactId = `setup-actions-${generateId()}`;
 
    /*
-   * Encode commands into the 'proceed' button's value
-   * Format: "proceed|setupCommand|startCommand"
-   * Use empty strings if commands are undefined
+   * Encode les commandes dans la valeur du bouton 'proceed'
+   * Format : "proceed|setupCommand|startCommand"
+   * Utilise des chaînes vides si les commandes sont indéfinies
    */
    const setupCmd = commands.setupCommand || '';
    const startCmd = commands.startCommand || '';
    const proceedValue = `proceed|${setupCmd}|${startCmd}`;
 
-    // Create the confirmation message with buttons
-    const confirmationContent = `I've found a \"${commands.type}\" project.${commands.followupMessage ? ` ${commands.followupMessage}` : ''}
-    Available commands:
-    ${commands.setupCommand ? `- Setup: \`${commands.setupCommand}\`` : ''}
-    ${commands.startCommand ? `- Start: \`${commands.startCommand}\`` : ''}
-    Would you like to setup and start the application now?
-    <boltArtifact id=\"${artifactId}\" title=\"Project Setup Confirmation\">\n<boltAction type=\"button\" value=\"skip\" artifactId=\"${artifactId}\">No, skip for now</boltAction>\n<boltAction type=\"button\" value=\"${proceedValue}\" artifactId=\"${artifactId}\">Yes, setup and start</boltAction>\n</boltArtifact>`;
+    // Crée le message de confirmation avec les boutons
+    const confirmationContent = `J'ai trouvé un projet \"${commands.type}\".${commands.followupMessage ? ` ${commands.followupMessage}` : ''}
+    Commandes disponibles :
+    ${commands.setupCommand ? `- Configuration : \`${commands.setupCommand}\`` : ''}
+    ${commands.startCommand ? `- Démarrage : \`${commands.startCommand}\`` : ''}
+    Voulez-vous configurer et démarrer l'application maintenant ?
+    <boltArtifact id=\"${artifactId}\" title=\"Confirmation de configuration du projet\">\n<boltAction type=\"button\" value=\"skip\" artifactId=\"${artifactId}\">Non, passer pour l'instant</boltAction>\n<boltAction type=\"button\" value=\"${proceedValue}\" artifactId=\"${artifactId}\">Oui, configurer et démarrer</boltAction>\n</boltArtifact>`;
 
   return {
     role: 'assistant',
