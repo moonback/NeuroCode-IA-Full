@@ -65,28 +65,36 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
 
 export function createCommandsMessage(commands: ProjectCommands): Message | null {
   if (!commands.setupCommand && !commands.startCommand) {
-    return null;
-  }
+ // If no commands detected, still might need to prompt if only setup is found
+ if (commands.setupCommand && commands.followupMessage) {
+  // Let's create a confirmation prompt even if only setup is found
+} else {
+  return null; // No relevant commands or message found
+}  }
 
-  let commandString = '';
+const artifactId = `setup-actions-${generateId()}`;
 
-  if (commands.setupCommand) {
-    commandString += `
-<boltAction type="shell">${commands.setupCommand}</boltAction>`;
-  }
+   /*
+   * Encode commands into the 'proceed' button's value
+   * Format: "proceed|setupCommand|startCommand"
+   * Use empty strings if commands are undefined
+   */
+   const setupCmd = commands.setupCommand || '';
+   const startCmd = commands.startCommand || '';
+   const proceedValue = `proceed|${setupCmd}|${startCmd}`;
 
-  if (commands.startCommand) {
-    commandString += `
-<boltAction type="start">${commands.startCommand}</boltAction>
-`;
-  }
+    // Create the confirmation message with buttons
+    const confirmationContent = `I've found a \"${commands.type}\" project.${commands.followupMessage ? ` ${commands.followupMessage}` : ''}
+    Available commands:
+    ${commands.setupCommand ? `- Setup: \`${commands.setupCommand}\`` : ''}
+    ${commands.startCommand ? `- Start: \`${commands.startCommand}\`` : ''}
+    Would you like to setup and start the application now?
+    <boltArtifact id=\"${artifactId}\" title=\"Project Setup Confirmation\">\n<boltAction type=\"button\" value=\"skip\" artifactId=\"${artifactId}\">No, skip for now</boltAction>\n<boltAction type=\"button\" value=\"${proceedValue}\" artifactId=\"${artifactId}\">Yes, setup and start</boltAction>\n</boltArtifact>`;
 
   return {
     role: 'assistant',
-    content: `
-<boltArtifact id="project-setup" title="Project Setup">
-${commandString}
-</boltArtifact>${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}`,
+    content: confirmationContent,
+
     id: generateId(),
     createdAt: new Date(),
   };

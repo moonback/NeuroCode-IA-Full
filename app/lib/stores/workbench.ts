@@ -18,6 +18,7 @@ import { description } from '~/lib/persistence';
 import Cookies from 'js-cookie';
 import { createSampler } from '~/utils/sampler';
 import type { ActionAlert, SupabaseAlert } from '~/types/actions';
+import type { Message } from 'ai';
 
 const { saveAs } = fileSaver;
 
@@ -40,6 +41,8 @@ export class WorkbenchStore {
   #filesStore = new FilesStore(webcontainer);
   #editorStore = new EditorStore(this.#filesStore);
   #terminalStore = new TerminalStore(webcontainer);
+  pendingMessages = atom<Message[]>([]);
+
 
   #reloadedMessages = new Set<string>();
 
@@ -689,6 +692,34 @@ export class WorkbenchStore {
       console.error('Error pushing to GitHub:', error);
       throw error; // Rethrow the error for further handling
     }
+  }
+  
+  addCommandsMessage(userMessage: any, commandsMessage: any) {
+    try {
+      /*
+       * Instead of trying to use the hook directly, we'll store these messages
+       * to be processed by a React component that properly uses the hook
+       */
+      if (commandsMessage) {
+        const messagesStore = atom<Message[]>([userMessage, commandsMessage]);
+        this.pendingMessages.set(messagesStore.get());
+      } else {
+        const messagesStore = atom<Message[]>([userMessage]);
+        this.pendingMessages.set(messagesStore.get());
+      }
+    } catch (error) {
+      console.error('Error adding command messages:', error);
+    }
+  }
+
+  getArtifact(messageId: string) {
+    return this.#getArtifact(messageId);
+  }
+
+  registerArtifact(messageId: string, artifact: any) {
+    const artifacts = this.artifacts.get();
+    artifacts[messageId] = artifact;
+    this.artifacts.set(artifacts);
   }
 }
 

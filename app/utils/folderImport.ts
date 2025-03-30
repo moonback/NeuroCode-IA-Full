@@ -61,11 +61,7 @@ ${escapeBoltTags(file.content)}
   const messages = [userMessage, filesMessage];
 
   if (commandsMessage) {
-    messages.push({
-      role: 'user',
-      id: generateId(),
-      content: 'Setup the codebase and Start the application',
-    });
+    // Add the commands message after the files message
     messages.push(commandsMessage);
   }
 

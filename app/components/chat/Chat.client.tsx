@@ -27,6 +27,7 @@ import { logStore } from '~/lib/stores/logs';
 import { streamingState } from '~/lib/stores/streaming';
 import { filesToArtifacts } from '~/utils/fileUtils';
 import { supabaseConnection } from '~/lib/stores/supabase';
+import { MessageProcessor } from './MessageProcessor';
 
 const toastAnimation = cssTransition({
   enter: 'animated fadeInRight',
@@ -55,6 +56,8 @@ export function Chat() {
           importChat={importChat}
         />
       )}
+            <MessageProcessor />
+
       <ToastContainer
         closeButton={({ closeToast }) => {
           return (

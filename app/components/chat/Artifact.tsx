@@ -8,6 +8,9 @@ import { workbenchStore } from '~/lib/stores/workbench';
 import { classNames } from '~/utils/classNames';
 import { cubicEasingFn } from '~/utils/easings';
 import { WORK_DIR } from '~/utils/constants';
+import { generateId } from '~/utils/fileUtils';
+import type { ButtonAction } from '~/types/actions';
+import type { Message } from 'ai';
 
 const highlighterOptions = {
   langs: ['shell'],
@@ -164,12 +167,134 @@ function openArtifactInWorkbench(filePath: any) {
   workbenchStore.setSelectedFile(`${WORK_DIR}/${filePath}`);
 }
 
+// Helper function to create the actual run commands message
+function createRunCommandsMessage(setupCmd?: string, startCmd?: string): Message | null {
+  if (!setupCmd && !startCmd) {
+    return null;
+  }
+
+  let commandString = '';
+
+  if (setupCmd) {
+    commandString += `\n<boltAction type="shell">${setupCmd}</boltAction>`;
+  }
+
+  if (startCmd) {
+    commandString += `\n<boltAction type="start">${startCmd}</boltAction>\n`;
+  }
+
+  return {
+    role: 'assistant',
+    content: `\n<boltArtifact id="project-run-${generateId()}" title="Running Project Setup">\n${commandString}\n</boltArtifact>\nSetting up and starting the application...`,
+    id: generateId(),
+    createdAt: new Date(),
+  };
+}
+
+async function handleButtonAction(action: ButtonAction) {
+  const { value, artifactId } = action;
+  console.log('Button clicked:', value, 'for artifact:', artifactId);
+
+  const userMessage: Message = {
+    role: 'user',
+    id: generateId(),
+    content: value.startsWith('proceed') ? 'Yes, setup and start.' : "No, I'll skip for now.",
+    createdAt: new Date(),
+  };
+
+  if (value.startsWith('proceed')) {
+    // Parse commands from the value: "proceed|setupCmd|startCmd"
+    const parts = value.split('|');
+    const setupCmd = parts[1] || undefined; // Get setup command or undefined
+    const startCmd = parts[2] || undefined; // Get start command or undefined
+
+    console.log('Parsed commands:', { setupCmd, startCmd });
+
+    if (setupCmd || startCmd) {
+      const runCommandsMsg = createRunCommandsMessage(setupCmd, startCmd);
+
+      if (runCommandsMsg) {
+        console.log('Proceeding: Adding user message and run commands message.');
+        workbenchStore.addCommandsMessage(userMessage, runCommandsMsg);
+      } else {
+        console.error('Failed to create run commands message even though commands were parsed.');
+        workbenchStore.addCommandsMessage(userMessage, null); // Add only user message
+      }
+    } else {
+      console.warn('Proceed clicked, but no commands embedded in value. Adding only user message.');
+      workbenchStore.addCommandsMessage(userMessage, null);
+    }
+  } else if (value === 'skip') {
+    console.log('Skipping setup. Adding user message.');
+    workbenchStore.addCommandsMessage(userMessage, null);
+  }
+}
+
 const ActionList = memo(({ actions }: ActionListProps) => {
+  const [clickedButtons, setClickedButtons] = useState<Set<string>>(new Set());
+
+  const handleButtonClick = (action: ButtonAction) => {
+    const buttonId = `${action.artifactId}-${action.value}`;
+    console.log('handleButtonClick triggered for:', buttonId, 'Action:', action);
+
+    if (!clickedButtons.has(buttonId)) {
+      setClickedButtons((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(buttonId);
+
+        return newSet;
+      });
+      handleButtonAction(action); // Pass the full action
+    } else {
+      console.log('Button already clicked:', buttonId);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
       <ul className="list-none space-y-2.5">
         {actions.map((action, index) => {
-          const { status, type, content } = action;
+          if (action.type === 'button') {
+            const buttonAction = action as ButtonAction;
+
+            // Use the full value for the ID to differentiate between proceed buttons with different commands
+            const buttonId = `${buttonAction.artifactId}-${buttonAction.value}`;
+            const isButtonClicked = clickedButtons.has(buttonId);
+            const displayValue = buttonAction.value.startsWith('proceed') ? 'proceed' : buttonAction.value; // Use 'proceed' for display
+
+            return (
+              <motion.li
+                key={buttonId} // Use a more unique key
+                variants={actionVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.2, ease: cubicEasingFn }}
+              >
+                {!isButtonClicked ? (
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => handleButtonClick(buttonAction)}
+                      className={classNames(
+                        'px-3 py-1.5 rounded-md text-sm font-medium hover:brightness-95',
+                        displayValue === 'proceed'
+                          ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent'
+                          : 'bg-bolt-elements-artifacts-background',
+                      )}
+                    >
+                      {displayValue === 'proceed' ? 'Yes, setup and start' : 'No, skip for now'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-2 text-sm text-bolt-elements-textSecondary italic">
+                    {displayValue === 'proceed' ? 'Setup initiated...' : 'Setup skipped'}
+                  </div>
+                )}
+              </motion.li>
+            );
+          }
+
+          // Existing rendering for other action types
+          const { status, type, content } = action as any; // Cast to any for existing logic
           const isLast = index === actions.length - 1;
 
           return (
@@ -184,7 +309,8 @@ const ActionList = memo(({ actions }: ActionListProps) => {
               }}
             >
               <div className="flex items-center gap-1.5 text-sm">
-                <div className={classNames('text-lg', getIconColor(action.status))}>
+                <div className={classNames('text-lg', getIconColor(status))}>
+                  {/* Icon rendering based on status */}
                   {status === 'running' ? (
                     <>
                       {type !== 'start' ? (
@@ -201,39 +327,40 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                     <div className="i-ph:x"></div>
                   ) : null}
                 </div>
-                {type === 'file' ? (
-                  <div>
-                    Créer {' '}
-                    <code
-                      className="bg-bolt-elements-artifacts-inlineCode-background text-bolt-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-bolt-elements-item-contentAccent hover:underline cursor-pointer"
-                      onClick={() => openArtifactInWorkbench(action.filePath)}
+
+                {/* Content rendering based on type */}
+                {
+                  type === 'file' ? (
+                    <div>
+                      Create{' '}
+                      <code
+                        className="bg-bolt-elements-artifacts-inlineCode-background text-bolt-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-bolt-elements-item-contentAccent hover:underline cursor-pointer"
+                        onClick={() => openArtifactInWorkbench((action as any).filePath)}
+                      >
+                        {(action as any).filePath}
+                      </code>
+                    </div>
+                  ) : type === 'shell' ? (
+                    <div className="flex items-center w-full min-h-[28px]">
+                      <span className="flex-1">Run command</span>
+                    </div>
+                  ) : type === 'start' ? (
+                    <a
+                      onClick={(e) => {
+                        e.preventDefault();
+                        workbenchStore.currentView.set('preview');
+                      }}
+                      className="flex items-center w-full min-h-[28px]"
                     >
-                      {action.filePath}
-                    </code>
-                  </div>
-                ) : type === 'shell' ? (
-                  <div className="flex items-center w-full min-h-[28px]">
-                    <span className="flex-1">Exécuter la commande</span>
-                  </div>
-                ) : type === 'start' ? (
-                  <a
-                    onClick={(e) => {
-                      e.preventDefault();
-                      workbenchStore.currentView.set('preview');
-                    }}
-                    className="flex items-center w-full min-h-[28px]"
-                  >
-                    <span className="flex-1">Démarrer l'application</span>
-                  </a>
-                ) : null}
+                      <span className="flex-1">Start Application</span>
+                    </a>
+                  ) : null /* Handle other types if necessary */
+                }
               </div>
+
+              {/* ShellCodeBlock rendering */}
               {(type === 'shell' || type === 'start') && (
-                <ShellCodeBlock
-                  classsName={classNames('mt-1', {
-                    'mb-3.5': !isLast,
-                  })}
-                  code={content}
-                />
+                <ShellCodeBlock classsName={classNames('mt-1', { 'mb-3.5': !isLast })} code={content} />
               )}
             </motion.li>
           );
