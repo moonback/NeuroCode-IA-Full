@@ -693,22 +693,22 @@ export function useDataOperations({
 
     setIsResetting(true);
     setProgressPercent(0);
-    toast.loading('Deleting all chats...', { toastId: 'operation-progress' });
+    // toast.loading('Suppression de toutes les discussions...', { toastId: 'operation-progress' });
 
     try {
       // Step 1: Save current chats for potential undo
-      showProgress('Backing up current chats', 25);
+      showProgress('Sauvegarde des discussions en cours', 25);
 
       const currentChats = await ImportExportService.exportAllChats(db);
       setLastOperation({ type: 'reset-chats', data: { previous: currentChats } });
 
       // Step 2: Delete chats
-      showProgress('Deleting chats from database', 50);
+      showProgress('Suppression des chats de la base de données', 50);
       await ImportExportService.deleteAllChats(db);
 
       // Step 3: Complete
-      showProgress('Completing deletion', 100);
-      toast.success('All chats deleted successfully', { toastId: 'operation-progress' });
+      showProgress('Fin de la suppression', 100);
+      toast.success('Toutes les discussions ont été supprimées avec succès', { toastId: 'operation-progress' });
 
       if (onResetChats) {
         onResetChats();
