@@ -429,7 +429,17 @@ export const ChatImpl = memo(
 
       if (modifiedFiles !== undefined) {
         const userUpdateArtifact = filesToArtifacts(modifiedFiles, `${Date.now()}`);
-        const targetedFilesPrefix = targetedFiles.length > 0 ? `[FILES: ${targetedFiles.join(', ')}]\n\n` : '';
+        // Create a prefix that lists targeted files if any exist
+        const targetedFilesPrefix = targetedFiles.length > 0
+  ? `[FILES: ${
+      targetedFiles
+        .map((file: string) => file.trim())
+        .filter(Boolean)  // Enlève les chaînes vides après trim
+        .join(', ')
+    }]\n\n`
+  : '';
+        
+        // Append the message with the targeted files prefix
         append({
           role: 'user',
           content: [
