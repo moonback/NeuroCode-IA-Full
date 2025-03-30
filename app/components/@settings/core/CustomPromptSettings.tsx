@@ -23,7 +23,7 @@ interface ToastConfig {
   description?: string;
 }
 
-const DEFAULT_AUTO_SAVE_DELAY = 1000; // 5 seconds
+// const DEFAULT_AUTO_SAVE_DELAY = 1000; // 5 seconds
 const MAX_CHARACTER_COUNT = 30000;
 const FORBIDDEN_PATTERNS = [
   /<[^>]+>/, // HTML tags
@@ -67,7 +67,7 @@ export const CustomPromptSettings = ({ open, onClose }: CustomPromptSettingsProp
   const [prompt, setPrompt] = useState(customPrompt);
   const [isModified, setIsModified] = useState(false);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
-  const [autoSaveDelay] = useState(DEFAULT_AUTO_SAVE_DELAY);
+  // const [autoSaveDelay] = useState(DEFAULT_AUTO_SAVE_DELAY);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -144,27 +144,27 @@ export const CustomPromptSettings = ({ open, onClose }: CustomPromptSettingsProp
     setPrompt(newValue);
     updateCharacterCount(newValue);
 
-    if (autoSaveEnabled) {
-      clearSaveTimeout();
-      saveTimeoutRef.current = setTimeout(() => {
-        handleSave();
-        // toast('Enregistrement automatique réussi', {
-        //   ...TOAST_CONFIG,
-        //   description: MESSAGES.AUTO_SAVE_ENABLED(autoSaveDelay / 1000)
-        // });
-      }, autoSaveDelay);
-    }
-  }, [autoSaveEnabled, autoSaveDelay, handleSave, validatePrompt, clearSaveTimeout, updateCharacterCount]);
+    // if (autoSaveEnabled) {
+    //   clearSaveTimeout();
+    //   saveTimeoutRef.current = setTimeout(() => {
+    //     handleSave();
+    //     // toast('Enregistrement automatique réussi', {
+    //     //   ...TOAST_CONFIG,
+    //     //   description: MESSAGES.AUTO_SAVE_ENABLED(autoSaveDelay / 1000)
+    //     // });
+    //   }, autoSaveDelay);
+    // }
+  // }, [autoSaveEnabled, autoSaveDelay, handleSave, validatePrompt, clearSaveTimeout, updateCharacterCount]);
 
-  const handleAutoSaveToggle = (checked: boolean) => {
-    setAutoSaveEnabled(checked);
-    if (!checked && saveTimeoutRef.current) {
-      clearSaveTimeout();
-      toast.info(MESSAGES.AUTO_SAVE_DISABLED, TOAST_CONFIG);
-    } else if (checked) {
-      toast(MESSAGES.AUTO_SAVE_ENABLED(autoSaveDelay), TOAST_CONFIG);
-    }
-  };
+  // const handleAutoSaveToggle = (checked: boolean) => {
+  //   setAutoSaveEnabled(checked);
+  //   if (!checked && saveTimeoutRef.current) {
+  //     clearSaveTimeout();
+  //     toast.info(MESSAGES.AUTO_SAVE_DISABLED, TOAST_CONFIG);
+  //   } else if (checked) {
+  //     toast(MESSAGES.AUTO_SAVE_ENABLED(autoSaveDelay), TOAST_CONFIG);
+  //   }
+   }, []);
 
   const handleFocus = () => {
     setIsFocused(true);
