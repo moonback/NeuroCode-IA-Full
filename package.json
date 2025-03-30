@@ -1,5 +1,5 @@
 {
-  "name": "bolt",
+  "name": "neurocode",
   "description": "An AI Agent",
   "private": true,
   "license": "MIT",
@@ -7,8 +7,8 @@
   "type": "module",
   "version": "0.0.7",
   "author": {
-    "name": "bolt.diy team",
-    "email": "maintainers@bolt.diy"
+    "name": "neurocode by MD",
+    "email": "maintainers@neurocode.fr"
   },
   "scripts": {
     "deploy": "npm run build && wrangler pages deploy",
