@@ -1,6 +1,6 @@
 import { getSystemPrompt } from './prompts/prompts';
 import optimized from './prompts/optimized';
-import smallModel from './prompts/small-model';
+import neurocode from './prompts/neurocode';
 
 
 export interface PromptOptions {
@@ -37,9 +37,9 @@ export class PromptLibrary {
       get: (options) => optimized(options),
     },
     smallModel: {
-      label: 'Small Model Prompt',
-      description: 'Compact prompt for small LLMs (7B or less) to help with code generation',
-      get: (options) => smallModel(options),
+      label: 'Neurocode',
+      description: 'a prompt optimized for llms with lower token usage',
+      get: (options) => neurocode(options),
     },
   };
   static getList() {
