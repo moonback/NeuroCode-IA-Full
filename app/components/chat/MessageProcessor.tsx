@@ -21,7 +21,7 @@ export const MessageProcessor = () => {
   useEffect(() => {
     const processPendingMessages = async () => {
       if (pendingMessages && pendingMessages.length > 0) {
-        console.log('Processing pending messages:', pendingMessages);
+        console.log('Traitement des messages en attente :', pendingMessages);
 
         // Check if this is an npm command button click
         let setupCommand = '';
@@ -68,12 +68,12 @@ export const MessageProcessor = () => {
             role: 'assistant',
             id: generateId(),
             content:
-              'Setup has been skipped. You can manually set up and run the project later using the terminal if needed.',
+              'La configuration a été ignorée. Vous pouvez configurer et exécuter le projet manuellement plus tard en utilisant le terminal si nécessaire.',
             createdAt: new Date(),
           };
 
           await storeMessageHistory([skipConfirmationMsg]);
-          toast.info('Setup skipped');
+          toast.info('Configuration ignorée');
 
           // Clear pending messages and return
           workbenchStore.pendingMessages.set([]);
@@ -83,7 +83,7 @@ export const MessageProcessor = () => {
 
         // If we detected setup commands, handle them directly
         if (actionDetected && (setupCommand || startCommand)) {
-          console.log(`Detected setup commands: ${setupCommand || 'none'}, ${startCommand || 'none'}`);
+          console.log(`Commandes de configuration détectées : ${setupCommand || 'aucune'}, ${startCommand || 'aucune'}`);
 
           // Make sure the workbench is visible
           workbenchStore.showWorkbench.set(true);
@@ -95,12 +95,12 @@ export const MessageProcessor = () => {
           try {
             const terminal = workbenchStore.boltTerminal;
             await terminal.ready();
-            console.log('Terminal is ready for commands');
+            console.log('Le terminal est prêt à recevoir des commandes');
 
             // Run the setup command first if present
             if (setupCommand) {
-              console.log(`Executing setup command: ${setupCommand}`);
-              toast.info(`Running: ${setupCommand}`);
+              console.log(`Exécution de la commande de configuration : ${setupCommand}`);
+              toast.info(`Exécution : ${setupCommand}`);
 
               await terminal.executeCommand(`setup-${Date.now()}`, setupCommand, () =>
                 console.log('Setup command aborted'),
@@ -112,8 +112,8 @@ export const MessageProcessor = () => {
 
             // Then run the start command if present
             if (startCommand) {
-              console.log(`Executing start command: ${startCommand}`);
-              toast.info(`Starting dev server: ${startCommand}`);
+              console.log(`Exécution de la commande de démarrage : ${startCommand}`);
+              toast.info(`Démarrage du serveur de développement : ${startCommand}`);
 
               await terminal.executeCommand(`start-${Date.now()}`, startCommand, () =>
                 console.log('Start command aborted'),
@@ -124,25 +124,25 @@ export const MessageProcessor = () => {
             const confirmationMsg: Message = {
               role: 'assistant',
               id: generateId(),
-              content: `✅ Project setup complete!\n\n${setupCommand ? `• Package installation complete (${setupCommand})\n` : ''}${startCommand ? `• Dev server started (${startCommand})\n` : ''}\n\nYou can now continue with your development. The application should be available in the preview panel.`,
+              content: `✅ Configuration du projet terminée !\n\n${setupCommand ? `• Installation des packages terminée (${setupCommand})\n` : ''}${startCommand ? `• Serveur de développement démarré (${startCommand})\n` : ''}\n\nVous pouvez maintenant continuer votre développement. L'application devrait être disponible dans le panneau de prévisualisation.`,
               createdAt: new Date(),
             };
 
             await storeMessageHistory([confirmationMsg]);
-            toast.success('Setup complete');
+            toast.success('Configuration terminée');
           } catch (error) {
-            console.error('Error executing commands:', error);
+            console.error('Erreur lors de l\'exécution des commandes :', error);
 
             // Add an error message
             const errorMsg: Message = {
               role: 'assistant',
               id: generateId(),
-              content: `❌ There was an error setting up the project:\n\n${error}\n\nPlease try running the commands manually in the terminal.`,
+              content: `❌ Une erreur s'est produite lors de la configuration du projet:\n\n${error}\n\nVeuillez essayer d'exécuter les commandes manuellement dans le terminal.`,
               createdAt: new Date(),
             };
 
             await storeMessageHistory([errorMsg]);
-            toast.error('Setup failed');
+            toast.error('Échec de la configuration');
           }
         } else {
           /*
@@ -160,7 +160,7 @@ export const MessageProcessor = () => {
 
             // Wait for terminal to be ready
             await terminal.ready();
-            console.log('Terminal is ready for commands');
+            console.log('Le terminal est prêt à recevoir des commandes');
           } catch (error) {
             console.error('Terminal initialization error:', error);
           }
@@ -170,7 +170,7 @@ export const MessageProcessor = () => {
             if (message.role === 'assistant' && message.content) {
               // Check if this message contains artifact tags
               if (message.content.includes('<boltArtifact') && message.content.includes('<boltAction')) {
-                console.log('Found boltAction in message - processing...');
+                console.log('Action bolt détectée dans le message - traitement en cours...');
 
                 const parser = new StreamingMessageParser({
                   callbacks: {
@@ -232,7 +232,7 @@ export const MessageProcessor = () => {
                 if (artifact && artifact.runner) {
                   // Get all registered actions
                   const actions = artifact.runner.actions.get();
-                  console.log('Actions registered:', Object.keys(actions));
+                  console.log('Actions enregistrées :', Object.keys(actions));
 
                   // Execute each shell or start action in sequence
                   const actionIds = Object.keys(actions).sort((a, b) => parseInt(a) - parseInt(b));
@@ -244,11 +244,11 @@ export const MessageProcessor = () => {
                     const action = actions[actionId];
 
                     if (action.type === 'shell' || action.type === 'start') {
-                      console.log(`Executing action ${actionId}:`, action);
+                      console.log(`Exécution de l\'action ${actionId} :`, action);
 
                       // Ensure the action has content
                       if (!action.content || action.content.trim() === '') {
-                        console.error(`Action ${actionId} has empty content`);
+                        console.error(`L\'action ${actionId} a un contenu vide`);
                         continue;
                       }
 
@@ -272,7 +272,7 @@ export const MessageProcessor = () => {
                         // Add a short delay between commands
                         await new Promise((resolve) => setTimeout(resolve, 800));
                       } catch (error) {
-                        console.error(`Error executing ${action.type} action:`, error);
+                        console.error(`Erreur lors de l\'exécution de l\'action ${action.type} :`, error);
                       }
                     }
                   }
@@ -287,7 +287,7 @@ export const MessageProcessor = () => {
                     };
 
                     await storeMessageHistory([confirmationMsg]);
-                    toast.success('Commands executed');
+                    toast.success('Commandes exécutées');
                   }
                 }
               }
