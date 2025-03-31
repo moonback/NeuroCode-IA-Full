@@ -69,6 +69,8 @@ export const Menu = () => {
   const [list, setList] = useState<ChatHistoryItem[]>([]);
   const [open, setOpen] = useState(false);
   const [dialogContent, setDialogContent] = useState<DialogContent>(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const profile = useStore(profileStore);
 
@@ -83,6 +85,23 @@ export const Menu = () => {
         .then((list) => list.filter((item) => item.urlId && item.description))
         .then(setList)
         .catch((error) => toast.error(error.message));
+    }
+  }, []);
+
+  const deleteItems = useCallback(async (items: ChatHistoryItem[]) => {
+    if (db) {
+      try {
+        await Promise.all(items.map((item) => deleteById(db!, item.id)));
+        loadEntries();
+
+        const currentChatId = chatId.get();
+        if (items.some((item) => item.id === currentChatId)) {
+          window.location.pathname = '/';
+        }
+      } catch (error) {
+        toast.error('Failed to delete conversations');
+        logger.error(error);
+      }
     }
   }, []);
 
@@ -142,6 +161,14 @@ export const Menu = () => {
   }, [isSettingsOpen]);
 
   const handleDeleteClick = (event: React.UIEvent, item: ChatHistoryItem) => {
+    if (isSelectionMode) {
+      event.preventDefault();
+      event.stopPropagation();
+      const isSelected = selectedItems.includes(item.id);
+      setSelectedItems(isSelected ? selectedItems.filter(id => id !== item.id) : [...selectedItems, item.id]);
+      return;
+    }
+
     event.preventDefault();
     setDialogContent({ type: 'delete', item });
   };
@@ -199,13 +226,47 @@ export const Menu = () => {
         <CurrentDateTime />
         <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
           <div className="p-4 space-y-3">
-            <a
-              href="/"
-              className="flex gap-2 items-center bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg px-4 py-2 transition-colors"
-            >
-              <span className="inline-block i-lucide:message-square h-4 w-4" />
-              <span className="text-sm font-medium">Démarrer une nouvelle discussion</span>
-            </a>
+            <div className="flex justify-between items-center">
+              <a
+                href="/"
+                className="flex gap-2 items-center bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg px-4 py-2 transition-colors"
+              >
+                <span className="inline-block i-lucide:message-square h-4 w-4" />
+                <span className="text-sm font-medium">Démarrer une nouvelle discussion</span>
+              </a>
+              <button
+                onClick={() => {
+                  setIsSelectionMode(!isSelectionMode);
+                  if (!isSelectionMode) {
+                    setSelectedItems([]);
+                  }
+                }}
+                className={classNames(
+                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+                  isSelectionMode
+                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                )}
+                title="Mode sélection multiple"
+              >
+                <span className="i-ph:check-square-duotone text-lg" />
+              </button>
+            </div>
+            {isSelectionMode && selectedItems.length > 0 && (
+              <button
+                onClick={() => {
+                  const itemsToDelete = list.filter(item => selectedItems.includes(item.id));
+                  deleteItems(itemsToDelete);
+                  setIsSelectionMode(false);
+                  setSelectedItems([]);
+                }}
+                className="w-full flex gap-2 items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
+              >
+                <span className="inline-block i-ph:trash h-4 w-4" />
+                <span className="text-sm font-medium">Supprimer la sélection ({selectedItems.length})</span>
+              </button>
+            )}
+            
             <div className="relative w-full">
               <div className="absolute left-3 top-1/2 -translate-y-1/2">
                 <span className="i-lucide:search h-4 w-4 text-gray-400 dark:text-gray-500" />
@@ -240,6 +301,12 @@ export const Menu = () => {
                         exportChat={exportChat}
                         onDelete={(event) => handleDeleteClick(event, item)}
                         onDuplicate={() => handleDuplicate(item.id)}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedItems.includes(item.id)}
+                        onSelect={(id) => {
+                          const isSelected = selectedItems.includes(id);
+                          setSelectedItems(isSelected ? selectedItems.filter(itemId => itemId !== id) : [...selectedItems, id]);
+                        }}
                       />
                     ))}
                   </div>

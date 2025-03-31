@@ -11,9 +11,12 @@ interface HistoryItemProps {
   onDelete?: (event: React.UIEvent) => void;
   onDuplicate?: (id: string) => void;
   exportChat: (id?: string) => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
-export function HistoryItem({ item, onDelete, onDuplicate, exportChat }: HistoryItemProps) {
+export function HistoryItem({ item, onDelete, onDuplicate, exportChat, isSelectionMode, isSelected, onSelect }: HistoryItemProps) {
   const { id: urlId } = useParams();
   const isActiveChat = urlId === item.urlId;
 
@@ -27,10 +30,33 @@ export function HistoryItem({ item, onDelete, onDuplicate, exportChat }: History
   return (
     <div
       className={classNames(
-        'group rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50/80 dark:hover:bg-gray-800/30 overflow-hidden flex justify-between items-center px-3 py-2 transition-colors',
-        { 'text-gray-900 dark:text-white bg-gray-50/80 dark:bg-gray-800/30': isActiveChat },
+        'group rounded-md text-sm font-medium transition-all duration-200 ease-in-out',
+        'flex justify-between items-center px-4 py-2.5',
+        'text-gray-700 dark:text-gray-300',
+        'hover:text-gray-900 dark:hover:text-white',
+        'hover:bg-gray-50/90 dark:hover:bg-gray-800/40',
+        'border border-transparent hover:border-gray-200 dark:hover:border-gray-700',
+        'shadow-sm hover:shadow-md',
+        isActiveChat ? 'text-gray-900 dark:text-white bg-gray-50/90 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700' : '',
+        isSelected ? 'bg-purple-50/60 dark:bg-purple-500/20 border-purple-200 dark:border-purple-800' : ''
       )}
     >
+      {isSelectionMode && (
+        <div className="flex items-center mr-3">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect?.(item.id)}
+            className={classNames(
+              'w-4 h-4 rounded transition-all duration-200',
+              'text-purple-600 bg-white dark:bg-gray-800',
+              'border-2 border-gray-300 dark:border-gray-600',
+              'focus:ring-2 focus:ring-purple-500/30 dark:focus:ring-purple-600/30',
+              'hover:border-purple-400 dark:hover:border-purple-500'
+            )}
+          />
+        </div>
+      )}
       {editing ? (
         <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2">
           <input
