@@ -279,7 +279,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white">LLM Intégré</h3>
                       </div>
                       <p className="text-gray-600 dark:text-gray-300">
-                        Générez, corrigez et optimisez votre code avec l'IA directement dans l'éditeur.
+                        Générez, corrigez et optimisez votre code avec l'IA directement dans l'éditeur. Ciblez des fichiers spécifiques pour des modifications précises.
                       </p>
                     </motion.div>
 
@@ -316,6 +316,77 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
                       </div>
                       <p className="text-gray-600 dark:text-gray-300">
                         Importation, versioning et restauration rapide de vos projets avec intégration Git native.
+                      </p>
+                    </motion.div>
+
+                    {/* Déploiement Vercel */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-black dark:bg-gray-900/30">
+                          <div className="w-6 h-6 text-white i-ph:triangle" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Déploiement Vercel</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Déployez vos applications en un clic sur Vercel avec une configuration automatisée.
+                      </p>
+                    </motion.div>
+
+                    {/* Déploiement Netlify */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-teal-100 dark:bg-teal-900/30">
+                          <div className="w-6 h-6 text-teal-600 dark:text-teal-400 i-ph:cloud-arrow-up" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Déploiement Netlify</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Publiez directement sur Netlify avec une intégration continue et des aperçus de déploiement.
+                      </p>
+                    </motion.div>
+
+                    {/* Intégration Supabase */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                          <div className="w-6 h-6 text-emerald-600 dark:text-emerald-400 i-ph:image" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">✅ Ajout d’images aux prompts</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Améliorez la compréhension contextuelle de l'IA en joignant des images à vos prompts de codage.
+                      </p>
+                    </motion.div>
+                    {/* Ajout d’images aux prompts */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                          <div className="w-6 h-6 text-emerald-600 dark:text-emerald-400 i-ph:image" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">✅ Ajout d’images aux prompts</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Améliorez la compréhension contextuelle de l'IA en joignant des images à vos prompts de codage.
                       </p>
                     </motion.div>
                   </div>
@@ -376,3 +447,6 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     </Dialog.Root>
   );
 }
+
+
+
