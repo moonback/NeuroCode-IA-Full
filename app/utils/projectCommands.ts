@@ -84,13 +84,18 @@ const artifactId = `setup-actions-${generateId()}`;
    const proceedValue = `proceed|${setupCmd}|${startCmd}`;
 
     // Crée le message de confirmation avec les boutons
-    const confirmationContent = `J'ai trouvé un projet \"${commands.type}\".${commands.followupMessage ? ` ${commands.followupMessage}` : ''}
-    Commandes disponibles :
-    ${commands.setupCommand ? `- Configuration : \`${commands.setupCommand}\`` : ''}
-    ${commands.startCommand ? `- Démarrage : \`${commands.startCommand}\`` : ''}
-    Voulez-vous configurer et démarrer l'application maintenant ?
-    <boltArtifact id=\"${artifactId}\" title=\"Confirmation de configuration du projet\">\n<boltAction type=\"button\" value=\"skip\" artifactId=\"${artifactId}\">Non, passer pour l'instant</boltAction>\n<boltAction type=\"button\" value=\"${proceedValue}\" artifactId=\"${artifactId}\">Oui, configurer et démarrer</boltAction>\n</boltArtifact>`;
+    const confirmationContent = `📦 Projet ${commands.type} détecté${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
 
+🛠️ Configuration du Projet
+${commands.setupCommand ? `▪️ Installation : \`${commands.setupCommand}\`` : ''}
+${commands.startCommand ? `\n▪️ Lancement : \`${commands.startCommand}\`` : ''}
+
+💫 Souhaitez-vous procéder à la configuration et au lancement de l'application ?
+
+<boltArtifact id="${artifactId}" title="Configuration du Projet">
+<boltAction type="button" value="skip" artifactId="${artifactId}">⏳ Reporter la configuration</boltAction>
+<boltAction type="button" value="${proceedValue}" artifactId="${artifactId}">✨ Configurer et Lancer</boltAction>
+</boltArtifact>`;
   return {
     role: 'assistant',
     content: confirmationContent,
