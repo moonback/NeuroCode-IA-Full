@@ -264,7 +264,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
 
             return (
               <motion.li
-                key={buttonId} // Use a more unique key
+                key={buttonId}
                 variants={actionVariants}
                 initial="hidden"
                 animate="visible"
@@ -272,42 +272,40 @@ const ActionList = memo(({ actions }: ActionListProps) => {
               >
                 {!isButtonClicked ? (
                   <div className="mt-4 flex gap-3 justify-center">
-                    <button
-                      onClick={() => handleButtonClick(buttonAction)}
-                      className={classNames(
-                        'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
-                        displayValue === 'proceed'
-                          ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent hover:brightness-110'
-                          : 'bg-bolt-elements-artifacts-background text-bolt-elements-textPrimary hover:bg-bolt-elements-artifacts-backgroundHover',
-                        'flex items-center gap-2'
-                      )}
-                    >
-                      {displayValue === 'proceed' ? (
-                        <>
-                          <div className="i-ph:check-circle-bold"></div>
-                          Oui, installez et démarrez
-                        </>
-                      ) : (
-                        <>
-                          <div className="i-ph:x-circle-bold"></div>
-                          Non, je vais sauter pour l'instant
-                        </>
-                      )}
-                    </button>
+                    {/* Only show buttons if no installation is in progress */}
+                    {!Array.from(clickedButtons).some(id => id.includes('proceed')) && (
+                      <button
+                        onClick={() => handleButtonClick(buttonAction)}
+                        className={classNames(
+                          'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
+                          displayValue === 'proceed'
+                            ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent hover:brightness-110'
+                            : 'bg-bolt-elements-artifacts-background text-bolt-elements-textPrimary hover:bg-bolt-elements-artifacts-backgroundHover',
+                          'flex items-center gap-2'
+                        )}
+                      >
+                        {displayValue === 'proceed' ? (
+                          <>
+                            <div className="i-ph:check-circle-bold"></div>
+                            Installez et démarrez
+                          </>
+                        ) : (
+                          <>
+                            <div className="i-ph:x-circle-bold"></div>
+                            Ignorer pour l'instant
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="mt-3 text-sm font-medium flex items-center gap-2 justify-center">
                     {displayValue === 'proceed' ? (
                       <>
                         <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-item-contentAccent"></div>
-                        <span className="text-bolt-elements-item-contentAccent">Setup en cours...</span>
+                        <span className="text-bolt-elements-item-contentAccent">Installation en cours...</span>
                       </>
-                    ) : (
-                      <>
-                        <div className="i-ph:info text-bolt-elements-textSecondary"></div>
-                        <span className="text-bolt-elements-textSecondary">Setup ignoré</span>
-                      </>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </motion.li>
