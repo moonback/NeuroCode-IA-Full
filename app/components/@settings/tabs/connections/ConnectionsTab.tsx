@@ -61,7 +61,47 @@ export default function ConnectionsTab() {
 
       {/* Diagnostics Tool - Conditionally rendered */}
       {showDiagnostics && <ConnectionDiagnostics />}
-
+      {/* Note de déploiement Cloudflare - Très visible */}
+      <motion.div
+        className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/30 border border-blue-200 dark:border-blue-800/50 rounded-lg shadow-sm p-4 mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-400">
+          <div className="i-ph:cloud-bold w-5 h-5" />
+          <h3 className="text-base font-medium">Vous utilisez Cloudflare Pages ?</h3>
+        </div>
+        <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+          Si vous rencontrez des problèmes de connexion à GitHub (erreurs 500) sur vos déploiements Cloudflare Pages,
+          vous devez configurer les variables d'environnement dans votre tableau de bord Cloudflare :
+        </p>
+        <div className="bg-white/80 dark:bg-slate-900/60 rounded-md p-3 text-sm border border-blue-200 dark:border-blue-800/50">
+          <ol className="list-decimal list-inside pl-2 text-blue-700 dark:text-blue-300 space-y-2">
+            <li>
+              Allez dans <strong>Tableau de bord Cloudflare Pages → Votre projet → Paramètres → Variables d'environnement</strong>
+            </li>
+            <li>
+              Ajoutez <strong>les deux</strong> secrets suivants (environnement de Production) :
+              <ul className="list-disc list-inside pl-4 mt-1 mb-1">
+                <li>
+                  <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-800/40 rounded">GITHUB_ACCESS_TOKEN</code>{' '}
+                  (appels API côté serveur)
+                </li>
+                <li>
+                  <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-800/40 rounded">VITE_GITHUB_ACCESS_TOKEN</code>{' '}
+                  (accès côté client)
+                </li>
+              </ul>
+            </li>
+            <li>
+              Ajoutez <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-800/40 rounded">VITE_GITHUB_TOKEN_TYPE</code> si
+              vous utilisez des tokens à granularité fine
+            </li>
+            <li>Déployez une nouvelle version après avoir ajouté ces variables</li>
+          </ol>
+        </div>
+      </motion.div>
       {/* Environment Variables Info - Collapsible */}
       <motion.div
         className="bg-bolt-elements-background dark:bg-bolt-elements-background rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor"
