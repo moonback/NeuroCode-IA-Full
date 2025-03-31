@@ -269,6 +269,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                 initial="hidden"
                 animate="visible"
                 transition={{ duration: 0.2, ease: cubicEasingFn }}
+                className="relative"
               >
                 {!isButtonClicked ? (
                   <div className="mt-4 flex gap-3 justify-center">
@@ -279,20 +280,26 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                         className={classNames(
                           'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
                           displayValue === 'proceed'
-                            ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent hover:brightness-110'
-                            : 'bg-bolt-elements-artifacts-background text-bolt-elements-textPrimary hover:bg-bolt-elements-artifacts-backgroundHover',
-                          'flex items-center gap-2'
+                            ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent hover:brightness-110 hover:scale-105'
+                            : 'bg-bolt-elements-artifacts-background text-bolt-elements-textPrimary hover:bg-bolt-elements-artifacts-backgroundHover hover:scale-105',
+                          'flex items-center gap-2 shadow-sm hover:shadow-md'
                         )}
                       >
                         {displayValue === 'proceed' ? (
                           <>
-                            <div className="i-ph:check-circle-bold"></div>
-                            Installez et démarrez
+                            <div className="i-ph:check-circle-bold animate-pulse"></div>
+                            <span className="relative">
+                              Installez et démarrez
+                              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-current transform scale-x-0 transition-transform origin-left group-hover:scale-x-100"></span>
+                            </span>
                           </>
                         ) : (
                           <>
                             <div className="i-ph:x-circle-bold"></div>
-                            Ignorer pour l'instant
+                            <span className="relative">
+                              Ignorer pour l'instant
+                              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-current transform scale-x-0 transition-transform origin-left group-hover:scale-x-100"></span>
+                            </span>
                           </>
                         )}
                       </button>
@@ -302,8 +309,10 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                   <div className="mt-3 text-sm font-medium flex items-center gap-2 justify-center">
                     {displayValue === 'proceed' ? (
                       <>
-                        <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-item-contentAccent"></div>
-                        <span className="text-bolt-elements-item-contentAccent">Installation en cours...</span>
+                        <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-item-contentAccent animate-spin"></div>
+                        <span className="text-bolt-elements-item-contentAccent font-medium">
+                          Installation en cours...
+                        </span>
                       </>
                     ) : null}
                   </div>
