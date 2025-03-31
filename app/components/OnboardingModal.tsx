@@ -147,53 +147,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
                     </p>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                          <div className="w-6 h-6 text-purple-600 dark:text-purple-400 i-ph:keyboard" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">Raccourcis clavier</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Activez les raccourcis pour coder plus rapidement</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={preferences.integrations.includes('shortcuts')}
-                        onCheckedChange={(checked) => {
-                          setPreferences(prev => ({
-                            ...prev,
-                            integrations: checked
-                              ? [...prev.integrations, 'shortcuts']
-                              : prev.integrations.filter(i => i !== 'shortcuts')
-                          }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                          <div className="w-6 h-6 text-blue-600 dark:text-blue-400 i-ph:info" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">Astuces en direct</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Afficher des conseils contextuels pendant le codage</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={preferences.integrations.includes('tips')}
-                        onCheckedChange={(checked) => {
-                          setPreferences(prev => ({
-                            ...prev,
-                            integrations: checked
-                              ? [...prev.integrations, 'tips']
-                              : prev.integrations.filter(i => i !== 'tips')
-                          }));
-                        }}
-                      />
-                    </div>
-                  </div>
+                  
 
                   <button
                     onClick={onClose}
