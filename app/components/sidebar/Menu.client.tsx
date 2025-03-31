@@ -316,7 +316,7 @@ export const Menu = () => {
                 {dialogContent?.type === 'delete' && (
                   <>
                     <div className="p-6 bg-white dark:bg-gray-950">
-                      <DialogTitle className="text-gray-900 dark:text-white">Delete Chat?</DialogTitle>
+                      <DialogTitle className="text-gray-900 dark:text-white">Suprimer la conversation ?</DialogTitle>
                       <DialogDescription className="mt-2 text-gray-600 dark:text-gray-400">
                         <p>
                         Vous êtes sur le point de supprimer {' '}
@@ -326,6 +326,9 @@ export const Menu = () => {
                         </p>
                         <p className="mt-2">Êtes-vous sûr de vouloir supprimer cette discussion ?</p>
                       </DialogDescription>
+                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-500/30">
+                        ⚠️ Cette action est irréversible - toutes les données de la discussion seront définitivement perdues !
+                      </div>
                     </div>
                     <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
                       <DialogButton type="secondary" onClick={closeDialog}>
