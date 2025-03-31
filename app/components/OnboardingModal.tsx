@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Dialog from '@radix-ui/react-dialog';
 import { classNames } from '~/utils/classNames';
@@ -17,7 +17,6 @@ const STEPS = [
   'welcome',
   'features',
   'demo',
-  'project-setup',
   'completion',
 ] as const;
 
@@ -31,8 +30,13 @@ const slideAnimation = {
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [currentStep, setCurrentStep] = useState<Step>('welcome');
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    integrations: [],
+  const [preferences, setPreferences] = useState<UserPreferences>(() => {
+    // Récupérer les préférences sauvegardées si elles existent
+    if (typeof window !== 'undefined') {
+      const savedPrefs = localStorage.getItem('neurocode_preferences');
+      return savedPrefs ? JSON.parse(savedPrefs) : { integrations: [] };
+    }
+    return { integrations: [] };
   });
 
   const handleNext = () => {
@@ -40,9 +44,18 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     if (currentIndex < STEPS.length - 1) {
       setCurrentStep(STEPS[currentIndex + 1]);
     } else {
+      // Sauvegarder les préférences avant de fermer
+      savePreferences();
       onClose();
     }
   };
+  
+  // Effet pour sauvegarder les préférences lorsqu'elles sont modifiées
+  useEffect(() => {
+    if (open) {
+      savePreferences();
+    }
+  }, [preferences, open]);
 
   const handleBack = () => {
     const currentIndex = STEPS.indexOf(currentStep);
@@ -52,7 +65,16 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   };
 
   const handleSkip = () => {
+    // Sauvegarder les préférences avant de fermer
+    savePreferences();
     onClose();
+  };
+  
+  // Fonction pour sauvegarder les préférences utilisateur
+  const savePreferences = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('neurocode_preferences', JSON.stringify(preferences));
+    }
   };
 
   return (
@@ -84,19 +106,24 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
               className="p-6"
             >
               {currentStep === 'welcome' && (
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                <div className="text-center space-y-6">
+                  <h1 className="text-5xl font-extrabold bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 bg-clip-text text-transparent animate-gradient transition-all duration-500 hover:scale-105 hover:shadow-lg">
                     Créez, codez et innovez avec l'IA dès maintenant !
                   </h1>
-                  <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                    NeuroCode est votre assistant de développement intelligent. Découvrez comment il peut optimiser votre workflow.
+                  <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                    NeuroCode est votre assistant de développement intelligent qui révolutionne votre façon de coder. Découvrez une nouvelle ère de productivité et d'innovation.
                   </p>
-                  <button
-                    onClick={handleNext}
-                    className="mt-8 px-6 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors"
-                  >
-                    Commencer
-                  </button>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={handleNext}
+                      className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full font-semibold text-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
+                    >
+                      <span className="flex items-center gap-2">
+                        Commencer
+                        <div className="w-5 h-5 i-ph:arrow-right group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -212,73 +239,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
                 </div>
               )}
 
-              {currentStep === 'project-setup' && (
-                <div className="space-y-8">
-                  <h2 className="text-2xl font-semibold text-center text-gray-900 dark:text-white">
-                    Configurons votre premier projet
-                  </h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Nouveau projet */}
-                    <motion.button
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                      onClick={handleNext}
-                      className="group p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
-                    >
-                      <div className="flex flex-col items-center text-center gap-4">
-                        <div className="p-4 rounded-full bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
-                          <div className="w-8 h-8 text-purple-600 dark:text-purple-400 i-ph:plus-circle" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nouveau projet</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Créez un projet à partir d'un template</p>
-                        </div>
-                      </div>
-                    </motion.button>
-
-                    {/* Import GitHub */}
-                    <motion.button
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      onClick={handleNext}
-                      className="group p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
-                    >
-                      <div className="flex flex-col items-center text-center gap-4">
-                        <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
-                          <div className="w-8 h-8 text-blue-600 dark:text-blue-400 i-ph:github-logo" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Import GitHub</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Importez depuis un dépôt GitHub</p>
-                        </div>
-                      </div>
-                    </motion.button>
-
-                    {/* Projet local */}
-                    <motion.button
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      onClick={handleNext}
-                      className="group p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
-                    >
-                      <div className="flex flex-col items-center text-center gap-4">
-                        <div className="p-4 rounded-full bg-green-100 dark:bg-green-900/30 group-hover:scale-110 transition-transform">
-                          <div className="w-8 h-8 text-green-600 dark:text-green-400 i-ph:folder-simple" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Projet local</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Importez depuis votre ordinateur</p>
-                        </div>
-                      </div>
-                    </motion.button>
-                  </div>
-                </div>
-              )}
-
+              
               {currentStep === 'features' && (
                 <div className="space-y-8">
                   <h2 className="text-2xl font-semibold text-center text-gray-900 dark:text-white">
@@ -396,8 +357,15 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
                   'absolute top-4 right-4',
                   'w-8 h-8 rounded-full flex items-center justify-center',
                   'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
-                  'transition-colors',
+                  'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700',
+                  'transition-all shadow-sm hover:shadow',
+                  'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50',
                 )}
+                aria-label="Fermer"
+                onClick={() => {
+                  savePreferences();
+                  onClose();
+                }}
               >
                 ×
               </Dialog.Close>
