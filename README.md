@@ -3,7 +3,7 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.0-important)]()
 [![License](https://img.shields.io/badge/license-MIT-success)](LICENSE)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fneurocode.app)](https://neurocode.app)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fneurocode.fr)](https://neurocode.fr)
 
 NeuroCode est une plateforme de développement web full-stack de nouvelle génération, propulsée par l'IA, conçue pour accélérer et optimiser le processus de développement. Elle s'exécute entièrement dans le navigateur grâce à [WebContainers](https://webcontainers.io/), offrant une expérience de développement intégrée et performante, sans nécessiter d'installation locale complexe.
 
