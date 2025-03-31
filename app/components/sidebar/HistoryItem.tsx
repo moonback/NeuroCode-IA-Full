@@ -5,27 +5,18 @@ import { type ChatHistoryItem } from '~/lib/persistence';
 import WithTooltip from '~/components/ui/Tooltip';
 import { useEditChatDescription } from '~/lib/hooks';
 import { forwardRef, type ForwardedRef } from 'react';
-import { Checkbox } from '~/components/ui/Checkbox';
 
 interface HistoryItemProps {
   item: ChatHistoryItem;
   onDelete?: (event: React.UIEvent) => void;
   onDuplicate?: (id: string) => void;
   exportChat: (id?: string) => void;
-  selectionMode?: boolean;
+  isSelectionMode?: boolean;
   isSelected?: boolean;
-  onToggleSelection?: (id: string) => void;
+  onSelect?: (id: string) => void;
 }
 
-export function HistoryItem({
-  item,
-  onDelete,
-  onDuplicate,
-  exportChat,
-  selectionMode = false,
-  isSelected = false,
-  onToggleSelection,
-}: HistoryItemProps) {
+export function HistoryItem({ item, onDelete, onDuplicate, exportChat, isSelectionMode, isSelected, onSelect }: HistoryItemProps) {
   const { id: urlId } = useParams();
   const isActiveChat = urlId === item.urlId;
 
@@ -40,20 +31,20 @@ export function HistoryItem({
     <div
       className={classNames(
         'group rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50/80 dark:hover:bg-gray-800/30 overflow-hidden flex justify-between items-center px-3 py-2 transition-colors',
-        { 'text-gray-900 dark:text-white bg-gray-50/80 dark:bg-gray-800/30': isActiveChat },
+        isActiveChat ? 'text-gray-900 dark:text-white bg-gray-50/80 dark:bg-gray-800/30' : '',
+        isSelected ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''
       )}
     >
-      {selectionMode && (
-        <div className="flex items-center mr-2" onClick={(e) => e.preventDefault()}>
-          <Checkbox
-            id={`select-${item.id}`}
+      {isSelectionMode && (
+        <div className="flex items-center mr-3">
+          <input
+            type="checkbox"
             checked={isSelected}
-            onCheckedChange={() => onToggleSelection?.(item.id)}
-            className="h-4 w-4"
+            onChange={() => onSelect?.(item.id)}
+            className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
       )}
-
       {editing ? (
         <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2">
           <input
@@ -78,10 +69,11 @@ export function HistoryItem({
           </WithTooltip>
           <div
             className={classNames(
-              'absolute right-0 top-0 bottom-0 flex items-center bg-transparent px-2 transition-colors',
+              'absolute right-0 top-0 bottom-0 flex items-center bg-white dark:bg-gray-950 group-hover:bg-gray-50/80 dark:group-hover:bg-gray-800/30 px-2',
+              { 'bg-gray-50/80 dark:bg-gray-900/10': isActiveChat },
             )}
           >
-            <div className="flex items-center gap-2.5 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-2.5 text-gray-400 dark:text-gray-500 opacity-0  group-hover:opacity-100 transition-opacity">
               <ChatActionButton
                 toolTipContent="Exporter"
                 icon="i-ph:download-simple h-4 w-4"
@@ -109,7 +101,7 @@ export function HistoryItem({
                 <ChatActionButton
                   toolTipContent="Supprimer"
                   icon="i-ph:trash h-4 w-4"
-                  className="hover:text-red-500 dark:hover:text-red-400"
+                  className="hover:text-red-500"
                   onClick={(event) => {
                     event.preventDefault();
                     onDelete?.(event);
