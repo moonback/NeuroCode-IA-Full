@@ -183,12 +183,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
                     >
                       Je teste moi-même
                     </button>
-                    <button
-                      onClick={handleSkip}
-                      className="px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-full font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      Passer
-                    </button>
+                    
                   </div>
                 </div>
               )}
