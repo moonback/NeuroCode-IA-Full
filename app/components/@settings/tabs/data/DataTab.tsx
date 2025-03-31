@@ -141,6 +141,29 @@ export function DataTab() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isImportingKeys, setIsImportingKeys] = useState(false);
 
+
+// Function to delete all cookies and reset application state
+const handleDeleteAllCookiesAndReset = () => {
+  if (window.confirm('Êtes-vous sûr de vouloir supprimer tous les cookies et tout réinitialiser ?')) {
+    // Clear cookies more reliably
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+    }
+
+    // Clear localStorage and sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Force reload after short delay
+    setTimeout(() => {
+      window.location.href = '/';  // Full page reload from server
+    }, 500);
+  }
+};
   // Load available chats
   useEffect(() => {
     if (db) {
@@ -353,6 +376,41 @@ export function DataTab() {
                       </>
                     ) : (
                       'Importer des discussions'
+                    )}
+                  </Button>
+                </motion.div>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center mb-2">
+                  <motion.div className="text-red-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <div className="i-ph-cookie-duotone w-5 h-5" />
+                  </motion.div>
+                  <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
+                    Supprimer les cookies et réinitialiser
+                  </CardTitle>
+                </div>
+                <CardDescription>Supprime tous les cookies et réinitialise l'application</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                  <Button
+                    onClick={handleDeleteAllCookiesAndReset}
+                    variant="outline"
+                    size="sm"
+                    className={classNames(
+                      'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    )}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                        Suppression en cours...
+                      </>
+                    ) : (
+                      'Supprimer et réinitialiser'
                     )}
                   </Button>
                 </motion.div>

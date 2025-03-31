@@ -13,7 +13,7 @@ import { ClientOnly } from 'remix-utils/client-only';
 import reactToastifyStyles from 'react-toastify/dist/ReactToastify.css?url';
 import globalStyles from './styles/index.scss?url';
 import xtermStyles from '@xterm/xterm/css/xterm.css?url';
-
+import { OnboardingModal } from '~/components/OnboardingModal';
 import 'virtual:uno.css';
 
 export const links: LinksFunction = () => [
@@ -82,22 +82,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 import { logStore } from './lib/stores/logs';
+import { markOnboardingAsShown, onboardingStore } from './lib/stores/onboarding';
 
 export default function App() {
   const theme = useStore(themeStore);
+  const hasShownOnboarding = useStore(onboardingStore);
 
   useEffect(() => {
+    const storedOnboardingState = localStorage.getItem('bolt_onboarding_shown');
+    if (storedOnboardingState === 'true' && !hasShownOnboarding) {
+      markOnboardingAsShown();
+    }
+    
     logStore.logSystem('Application initialized', {
       theme,
       platform: navigator.platform,
       userAgent: navigator.userAgent,
       timestamp: new Date().toISOString(),
     });
-  }, []);
+  }, [hasShownOnboarding]);
 
   return (
     <Layout>
       <Outlet />
+      <OnboardingModal open={!hasShownOnboarding} onClose={() => markOnboardingAsShown()} />
     </Layout>
   );
 }
