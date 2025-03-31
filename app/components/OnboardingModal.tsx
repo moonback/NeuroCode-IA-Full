@@ -1,355 +1,410 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
-import Cookies from 'js-cookie';
-import { useStore } from '@nanostores/react';
-import { profileStore, updateProfile } from '~/lib/stores/profile';
+import * as Dialog from '@radix-ui/react-dialog';
+import { classNames } from '~/utils/classNames';
+import { Switch } from '@radix-ui/react-switch';
 
-// Amélioration de la validation du username
-const isValidUsername = (username: string): { valid: boolean; message?: string } => {
-  if (username.length < 3) return { valid: false, message: "Le nom d'utilisateur doit contenir au moins 3 caractères." };
-  if (username.length > 20) return { valid: false, message: "Le nom d'utilisateur ne peut pas dépasser 20 caractères." };
-  if (!/^[a-zA-Z0-9_.-]*$/.test(username)) {
-    return { valid: false, message: "Seuls les caractères alphanumériques, '_', '.' et '-' sont autorisés." };
-  }
-  return { valid: true };
+interface OnboardingModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+interface UserPreferences {
+  integrations: string[];
+}
+
+const STEPS = [
+  'welcome',
+  'features',
+  'demo',
+  'project-setup',
+  'completion',
+] as const;
+
+type Step = typeof STEPS[number];
+
+const slideAnimation = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
 };
 
-export function OnboardingModal() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState<string | null>(null); // Add username error state
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const profile = useStore(profileStore);
-  const [isLoading, setIsLoading] = useState(false); // loading state
-  const [currentStep, setCurrentStep] = useState<'welcome' | 'profile'>('welcome');
+export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
+  const [currentStep, setCurrentStep] = useState<Step>('welcome');
+  const [preferences, setPreferences] = useState<UserPreferences>({
+    integrations: [],
+  });
 
-  useEffect(() => {
-    // Check for existing cookies
-    const apiKeys = Cookies.get('apiKeys');
-    const userSettings = Cookies.get('userSettings');
-    const onboardingSeen = Cookies.get('onboardingSeen');
-
-    // Only show the modal if *none* of the relevant cookies are present
-    if (!apiKeys && !userSettings && !onboardingSeen) {
-      setIsOpen(true);
-    }
-  }, []);
-
-  // Ajout d'un délai pour la validation du username
-  const validateUsername = (username: string) => {
-    const validation = isValidUsername(username);
-    setUsernameError(validation.message || null);
-    return validation.valid;
-  };
-
-  // Amélioration de la gestion de la fermeture
-  const handleClose = () => {
-    if (currentStep === 'profile' && !profile.username) {
-      toast.error("Le nom d'utilisateur est requis pour continuer.", {
-        autoClose: 3000,
-        pauseOnHover: false
-      });
-      return;
-    }
-    
-    if (!Cookies.get('onboardingSeen')) {
-      Cookies.set('onboardingSeen', 'true', { 
-        expires: 365,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production'
-      });
-    }
-    
-    setIsOpen(false);
-  };
-
-  // Amélioration de la gestion du profil
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const username = (formData.get('username') as string).trim();
-    const bio = (formData.get('bio') as string).trim();
-
-    if (!validateUsername(username)) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      await updateProfile({
-        username,
-        bio,
-        avatar: avatarPreview || profile.avatar,
-      });
-      
-      toast.success("Profil mis à jour avec succès!", {
-        autoClose: 2000,
-        pauseOnHover: false
-      });
-      
-      setIsEditingProfile(false);
-    } catch (error: any) {
-      console.error("Erreur lors de la mise à jour du profil:", error);
-      toast.error(`Erreur : ${error.message || "Veuillez réessayer."}`, {
-        autoClose: 4000
-      });
-    } finally {
-      setIsLoading(false);
+  const handleNext = () => {
+    const currentIndex = STEPS.indexOf(currentStep);
+    if (currentIndex < STEPS.length - 1) {
+      setCurrentStep(STEPS[currentIndex + 1]);
+    } else {
+      onClose();
     }
   };
 
-  // Amélioration de la gestion de l'avatar
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Vérification du type de fichier
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Format d'image non supporté. Veuillez utiliser JPEG, PNG, GIF ou WEBP.");
-      return;
-    }
-
-    // Vérification de la taille du fichier
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      toast.error("L'image est trop grande. Veuillez choisir une image de moins de 5 Mo.");
-      return;
-    }
-
-    // Lecture du fichier
-    const reader = new FileReader();
-    reader.onloadstart = () => setIsLoading(true);
-    reader.onload = () => {
-      setAvatarPreview(reader.result as string);
-      setIsLoading(false);
-    };
-    reader.onerror = () => {
-      toast.error("Erreur lors de la lecture de l'image. Veuillez réessayer.");
-      setIsLoading(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleStartWithoutProfile = () => {
-    setIsOpen(false);
-     // Don't set 'onboardingSeen' if we're just editing, only when it's first shown.
-     if(!Cookies.get('onboardingSeen')){
-      Cookies.set('onboardingSeen', 'true', { expires: 365 });
+  const handleBack = () => {
+    const currentIndex = STEPS.indexOf(currentStep);
+    if (currentIndex > 0) {
+      setCurrentStep(STEPS[currentIndex - 1]);
     }
   };
 
-  // Added a check for profile.username to auto-switch to editing mode *if* the user
-  // somehow got to this modal with no username.
-  useEffect(() => {
-    if (isOpen && !profile.username) {
-      setCurrentStep('welcome');
-    }
-  }, [isOpen, profile.username]);
-
-  // Nouvelle fonction pour passer à l'étape du profil
-  const handleStartProfileSetup = () => {
-    setCurrentStep('profile');
+  const handleSkip = () => {
+    onClose();
   };
-
-  if (!isOpen) return null;
-
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        role="dialog"
-        aria-labelledby="onboarding-modal-title"
-        className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center z-[100] p-4"
-      >
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 20, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          role="document"
-          className="bg-bolt-elements-background-depth-1 rounded-2xl p-8 w-full max-w-2xl border-2 border-bolt-elements-border/20 shadow-2xl relative backdrop-blur-[2px]"
-        >
-          <div className="flex items-center justify-between mb-8">
-            <h2 id="onboarding-modal-title" className="text-2xl font-bold text-bolt-elements-textPrimary flex items-center gap-3">
-              <div className="i-ph:sparkle w-6 h-6 text-green-400 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text" />
-              <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                {currentStep === 'profile' ? 'Personnalisez votre profil' : 'Bienvenue sur NeuroCode !'}
-              </span>
-            </h2>
-            <button
-              onClick={handleStartWithoutProfile}
-              className="p-2 rounded-xl hover:bg-bolt-elements-background-depth-2 transition-all duration-200 text-bolt-elements-textSecondary hover:text-red-400 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500/50"
-              aria-label="Fermer la modale"
-            >
-              <div className="i-ph:x-bold w-6 h-6" />
-            </button>
-          </div>
-
-          {currentStep === 'welcome' ? (
-            <div className="space-y-8">
-              <div className="text-bolt-elements-textSecondary">
-                <p className="mb-6 text-lg leading-relaxed">
-                  NeuroCode est la plateforme de développement full-stack nouvelle génération, 
-                  combinant intelligence artificielle et outils modernes pour booster votre productivité.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { 
-                      icon: 'ph:rocket-launch', 
-                      title: 'Développement accéléré',
-                      text: 'Générez du code intelligent en quelques secondes' 
-                    },
-                    { 
-                      icon: 'ph:brain', 
-                      title: 'IA intégrée',
-                      text: 'Assistance intelligente pour chaque étape du développement' 
-                    },
-                    { 
-                      icon: 'ph:stack', 
-                      title: 'Architecture modulaire',
-                      text: 'Créez des applications avec des composants réutilisables' 
-                    },
-                    { 
-                      icon: 'ph:shield-check', 
-                      title: 'Sécurité renforcée',
-                      text: 'Protocoles de sécurité avancés pour vos projets' 
-                    },
-                  ].map((item, index) => (
-                    <div key={index} className="p-4 bg-bolt-elements-background-depth-2 rounded-xl border-2 border-bolt-elements-border/20 hover:border-green-400/30 transition-all duration-200">
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`i-${item.icon} w-6 h-6 text-green-400`} />
-                          <h3 className="font-semibold text-bolt-elements-textPrimary">{item.title}</h3>
-                        </div>
-                        <p className="text-sm">{item.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-center gap-4 mt-8">
-                <button
-                  onClick={handleStartProfileSetup}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-200 font-semibold flex items-center gap-2"
-                >
-                  <div className="i-ph:user-circle-bold w-5 h-5" />
-                  Configurer mon profil
-                </button>
-                <button
-                  onClick={handleClose}
-                  className="px-6 py-3 rounded-xl text-white bg-bolt-elements-background-depth-2 border-2 border-bolt-elements-border/20 hover:border-green-400/30 hover:bg-bolt-elements-background-depth-3 transition-all duration-200 font-medium"
-                >
-                  Explorer sans profil
-                </button>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleProfileSubmit} className="space-y-8">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="relative group">
-                  <div className="w-28 h-28 rounded-full bg-bolt-elements-background-depth-2 border-2 border-bolt-elements-border/20 overflow-hidden ring-4 ring-bolt-elements-background-depth-3/30 hover:ring-green-400/20 transition-all duration-300">
-                    {avatarPreview || profile.avatar ? (
-                      <img
-                        src={avatarPreview || profile.avatar}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="i-ph:user-circle w-full h-full text-bolt-elements-textSecondary" />
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 p-2 bg-bolt-elements-background-depth-3 rounded-full border-2 border-bolt-elements-border/20 hover:bg-bolt-elements-background-depth-4 hover:border-green-400/30 transition-all duration-200 shadow-md"
-                    aria-label="Changer la photo de profil"
-                  >
-                    <div className="i-ph:camera-bold w-5 h-5 text-bolt-elements-textPrimary" />
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                  />
-                </div>
-                <p className="text-sm text-bolt-elements-textSecondary text-center">
-                  Cliquez sur l'icône pour changer votre photo de profil (Max 5MB, JPEG, PNG, GIF, WEBP)
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label htmlFor="username" className="block text-sm font-semibold text-white">
-                    Nom d'utilisateur
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    id="username"
-                    name="username"
-                    defaultValue={profile.username}
-                    required
-                    className={`w-full text-white px-4 py-3 rounded-xl bg-bolt-elements-background-depth-2 border-2 ${
-                      usernameError 
-                        ? 'border-red-500/80 focus:ring-red-500/30' 
-                        : 'border-bolt-elements-border/20 focus:ring-green-500/30'
-                    } focus:outline-none focus:ring-4 transition-all duration-200`}
-                  />
-                  {usernameError && <p className="text-red-500 text-sm mt-1">{usernameError}</p>}
-                </div>
-                <div className="space-y-3">
-                  <label htmlFor="bio" className="block text-sm font-semibold text-white">
-                    Bio
-                  </label>
-                  <textarea
-                    id="bio"
-                    name="bio"
-                    defaultValue={profile.bio}
-                    className="w-full text-white px-4 py-3 rounded-xl bg-bolt-elements-background-depth-2 border-2 border-bolt-elements-border/20 focus:outline-none focus:ring-2 focus:ring-green-500/30"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-6">
-                <button
-                  type="button"
-                  onClick={handleStartWithoutProfile}
-                  className="px-6 py-3 rounded-xl bg-transparent border-2 border-bolt-elements-border/20 text-bolt-elements-textSecondary hover:bg-bolt-elements-background-depth-2 hover:border-green-400/30 transition-all duration-200 font-medium"
-                >
-                  Commencer sans profil
-                </button>
-                <button
-                  type="submit"
-                  onClick={handleClose}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <div className="i-svg-spinners:3-dots-scale w-5 h-5 mr-2" />
-                      <span>Enregistrement...</span>
-                    </div>
-                  ) : (
-                    "Enregistrer et continuer"
-                  )}
-                </button>
-              </div>
-            </form>
+    <Dialog.Root open={open} onOpenChange={onClose}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          className={classNames(
+            'fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]',
+            'data-[state=open]:animate-overlay-show',
           )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+        />
+        <Dialog.Content
+          className={classNames(
+            'fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-[9999]',
+            'w-[90vw] max-w-[800px] max-h-[85vh] overflow-y-auto',
+            'bg-white dark:bg-gray-900 rounded-xl shadow-xl',
+            'focus:outline-none',
+            'data-[state=open]:animate-content-show',
+          )}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={slideAnimation}
+              transition={{ duration: 0.2 }}
+              className="p-6"
+            >
+              {currentStep === 'welcome' && (
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                    Créez, codez et innovez avec l'IA dès maintenant !
+                  </h1>
+                  <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                    NeuroCode est votre assistant de développement intelligent. Découvrez comment il peut optimiser votre workflow.
+                  </p>
+                  <button
+                    onClick={handleNext}
+                    className="mt-8 px-6 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    Commencer
+                  </button>
+                </div>
+              )}
+
+              {currentStep === 'completion' && (
+                <div className="space-y-8">
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center"
+                    >
+                      <div className="w-12 h-12 text-white i-ph:check-bold" />
+                    </motion.div>
+                    
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+                      Bienvenue dans NeuroCode
+                    </h2>
+                    <p className="text-lg text-gray-600 dark:text-gray-300">
+                      L'IA est prête à vous accompagner dans votre code !
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                          <div className="w-6 h-6 text-purple-600 dark:text-purple-400 i-ph:keyboard" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white">Raccourcis clavier</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Activez les raccourcis pour coder plus rapidement</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={preferences.integrations.includes('shortcuts')}
+                        onCheckedChange={(checked) => {
+                          setPreferences(prev => ({
+                            ...prev,
+                            integrations: checked
+                              ? [...prev.integrations, 'shortcuts']
+                              : prev.integrations.filter(i => i !== 'shortcuts')
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                          <div className="w-6 h-6 text-blue-600 dark:text-blue-400 i-ph:info" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white">Astuces en direct</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Afficher des conseils contextuels pendant le codage</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={preferences.integrations.includes('tips')}
+                        onCheckedChange={(checked) => {
+                          setPreferences(prev => ({
+                            ...prev,
+                            integrations: checked
+                              ? [...prev.integrations, 'tips']
+                              : prev.integrations.filter(i => i !== 'tips')
+                          }));
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={onClose}
+                    className="w-full px-6 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    Accéder à l'éditeur
+                  </button>
+                </div>
+              )}
+
+              {currentStep === 'demo' && (
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-semibold text-center text-gray-900 dark:text-white">
+                    Voyez NeuroCode en action
+                  </h2>
+                  
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <video
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    >
+                      <source src="/demo.mp4" type="video/mp4" />
+                    </video>
+                  </div>
+
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={handleNext}
+                      className="px-6 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors"
+                    >
+                      Je teste moi-même
+                    </button>
+                    <button
+                      onClick={handleSkip}
+                      className="px-6 py-3 border border-gray-200 dark:border-gray-700 rounded-full font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      Passer
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 'project-setup' && (
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-semibold text-center text-gray-900 dark:text-white">
+                    Configurons votre premier projet
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Nouveau projet */}
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      onClick={handleNext}
+                      className="group p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+                    >
+                      <div className="flex flex-col items-center text-center gap-4">
+                        <div className="p-4 rounded-full bg-purple-100 dark:bg-purple-900/30 group-hover:scale-110 transition-transform">
+                          <div className="w-8 h-8 text-purple-600 dark:text-purple-400 i-ph:plus-circle" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nouveau projet</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Créez un projet à partir d'un template</p>
+                        </div>
+                      </div>
+                    </motion.button>
+
+                    {/* Import GitHub */}
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      onClick={handleNext}
+                      className="group p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+                    >
+                      <div className="flex flex-col items-center text-center gap-4">
+                        <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900/30 group-hover:scale-110 transition-transform">
+                          <div className="w-8 h-8 text-blue-600 dark:text-blue-400 i-ph:github-logo" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Import GitHub</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Importez depuis un dépôt GitHub</p>
+                        </div>
+                      </div>
+                    </motion.button>
+
+                    {/* Projet local */}
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      onClick={handleNext}
+                      className="group p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+                    >
+                      <div className="flex flex-col items-center text-center gap-4">
+                        <div className="p-4 rounded-full bg-green-100 dark:bg-green-900/30 group-hover:scale-110 transition-transform">
+                          <div className="w-8 h-8 text-green-600 dark:text-green-400 i-ph:folder-simple" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Projet local</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Importez depuis votre ordinateur</p>
+                        </div>
+                      </div>
+                    </motion.button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 'features' && (
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-semibold text-center text-gray-900 dark:text-white">
+                    Découvrez la puissance de NeuroCode
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Éditeur de code avancé */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                          <div className="w-6 h-6 text-purple-600 dark:text-purple-400 i-ph:code" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Éditeur de code avancé</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Syntaxe intelligente, auto-complétion et refactoring assisté pour une productivité maximale.
+                      </p>
+                    </motion.div>
+
+                    {/* LLM Intégré */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                          <div className="w-6 h-6 text-blue-600 dark:text-blue-400 i-ph:brain" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">LLM Intégré</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Générez, corrigez et optimisez votre code avec l'IA directement dans l'éditeur.
+                      </p>
+                    </motion.div>
+
+                    {/* Exécution en direct */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30">
+                          <div className="w-6 h-6 text-green-600 dark:text-green-400 i-ph:play" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Exécution en direct</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Testez votre code directement dans le navigateur avec un environnement d'exécution intégré.
+                      </p>
+                    </motion.div>
+
+                    {/* Gestion de projets et Git */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="p-6 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                          <div className="w-6 h-6 text-orange-600 dark:text-orange-400 i-ph:git-branch" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Gestion de projets et Git</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Importation, versioning et restauration rapide de vos projets avec intégration Git native.
+                      </p>
+                    </motion.div>
+                  </div>
+
+                  <div className="flex justify-center mt-8">
+                    <button
+                      onClick={handleNext}
+                      className="px-6 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors"
+                    >
+                      Continuer
+                    </button>
+                  </div>
+                </div>
+              )}
+
+
+
+              {/* Navigation buttons */}
+              <div className="mt-8 flex justify-between items-center">
+                {currentStep !== 'welcome' && (
+                  <button
+                    onClick={handleBack}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Retour
+                  </button>
+                )}
+                <button
+                  onClick={handleSkip}
+                  className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  Passer
+                </button>
+              </div>
+
+              {/* Close button */}
+              <Dialog.Close
+                className={classNames(
+                  'absolute top-4 right-4',
+                  'w-8 h-8 rounded-full flex items-center justify-center',
+                  'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+                  'transition-colors',
+                )}
+              >
+                ×
+              </Dialog.Close>
+            </motion.div>
+          </AnimatePresence>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
