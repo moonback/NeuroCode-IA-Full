@@ -11,9 +11,12 @@ interface HistoryItemProps {
   onDelete?: (event: React.UIEvent) => void;
   onDuplicate?: (id: string) => void;
   exportChat: (id?: string) => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
-export function HistoryItem({ item, onDelete, onDuplicate, exportChat }: HistoryItemProps) {
+export function HistoryItem({ item, onDelete, onDuplicate, exportChat, isSelectionMode, isSelected, onSelect }: HistoryItemProps) {
   const { id: urlId } = useParams();
   const isActiveChat = urlId === item.urlId;
 
@@ -28,9 +31,20 @@ export function HistoryItem({ item, onDelete, onDuplicate, exportChat }: History
     <div
       className={classNames(
         'group rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50/80 dark:hover:bg-gray-800/30 overflow-hidden flex justify-between items-center px-3 py-2 transition-colors',
-        { 'text-gray-900 dark:text-white bg-gray-50/80 dark:bg-gray-800/30': isActiveChat },
+        isActiveChat ? 'text-gray-900 dark:text-white bg-gray-50/80 dark:bg-gray-800/30' : '',
+        isSelected ? 'bg-purple-50/50 dark:bg-purple-500/10' : ''
       )}
     >
+      {isSelectionMode && (
+        <div className="flex items-center mr-3">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect?.(item.id)}
+            className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+          />
+        </div>
+      )}
       {editing ? (
         <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2">
           <input
