@@ -136,20 +136,25 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => window.open('https://github.com', '_blank')}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title="Ouvrir GitHub"
-          >
-            <span className="i-ph:github-logo h-5 w-5" />
-          </button>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title="Fermer"
-          >
-            <span className="i-ph:x h-5 w-5" />
-          </button>
+        <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg shadow-sm">
+  <button
+    onClick={() => window.open('https://github.com', '_blank')}
+    className="flex items-center justify-center bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all transform hover:scale-105 shadow-sm hover:shadow-md"
+    title="Ouvrir GitHub"
+    aria-label="Ouvrir GitHub dans un nouvel onglet"
+  >
+    <span className="i-ph:github-logo h-6 w-6" />
+  </button>
+  
+  <button
+    onClick={onClose}
+    className="flex items-center justify-center bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all transform hover:scale-105 shadow-sm hover:shadow-md"
+    title="Fermer"
+    aria-label="Fermer"
+  >
+    <span className="i-ph:x h-6 w-6" />
+  </button>
+</div>
         </div>
       </div>
 
