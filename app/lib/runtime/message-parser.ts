@@ -1,4 +1,4 @@
-import type { ActionType, BoltAction, BoltActionData, FileAction, ShellAction, SupabaseAction } from '~/types/actions';
+import type { ActionType, BoltAction, BoltActionData, FileAction, SupabaseAction, ButtonAction } from '~/types/actions';
 import type { BoltArtifactData } from '~/types/artifact';
 import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
@@ -321,12 +321,24 @@ export class StreamingMessageParser {
       }
 
       (actionAttributes as FileAction).filePath = filePath;
-    } else if (!['shell', 'start'].includes(actionType)) {
-      logger.warn(`Unknown action type '${actionType}'`);
+    } else if (actionType === 'button') {
+      const value = this.#extractAttribute(actionTag, 'value');
+      const artifactId = this.#extractAttribute(actionTag, 'artifactId');
+
+      if (value && artifactId) {
+        (actionAttributes as ButtonAction).value = value;
+        (actionAttributes as ButtonAction).artifactId = artifactId;
+      } else {
+        logger.warn('Button action missing value or artifactId');
+
+        // Potentially throw an error or handle gracefully
+      }
+    } else if (!['shell', 'start', 'build'].includes(actionType)) {
+      logger.warn(`Unknown or unsupported action type '${actionType}'`);
     }
 
-    return actionAttributes as FileAction | ShellAction;
-  }
+  // Ensure we always return a valid BoltAction type
+  return actionAttributes as BoltAction;  }
 
   #extractAttribute(tag: string, attributeName: string): string | undefined {
     const match = tag.match(new RegExp(`${attributeName}="([^"]*)"`, 'i'));

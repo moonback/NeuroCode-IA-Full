@@ -1,6 +1,6 @@
 import type { Change } from 'diff';
 
-export type ActionType = 'file' | 'shell' | 'supabase';
+export type ActionType = 'file' | 'shell' | 'supabase' | 'start' | 'build' | 'button';
 
 export interface BaseAction {
   content: string;
@@ -22,6 +22,12 @@ export interface StartAction extends BaseAction {
 export interface BuildAction extends BaseAction {
   type: 'build';
 }
+export interface ButtonAction extends BaseAction {
+  type: 'button';
+  value: string; // e.g., 'proceed' or 'skip'
+  artifactId: string; // ID of the artifact containing this button
+}
+
 
 export interface SupabaseAction extends BaseAction {
   type: 'supabase';
@@ -30,7 +36,7 @@ export interface SupabaseAction extends BaseAction {
   projectId?: string;
 }
 
-export type BoltAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction;
+export type BoltAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction | ButtonAction;
 
 export type BoltActionData = BoltAction | BaseAction;
 

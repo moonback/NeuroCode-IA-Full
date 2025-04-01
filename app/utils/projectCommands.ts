@@ -27,7 +27,7 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       const packageJson = JSON.parse(packageJsonFile.content);
       const scripts = packageJson?.scripts || {};
 
-      // Check for preferred commands in priority order
+      // Vérifie les commandes préférées par ordre de priorité
       const preferredCommands = ['dev', 'start', 'preview'];
       const availableCommand = preferredCommands.find((cmd) => scripts[cmd]);
 
@@ -36,7 +36,7 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
           type: 'Node.js',
           setupCommand: `npm install`,
           startCommand: `npm run ${availableCommand}`,
-          followupMessage: `Found "${availableCommand}" script in package.json. Running "npm run ${availableCommand}" after installation.`,
+          followupMessage: `J'ai trouvé le script "${availableCommand}" dans package.json. Je vais exécuter "npm run ${availableCommand}" après l'installation.`,
         };
       }
 
@@ -44,17 +44,17 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
         type: 'Node.js',
         setupCommand: 'npm install',
         followupMessage:
-          'Would you like me to inspect package.json to determine the available scripts for running this project?',
+          'Voulez-vous que j\'inspecte le package.json pour déterminer les scripts disponibles pour exécuter ce projet ?',
       };
     } catch (error) {
-      console.error('Error parsing package.json:', error);
+      console.error('Erreur lors de l\'analyse du package.json :', error);
       return { type: '', setupCommand: '', followupMessage: '' };
     }
   }
 
   if (hasFile('index.html')) {
     return {
-      type: 'Static',
+      type: 'Statique',
       startCommand: 'npx --yes serve',
       followupMessage: '',
     };
@@ -65,28 +65,48 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
 
 export function createCommandsMessage(commands: ProjectCommands): Message | null {
   if (!commands.setupCommand && !commands.startCommand) {
-    return null;
-  }
+ // If no commands detected, still might need to prompt if only setup is found
+ if (commands.setupCommand && commands.followupMessage) {
+  // Let's create a confirmation prompt even if only setup is found
+} else {
+  return null; // No relevant commands or message found
+}  }
 
-  let commandString = '';
+const artifactId = `setup-actions-${generateId()}`;
 
-  if (commands.setupCommand) {
-    commandString += `
-<boltAction type="shell">${commands.setupCommand}</boltAction>`;
-  }
+   /*
+   * Encode les commandes dans la valeur du bouton 'proceed'
+   * Format : "proceed|setupCommand|startCommand"
+   * Utilise des chaînes vides si les commandes sont indéfinies
+   */
+   const setupCmd = commands.setupCommand || '';
+   const startCmd = commands.startCommand || '';
+   const proceedValue = `proceed|${setupCmd}|${startCmd}`;
 
-  if (commands.startCommand) {
-    commandString += `
-<boltAction type="start">${commands.startCommand}</boltAction>
-`;
-  }
+    // Creates a detailed confirmation message with interactive buttons
+    const confirmationContent = `🚀 Projet ${commands.type} Détecté${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
 
+━━━━━━━━━━ Détails de Configuration du Projet ━━━━━━━━━━
+
+📦 Processus d'Installation
+${commands.setupCommand ? `   • Commande: \`${commands.setupCommand}\`\n   • Ceci installera toutes les dépendances requises` : ''}
+
+🎯 Configuration de Lancement
+${commands.startCommand ? `   • Commande: \`${commands.startCommand}\`\n   • Ceci démarrera votre serveur de développement` : ''}
+
+📋 Prochaines Étapes:
+   • Vérifiez les commandes ci-dessus
+   • Choisissez de continuer ou reporter
+   • Surveillez la progression de l'installation
+
+<boltArtifact id="${artifactId}" title="Configuration du Projet">
+<boltAction type="button" value="skip" artifactId="${artifactId}">⌛ Reporter la Configuration</boltAction>
+<boltAction type="button" value="${proceedValue}" artifactId="${artifactId}">⚡ Initialiser le Projet Maintenant</boltAction>
+</boltArtifact>`;
   return {
     role: 'assistant',
-    content: `
-<boltArtifact id="project-setup" title="Project Setup">
-${commandString}
-</boltArtifact>${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}`,
+    content: confirmationContent,
+
     id: generateId(),
     createdAt: new Date(),
   };
