@@ -109,13 +109,28 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
       className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 p-4 w-full max-w-md"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Projets GitHub</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <span className="i-ph:x h-5 w-5" />
-        </button>
+        <div>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white">Bibliotheque Projets GitHub</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Gérez et importez vos projets GitHub favoris
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.open('https://github.com', '_blank')}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            title="Ouvrir GitHub"
+          >
+            <span className="i-ph:github-logo h-5 w-5" />
+          </button>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            title="Fermer"
+          >
+            <span className="i-ph:x h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <div className="mb-4 flex gap-2">
