@@ -16,6 +16,7 @@ import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
 import { useSettings } from '~/lib/hooks/useSettings';
 import { PromptLibrary } from '~/lib/common/prompt-library';
+import { ProjectList } from './ProjectList';
 
 const menuVariants = {
   closed: {
@@ -72,6 +73,7 @@ export const Menu = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProjectListOpen, setIsProjectListOpen] = useState(false);
   const profile = useStore(profileStore);
 
   const { filteredItems: filteredList, handleSearchChange } = useSearchFilter({
@@ -234,6 +236,13 @@ export const Menu = () => {
                 {/* <span className="inline-block i-lucide:message-square h-4 w-4" /> */}
                 <span className="text-sm font-medium">Nouvelle discussion</span>
               </a>
+              <button
+                onClick={() => setIsProjectListOpen(true)}
+                className="flex gap-2 items-center bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg px-4 py-2 transition-colors"
+              >
+                <span className="inline-block i-ph:folder h-4 w-4" />
+                <span className="text-sm font-medium">Projets</span>
+              </button>
               <div className="flex gap-2">
                 {isSelectionMode && (
                   <>
@@ -435,6 +444,12 @@ export const Menu = () => {
       </motion.div>
 
       <ControlPanel open={isSettingsOpen} onClose={handleSettingsClose} />
+
+      {isProjectListOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 dark:bg-black/80 backdrop-blur-sm">
+          <ProjectList onClose={() => setIsProjectListOpen(false)} />
+        </div>
+      )}
     </>
   );
 };
