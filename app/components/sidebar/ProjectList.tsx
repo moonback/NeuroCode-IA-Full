@@ -182,73 +182,127 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
       </div>
 
       {/* Filters */}
-      <div className="mb-6 space-y-4 p-5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-medium text-gray-900 dark:text-white">Filtres</h3>
-          <button
-            onClick={() => setFilters(prev => ({ ...prev, showFavorites: !prev.showFavorites }))}
-            className={`p-2 rounded-lg ${filters.showFavorites ? 'bg-yellow-400 text-yellow-900' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'} hover:opacity-90 transition-all flex items-center gap-2`}
-            title="Afficher uniquement les favoris"
-          >
-            <span className={`h-5 w-5 ${filters.showFavorites ? 'i-ph:star-fill' : 'i-ph:star'}`} />
-            {filters.showFavorites ? 'Favoris uniquement' : 'Tous les projets'}
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Langage</label>
-            <select
-              value={filters.language}
-              onChange={(e) => setFilters(prev => ({ ...prev, language: e.target.value }))}
-              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-            >
-              <option value="">Tous les langages</option>
-              {allLanguages.map(lang => (
-                <option key={lang} value={lang}>{lang}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Période</label>
-            <select
-              value={filters.dateRange}
-              onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as Filters['dateRange'] }))}
-              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-            >
-              <option value="all">Toutes les dates</option>
-              <option value="week">Cette semaine</option>
-              <option value="month">Ce mois</option>
-              <option value="year">Cette année</option>
-            </select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tri</label>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as Filters['sortBy'] }))}
-              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-            >
-              <option value="updated">Trié par date de mise à jour</option>
-              <option value="stars">Trié par étoiles</option>
-              <option value="name">Trié par nom</option>
-            </select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Étoiles minimum</label>
-            <input
-              type="number"
-              value={filters.minStars}
-              onChange={(e) => setFilters(prev => ({ ...prev, minStars: parseInt(e.target.value) || 0 }))}
-              placeholder="Min étoiles"
-              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-            />
-          </div>
-        </div>
+      <div className="mb-8 p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/90 dark:to-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700/50 shadow-sm backdrop-blur-sm">
+  <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+    <div className="flex items-center gap-2">
+      <span className="i-ph:funnel-simple h-5 w-5 text-purple-600 dark:text-purple-400" />
+      <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Filtres</h3>
+    </div>
+    
+    <motion.button
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => setFilters(prev => ({ ...prev, showFavorites: !prev.showFavorites }))}
+      className={`px-4 py-2 rounded-xl ${
+        filters.showFavorites 
+          ? 'bg-gradient-to-r from-yellow-400 to-yellow-300 text-yellow-900 shadow-md shadow-yellow-200/40 dark:shadow-yellow-900/20' 
+          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 shadow-md shadow-gray-200/30 dark:shadow-gray-900/30'
+      } hover:opacity-90 transition-all flex items-center gap-2 font-medium`}
+      title={filters.showFavorites ? "Afficher tous les projets" : "Afficher uniquement les favoris"}
+    >
+      <span className={`h-5 w-5 ${filters.showFavorites ? 'i-ph:star-fill' : 'i-ph:star'}`} />
+      {filters.showFavorites ? 'Favoris uniquement' : 'Tous les projets'}
+    </motion.button>
+  </div>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="i-ph:code h-4 w-4 text-purple-500 dark:text-purple-400" />
+        Langage
+      </label>
+      <div className="relative">
+        <select
+          value={filters.language}
+          onChange={(e) => setFilters(prev => ({ ...prev, language: e.target.value }))}
+          className="w-full pl-4 pr-10 py-2.5 rounded-xl text-sm bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white appearance-none shadow-sm hover:shadow-md"
+        >
+          <option value="">Tous les langages</option>
+          {allLanguages.map(lang => (
+            <option key={lang} value={lang}>{lang}</option>
+          ))}
+        </select>
+        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none i-ph:caret-down h-4 w-4 text-gray-500 dark:text-gray-400" />
       </div>
+    </div>
+    
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="i-ph:calendar h-4 w-4 text-purple-500 dark:text-purple-400" />
+        Période
+      </label>
+      <div className="relative">
+        <select
+          value={filters.dateRange}
+          onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as Filters['dateRange'] }))}
+          className="w-full pl-4 pr-10 py-2.5 rounded-xl text-sm bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white appearance-none shadow-sm hover:shadow-md"
+        >
+          <option value="all">Toutes les dates</option>
+          <option value="week">Cette semaine</option>
+          <option value="month">Ce mois</option>
+          <option value="year">Cette année</option>
+        </select>
+        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none i-ph:caret-down h-4 w-4 text-gray-500 dark:text-gray-400" />
+      </div>
+    </div>
+    
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="i-ph:sort-ascending h-4 w-4 text-purple-500 dark:text-purple-400" />
+        Tri
+      </label>
+      <div className="relative">
+        <select
+          value={filters.sortBy}
+          onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as Filters['sortBy'] }))}
+          className="w-full pl-4 pr-10 py-2.5 rounded-xl text-sm bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white appearance-none shadow-sm hover:shadow-md"
+        >
+          <option value="updated">Récents d'abord</option>
+          <option value="stars">Plus d'étoiles d'abord</option>
+          <option value="name">Ordre alphabétique</option>
+        </select>
+        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none i-ph:caret-down h-4 w-4 text-gray-500 dark:text-gray-400" />
+      </div>
+    </div>
+    
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="i-ph:star h-4 w-4 text-purple-500 dark:text-purple-400" />
+        Étoiles minimum
+      </label>
+      <div className="relative">
+        <input
+          type="number"
+          value={filters.minStars}
+          onChange={(e) => setFilters(prev => ({ ...prev, minStars: parseInt(e.target.value) || 0 }))}
+          placeholder="0"
+          min="0"
+          className="w-full pl-4 pr-10 py-2.5 rounded-xl text-sm bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white shadow-sm hover:shadow-md"
+        />
+        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none i-ph:star-fill h-4 w-4 text-yellow-400" />
+      </div>
+    </div>
+  </div>
+  
+  <div className="flex justify-end mt-5">
+    <motion.button
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => setFilters({
+        language: '',
+        dateRange: 'all',
+        sortBy: 'updated',
+        minStars: 0,
+        showFavorites: false
+      })}
+      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-all font-medium shadow-sm"
+      title="Réinitialiser tous les filtres"
+    >
+      <span className="i-ph:arrow-counter-clockwise h-4 w-4" />
+      Réinitialiser
+    </motion.button>
+  </div>
+</div>
 
       {/* Project List */}
       {loading ? (
