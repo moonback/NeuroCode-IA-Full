@@ -83,18 +83,25 @@ const artifactId = `setup-actions-${generateId()}`;
    const startCmd = commands.startCommand || '';
    const proceedValue = `proceed|${setupCmd}|${startCmd}`;
 
-    // Crée le message de confirmation avec les boutons
-    const confirmationContent = `📦 Projet ${commands.type} détecté${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
+    // Creates a detailed confirmation message with interactive buttons
+    const confirmationContent = `🚀 Projet ${commands.type} Détecté${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
 
-🛠️ Configuration du Projet
-${commands.setupCommand ? `▪️ Installation : \`${commands.setupCommand}\`` : ''}
-${commands.startCommand ? `\n▪️ Lancement : \`${commands.startCommand}\`` : ''}
+━━━━━━━━━━ Détails de Configuration du Projet ━━━━━━━━━━
 
-💫 Souhaitez-vous procéder à la configuration et au lancement de l'application ?
+📦 Processus d'Installation
+${commands.setupCommand ? `   • Commande: \`${commands.setupCommand}\`\n   • Ceci installera toutes les dépendances requises` : ''}
+
+🎯 Configuration de Lancement
+${commands.startCommand ? `   • Commande: \`${commands.startCommand}\`\n   • Ceci démarrera votre serveur de développement` : ''}
+
+📋 Prochaines Étapes:
+   • Vérifiez les commandes ci-dessus
+   • Choisissez de continuer ou reporter
+   • Surveillez la progression de l'installation
 
 <boltArtifact id="${artifactId}" title="Configuration du Projet">
-<boltAction type="button" value="skip" artifactId="${artifactId}">⏳ Reporter la configuration</boltAction>
-<boltAction type="button" value="${proceedValue}" artifactId="${artifactId}">✨ Configurer et Lancer</boltAction>
+<boltAction type="button" value="skip" artifactId="${artifactId}">⌛ Reporter la Configuration</boltAction>
+<boltAction type="button" value="${proceedValue}" artifactId="${artifactId}">⚡ Initialiser le Projet Maintenant</boltAction>
 </boltArtifact>`;
   return {
     role: 'assistant',
