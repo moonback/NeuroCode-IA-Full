@@ -15,12 +15,27 @@ interface Project {
   updatedAt?: string;
 }
 
+interface Filters {
+  language: string;
+  dateRange: 'all' | 'week' | 'month' | 'year';
+  minStars: number;
+  sortBy: 'updated' | 'stars' | 'name';
+}
+
 export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; onImportToChat?: (project: Project) => void }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [githubUrl, setGithubUrl] = useState('');
   const [importing, setImporting] = useState(false);
+  const [filters, setFilters] = useState<Filters>({
+    language: '',
+    dateRange: 'all',
+    minStars: 0,
+    sortBy: 'updated'
+  });
+  
+  const allLanguages = [...new Set(projects.flatMap(p => p.languages))].sort();
 
   const deleteProject = (projectToDelete: Project) => {
     const updatedProjects = projects.filter(project => project.name !== projectToDelete.name);
@@ -129,6 +144,49 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
         </button>
       </div>
 
+      <div className="mb-4 space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="flex items-center gap-2">
+          <select
+            value={filters.language}
+            onChange={(e) => setFilters(prev => ({ ...prev, language: e.target.value }))}
+            className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
+          >
+            <option value="">Tous les langages</option>
+            {allLanguages.map(lang => (
+              <option key={lang} value={lang}>{lang}</option>
+            ))}
+          </select>
+          <select
+            value={filters.dateRange}
+            onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as Filters['dateRange'] }))}
+            className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
+          >
+            <option value="all">Toutes les dates</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+            <option value="year">Cette année</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={filters.sortBy}
+            onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as Filters['sortBy'] }))}
+            className="flex-1 px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
+          >
+            <option value="updated">Trié par date de mise à jour</option>
+            <option value="stars">Trié par étoiles</option>
+            <option value="name">Trié par nom</option>
+          </select>
+          <input
+            type="number"
+            value={filters.minStars}
+            onChange={(e) => setFilters(prev => ({ ...prev, minStars: parseInt(e.target.value) || 0 }))}
+            placeholder="Min étoiles"
+            className="w-32 px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
+          />
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin h-6 w-6 text-purple-500">
@@ -139,7 +197,31 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
         <div className="text-red-500 dark:text-red-400 text-center py-4">{error}</div>
       ) : (
         <div className="space-y-3">
-          {projects.map((project) => (
+          {projects
+            .filter(project => {
+              if (filters.language && !project.languages.includes(filters.language)) return false;
+              if (filters.minStars && (!project.stars || project.stars < filters.minStars)) return false;
+              if (filters.dateRange !== 'all' && project.updatedAt) {
+                const date = new Date(project.updatedAt);
+                const now = new Date();
+                const diff = now.getTime() - date.getTime();
+                const days = diff / (1000 * 60 * 60 * 24);
+                if (filters.dateRange === 'week' && days > 7) return false;
+                if (filters.dateRange === 'month' && days > 30) return false;
+                if (filters.dateRange === 'year' && days > 365) return false;
+              }
+              return true;
+            })
+            .sort((a, b) => {
+              if (filters.sortBy === 'stars') {
+                return (b.stars || 0) - (a.stars || 0);
+              } else if (filters.sortBy === 'name') {
+                return a.name.localeCompare(b.name);
+              } else {
+                return new Date(b.updatedAt || '').getTime() - new Date(a.updatedAt || '').getTime();
+              }
+            })
+            .map((project) => (
             <a
               key={project.name}
               onClick={(e) => {
