@@ -596,7 +596,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
                         
                         <IconButton
-                          title="Model Settings"
+                          title="Paramètres des modèles"
                           className={classNames('transition-all flex items-center gap-1', {
                             'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent':
                               isModelSettingsCollapsed,
@@ -607,7 +607,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           disabled={!providerList || providerList.length === 0}
                         >
                           <div className={`i-ph:caret-${isModelSettingsCollapsed ? 'right' : 'down'} text-lg`} />
-                          {isModelSettingsCollapsed ? <span className="text-xs">{model}</span> : <span />}
+                          {isModelSettingsCollapsed ? <span className="text-xs">Réglages API</span> : <span />}
+                          
                         </IconButton>
                       </div>
                       {input.length > 3 ? (
