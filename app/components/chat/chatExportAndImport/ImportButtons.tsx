@@ -64,6 +64,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
               const input = document.getElementById('chat-import');
               input?.click();
             }}
+            title="Importer un Chat"
             variant="ghost"
             size="icon"
             className="p-0 bg-transparent hover:bg-transparent"
@@ -71,6 +72,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
             <span className="i-ph:upload-simple w-5 h-5 text-gray-500 dark:text-gray-500 hover:text-white" />
           </Button>
           <ImportFolderButton
+          
             importChat={importChat}
             className={classNames(
               'gap-2 bg-[#F5F5F5] dark:bg-[#252525]',
