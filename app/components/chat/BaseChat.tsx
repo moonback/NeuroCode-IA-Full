@@ -128,6 +128,18 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [isModelLoading, setIsModelLoading] = useState<string | undefined>('all');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
+    // Add state for rotating text
+    const [currentTextIndex, setCurrentTextIndex] = useState(0);
+    const rotatingTexts = ["expériences uniques", "réalisations créatives", "projets innovants"];
+    
+    // Add effect for text rotation
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setCurrentTextIndex((prevIndex) => (prevIndex + 1) % rotatingTexts.length);
+      }, 3000); // Change text every 3 seconds
+      
+      return () => clearInterval(interval);
+    }, []);
     
     useEffect(() => {
       if (data) {
@@ -327,17 +339,47 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         <div ref={scrollRef} className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
             {!chatStarted && (
-              <div id="intro" className="mt-[5vh] max-w-chat mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
-                  NeuroCode Assistant
-                </h1>
-                <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
-                  Transformez vos idées en solutions concrètes.
+              <div id="intro" className="mt-[2vh] max-w-chat mx-[auto] text-center px-4 lg:px-0">
+                <div className="flex justify-center mb-8">
+                  <img 
+                    src={`/logo${document.documentElement.classList.contains('dark') ? '-dark' : '-light'}.png`}
+                    alt="NeuroCode Logo" 
+                    className="w-40 h-40 animate-fade-in"
+                  />
+                </div>
+                {/* <h1 className="text-4xl lg:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-600 mb-6 animate-fade-in [animation-duration:800ms]">
+                  Votre assistant IA
+                  <span className="inline-block ml-2 animate-bounce">🚀</span>
+                </h1> */}
+
+                <p className="text-2xl lg:text-2xl max-w-4xl text-gray-100/95 mb-16 leading-relaxed animate-fade-in [animation-duration:1200ms] [animation-delay:400ms] font-light tracking-wide">
+                  Transformez vos <div className="font-bold text-white/95 italic bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 inline">idées</div> en
+                  
+                  <span className="inline-block mx-4 my-5">
+                    <span className="relative px-5 py-5 bg-gradient-to-r from-violet-900/50 to-teal-900/50 rounded-2xl border-2 border-violet-400/40 text-teal-100/95 shadow-xl shadow-violt-500/30 hover:scale-105 transition-transform duration-300">
+                      <span className="inline-flex justify-center items-center min-w-[180px] h-[28px] relative">
+                        {rotatingTexts.map((text, index) => (
+                          <span 
+                            key={index}
+                            className={`absolute transition-all duration-500 ${
+                              index === currentTextIndex 
+                                ? "opacity-100 transform-none" 
+                                : "opacity-0 -translate-y-8"
+                            }`}
+                            style={{ position: 'absolute', left: '0', right: '0', textAlign: 'center' }}
+                          >
+                            {text}
+                          </span>
+                        ))}
+                      </span>
+                      <span className="absolute -top-2 right-3 w-3 h-3 rounded-full bg-violet-400 animate-ping opacity-75"></span>
+                    </span>
+                  </span>
                 </p>
               </div>
             )}
             <div
-              className={classNames('pt-6 px-2 sm:px-6', {
+              className={classNames('pt-1 px-2 sm:px-6', {
                 'h-full flex flex-col': chatStarted,
               })}
               ref={scrollRef}
