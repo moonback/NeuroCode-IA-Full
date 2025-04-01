@@ -591,6 +591,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           onStop={stopListening}
                           disabled={isStreaming}
                         />
+                        {ImportButtons(importChat)}
+
+                        <GitCloneButton importChat={importChat} />
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
                         <IconButton
                           title="Model Settings"
@@ -624,8 +627,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             <div className="flex flex-col justify-center gap-5">
               {!chatStarted && (
                 <div className="flex justify-center gap-2">
-                  {ImportButtons(importChat)}
-                  <GitCloneButton importChat={importChat} />
+                  {/* <GitCloneButton importChat={importChat} /> */}
                 </div>
               )}
               {!chatStarted &&
