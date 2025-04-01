@@ -105,6 +105,7 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 p-4 w-full max-w-md"
     >
       <div className="flex items-center justify-between mb-4">
@@ -200,117 +201,116 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
           {projects
             .filter(project => {
               if (filters.language && !project.languages.includes(filters.language)) return false;
-              if (filters.minStars && (!project.stars || project.stars < filters.minStars)) return false;
+              if (filters.minStars && (project.stars || 0) < filters.minStars) return false;
               if (filters.dateRange !== 'all' && project.updatedAt) {
                 const date = new Date(project.updatedAt);
                 const now = new Date();
-                const diff = now.getTime() - date.getTime();
-                const days = diff / (1000 * 60 * 60 * 24);
-                if (filters.dateRange === 'week' && days > 7) return false;
-                if (filters.dateRange === 'month' && days > 30) return false;
-                if (filters.dateRange === 'year' && days > 365) return false;
+                switch (filters.dateRange) {
+                  case 'week':
+                    return now.getTime() - date.getTime() <= 7 * 24 * 60 * 60 * 1000;
+                  case 'month':
+                    return now.getTime() - date.getTime() <= 30 * 24 * 60 * 60 * 1000;
+                  case 'year':
+                    return now.getTime() - date.getTime() <= 365 * 24 * 60 * 60 * 1000;
+                }
               }
               return true;
             })
             .sort((a, b) => {
-              if (filters.sortBy === 'stars') {
-                return (b.stars || 0) - (a.stars || 0);
-              } else if (filters.sortBy === 'name') {
-                return a.name.localeCompare(b.name);
-              } else {
-                return new Date(b.updatedAt || '').getTime() - new Date(a.updatedAt || '').getTime();
+              switch (filters.sortBy) {
+                case 'stars':
+                  return (b.stars || 0) - (a.stars || 0);
+                case 'name':
+                  return a.name.localeCompare(b.name);
+                default:
+                  return new Date(b.updatedAt || '').getTime() - new Date(a.updatedAt || '').getTime();
               }
             })
-            .map((project) => (
-            <a
-              key={project.name}
-              onClick={(e) => {
-                e.preventDefault();
-                const gitUrl = `http://localhost:5173/git?url=${project.url}`;
-                window.open(gitUrl, '_blank');
-              }}
-              className="block p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg relative group"
-            >
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-2 transition-opacity">
-                {onImportToChat && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onImportToChat(project);
-                      toast.success('Projet importé dans le chat');
-                    }}
-                    className="p-1.5 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
-                    title="Importer dans le chat"
+            .map(project => (
+              <motion.div
+                key={project.name}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                whileHover={{ scale: 1.02 }}
+                className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <a
+                    href={project.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lg font-semibold text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                   >
-                    <span className="i-ph:chat-circle-dots w-4 h-4" />
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const gitUrl = `http://localhost:5173/git?url=${project.url}`;
-                    window.open(gitUrl, '_blank');
-                  }}
-                  className="p-1.5 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
-                  title="Ouvrir dans Git"
-                >
-                  <span className="i-ph:git-branch w-4 h-4" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const gitUrl = `http://localhost:5173/git?url=${project.url}`;
-                    window.open(gitUrl, '_blank');
-                  }}
-                  className="p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
-                  title="Supprimer le projet"
-                >
-                  <span className="i-ph:trash w-4 h-4" />
-                </button>
-              </div>
-              <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                <span className="i-ph:git-repository" />
-                {project.name}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                {project.description}
-              </p>
-              <div className="flex items-center gap-4 mb-3 text-sm text-gray-600 dark:text-gray-400">
-                {project.stars !== undefined && (
-                  <div className="flex items-center gap-1">
-                    <span className="i-ph:star" />
-                    {project.stars}
+                    {project.name}
+                  </a>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onImportToChat?.(project)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+                      title="Importer dans le chat"
+                    >
+                      <span className="i-ph:chat-circle-text h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    </button>
+                    <button
+                      onClick={() => deleteProject(project)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+                      title="Supprimer"
+                    >
+                      <span className="i-ph:trash h-5 w-5 text-red-500" />
+                    </button>
                   </div>
-                )}
-                {project.forks !== undefined && (
-                  <div className="flex items-center gap-1">
-                    <span className="i-ph:git-fork" />
-                    {project.forks}
-                  </div>
-                )}
-                {project.updatedAt && (
-                  <div className="flex items-center gap-1">
-                    <span className="i-ph:clock" />
-                    {new Date(project.updatedAt).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {project.languages.map((lang) => (
-                  <span
-                    key={lang}
-                    className="px-2 py-1 text-xs rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 flex items-center gap-1"
-                  >
-                    <span className="i-ph:code" />
-                    {lang}
-                  </span>
-                ))}
-              </div>
-            </a>
-          ))}
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{project.description}</p>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {project.languages.map(lang => (
+                    <motion.span
+                      key={lang}
+                      whileHover={{ scale: 1.1 }}
+                      className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
+                    >
+                      {lang}
+                    </motion.span>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                  {project.stars !== undefined && (
+                    <motion.div 
+                      className="flex items-center gap-1"
+                      whileHover={{ scale: 1.1 }}
+                      title="Stars"
+                    >
+                      <span className="i-ph:star text-yellow-500" />
+                      {project.stars}
+                    </motion.div>
+                  )}
+                  {project.forks !== undefined && (
+                    <motion.div 
+                      className="flex items-center gap-1"
+                      whileHover={{ scale: 1.1 }}
+                      title="Forks"
+                    >
+                      <span className="i-ph:git-fork text-blue-500" />
+                      {project.forks}
+                    </motion.div>
+                  )}
+                  {project.updatedAt && (
+                    <motion.div 
+                      className="flex items-center gap-1"
+                      whileHover={{ scale: 1.1 }}
+                      title="Dernière mise à jour"
+                    >
+                      <span className="i-ph:clock text-green-500" />
+                      {new Date(project.updatedAt).toLocaleDateString()}
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
         </div>
       )}
     </motion.div>
