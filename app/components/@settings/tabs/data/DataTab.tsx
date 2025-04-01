@@ -235,6 +235,16 @@ const handleDeleteAllCookiesAndReset = () => {
   return (
     
     <div className="space-y-12">
+      {/* Data Visualization */}
+<div>
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Utilisation des données
+        </h2>
+        <Card>
+          <CardContent className="p-5">
+            <DataVisualization chats={availableChats} />
+          </CardContent>
+        </Card>
+      </div>
       {/* Chats Section */}
       <div>
         
@@ -524,16 +534,7 @@ const handleDeleteAllCookiesAndReset = () => {
         }}
         confirmLabel="Export Selected"
       />
-{/* Data Visualization */}
-<div>
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Utilisation des données
-        </h2>
-        <Card>
-          <CardContent className="p-5">
-            <DataVisualization chats={availableChats} />
-          </CardContent>
-        </Card>
-      </div>
+
 
       {/* Undo Last Operation */}
       {lastOperation && (
