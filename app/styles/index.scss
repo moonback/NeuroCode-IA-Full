@@ -24,7 +24,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
+  background: rgba(19, 19, 19, 0.8);
   border-radius: 4px;
   transition: background 0.2s ease;
 }
