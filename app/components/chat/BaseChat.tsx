@@ -591,10 +591,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           onStop={stopListening}
                           disabled={isStreaming}
                         />
-                        {ImportButtons(importChat)}
-
-                        <GitCloneButton importChat={importChat} />
+                        {!chatStarted && ImportButtons(importChat)}
+                        {!chatStarted && <GitCloneButton importChat={importChat} />}
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
+                        
                         <IconButton
                           title="Model Settings"
                           className={classNames('transition-all flex items-center gap-1', {
