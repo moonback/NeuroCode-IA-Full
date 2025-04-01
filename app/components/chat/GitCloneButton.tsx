@@ -113,15 +113,15 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
 
         const filesMessage: Message = {
           role: 'assistant',
-          content: `Cloning the repo ${repoUrl} into ${workdir}
+          content: `Clonage du dépôt ${repoUrl} dans ${workdir}
 ${
   skippedFiles.length > 0
-    ? `\nSkipped files (${skippedFiles.length}):
+    ? `\nFichiers ignorés (${skippedFiles.length}):
 ${skippedFiles.map((f) => `- ${f}`).join('\n')}`
     : ''
 }
 
-<boltArtifact id="imported-files" title="Git Cloned Files" type="bundled">
+<boltArtifact id="imported-files" title="Fichiers clonés Git" type="bundled">
 ${fileContents
   .map(
     (file) =>
@@ -141,7 +141,7 @@ ${escapeBoltTags(file.content)}
           messages.push(commandsMessage);
         }
 
-        await importChat(`Git Project:${repoUrl.split('/').slice(-1)[0]}`, messages);
+        await importChat(`Projet Git :${repoUrl.split('/').slice(-1)[0]}`, messages);
       }
     } catch (error) {
       console.error('Error during import:', error);
