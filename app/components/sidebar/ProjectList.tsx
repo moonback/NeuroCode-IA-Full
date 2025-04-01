@@ -238,9 +238,7 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
               >
                 <div className="flex justify-between items-start mb-2">
                   <a
-                    href={project.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/git?url=${encodeURIComponent(project.url)}`}
                     className="text-lg font-semibold text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                   >
                     {project.name}
