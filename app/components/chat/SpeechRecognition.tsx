@@ -15,7 +15,7 @@ export const SpeechRecognitionButton = ({
 }) => {
   return (
     <IconButton
-      title={isListening ? 'Stop listening' : 'Start speech recognition'}
+      title={isListening ? 'Arrête d\'écouter' : 'Démarrer la reconnaissance vocale'}
       disabled={disabled}
       className={classNames('transition-all', {
         'text-bolt-elements-item-contentAccent': isListening,

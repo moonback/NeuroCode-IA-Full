@@ -156,21 +156,17 @@ ${escapeBoltTags(file.content)}
       <Button
         onClick={() => setIsDialogOpen(true)}
         title="Cloner un dépôt Git"
-        variant="outline"
-        size="lg"
-        className={classNames(
-          'gap-2 bg-bolt-elements-background-depth-1',
-          'text-bolt-elements-textPrimary',
-          'hover:bg-bolt-elements-background-depth-2',
-          'border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]',
-          'h-10 px-4 py-2 min-w-[120px] justify-center',
-          'transition-all duration-200 ease-in-out',
-          className,
-        )}
+        variant="ghost"
+        size="icon"
+        className="p-0 hover:bg-bolt-elements-background-depth-3 bg-transparent border-none text-white hover:text-white bg-bolt-elements-background-depth-3 transition-all duration-200 hover:scale-105"
         disabled={!ready || loading}
+        aria-busy={loading}
       >
-        <span className="i-ph:git-branch w-4 h-4" />
-        Cloner un dépôt Git
+        {loading ? (
+          <span className="i-svg-spinners:90-ring-with-bg w-5 h-5 text-bolt-elements-loader-progress animate-spin" />
+        ) : (
+          <span className="i-ph:git-merge w-5 h-5 text-bolt-elements-textPrimary dark:text-gray-500 hover:text-white" />
+        )}
       </Button>
 
       <RepositorySelectionDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} onSelect={handleClone} />
