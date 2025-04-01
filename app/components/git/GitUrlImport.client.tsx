@@ -73,8 +73,8 @@ export function GitUrlImport() {
 
           const filesMessage: Message = {
             role: 'assistant',
-            content: `Cloning the repo ${repoUrl} into ${workdir}
-<boltArtifact id="imported-files" title="Git Cloned Files"  type="bundled">
+            content: `Clonage du dépôt ${repoUrl} dans ${workdir}
+<boltArtifact id="imported-files" title="Fichiers clonés Git"  type="bundled">
 ${fileContents
   .map(
     (file) =>
@@ -95,7 +95,7 @@ ${escapeBoltTags(file.content)}
             messages.push(commandsMessage);
           }
 
-          await importChat(`Git Project:${repoUrl.split('/').slice(-1)[0]}`, messages, { gitUrl: repoUrl });
+          await importChat(`Projet Git :${repoUrl.split('/').slice(-1)[0]}`, messages, { gitUrl: repoUrl });
         }
       } catch (error) {
         console.error('Error during import:', error);
