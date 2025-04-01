@@ -119,22 +119,17 @@ export const ImportFolderButton: React.FC<ImportFolderButtonProps> = ({ classNam
           const input = document.getElementById('folder-import');
           input?.click();
         }}
-        title="Import Folder"
-        variant="outline"
-        size="lg"
-        className={classNames(
-          'gap-2 bg-bolt-elements-background-depth-1',
-          'text-bolt-elements-textPrimary',
-          'hover:bg-bolt-elements-background-depth-2',
-          'border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]',
-          'h-10 px-4 py-2 min-w-[120px] justify-center',
-          'transition-all duration-200 ease-in-out',
-          className,
-        )}
+        title="Importer un dossier"
+        variant="ghost"
+        size="icon"
+        className="p-0 hover:bg-bolt-elements-background-depth-3 -mx-1 bg-transparent border-none text-white hover:text-white bg-bolt-elements-background-depth-2"
         disabled={isLoading}
       >
-        <span className="i-ph:upload-simple w-4 h-4" />
-        {isLoading ? 'Importation...' : 'Importer le dossier'}
+        {isLoading ? (
+          <span className="i-svg-spinners:90-ring-with-bg w-5 h-5 text-bolt-elements-loader-progress animate-spin" />
+        ) : (
+          <span className="i-ph:folder-open w-5 h-5 text-bolt-elements-textPrimary dark:text-gray-500 hover:text-white" />
+        )}
       </Button>
     </>
   );
