@@ -160,7 +160,7 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
         </button>
       </div>
 
-      <div className="mb-4 space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="mb-4 text-white space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div className="flex items-center gap-2">
           <select
             value={filters.language}
