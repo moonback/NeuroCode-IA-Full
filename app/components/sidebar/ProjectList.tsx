@@ -320,117 +320,128 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
                 })
                 .map(project => (
                   <motion.div
-                    key={project.name}
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    transition={{ 
-                      duration: 0.3,
-                      ease: [0.4, 0, 0.2, 1],
-                      scale: { duration: 0.2 }
-                    }}
-                    whileHover={{ 
-                      scale: 1.02,
-                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
-                      y: -2
-                    }}
-                    className={`group relative p-4 rounded-xl h-full flex flex-col ${project.favorite ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'} hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 border shadow-sm hover:shadow-md`}                
-                  >
-                    {project.favorite && (
-                      <div className="absolute top-3 right-3">
-                        <span className="i-ph:star-fill text-yellow-400 h-5 w-5" />
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-start mb-3">
-                      <a
-                        href={`/git?url=${encodeURIComponent(project.url)}`}
-                        className="text-lg font-bold text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors group-hover:text-purple-600 dark:group-hover:text-purple-400 line-clamp-1"
-                      >
-                        {project.name}
-                      </a>
-                      <div className="flex gap-1">
-                      <button
-  onClick={() => onImportToChat?.(project)}
-  className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-800/30 hover:scale-105 transform flex items-center justify-center"
-  title="Importer dans le chat"
-  aria-label="Importer dans le chat"
+  key={project.name}
+  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+  animate={{ opacity: 1, y: 0, scale: 1 }}
+  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+  transition={{ 
+    duration: 0.4,
+    ease: [0.25, 0.1, 0.25, 1], // Courbe d'animation plus fluide (ease-out-cubic)
+    scale: { duration: 0.3 }
+  }}
+  whileHover={{ 
+    scale: 1.03,
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+    y: -4
+  }}
+  className={`group relative p-5 rounded-2xl h-full flex flex-col ${
+    project.favorite 
+      ? 'bg-gradient-to-br from-yellow-50 to-yellow-100/70 dark:from-yellow-900/30 dark:to-yellow-800/10 border-yellow-200 dark:border-yellow-800/50' 
+      : 'bg-white dark:bg-gray-800/90 border-gray-100 dark:border-gray-700/50'
+  } hover:bg-gray-50 dark:hover:bg-gray-700/80 transition-all duration-300 border backdrop-blur-sm shadow-sm hover:shadow-lg`}                
 >
-  <span className="i-ph:chat-circle-text h-5 w-5 text-purple-600 dark:text-purple-400" />
-</button>
+  {project.favorite && (
+    <div className="absolute top-4 right-4">
+      <motion.span 
+        className="i-ph:star-fill text-yellow-400 h-5 w-5" 
+        animate={{ rotate: [0, 15, -15, 0] }}
+        transition={{ duration: 1, repeat: Infinity, repeatDelay: 5 }}
+      />
+    </div>
+  )}
+  
+  <div className="flex justify-between items-start mb-4">
+    <a
+      href={`/git?url=${encodeURIComponent(project.url)}`}
+      className="text-xl font-bold text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors group-hover:text-purple-600 dark:group-hover:text-purple-400 line-clamp-1 hover:underline decoration-purple-400 decoration-2 underline-offset-2"
+    >
+      {project.name}
+    </a>
+    <div className="flex gap-2">
+      <button
+        onClick={() => onImportToChat?.(project)}
+        className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-purple-50/80 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-800/40 hover:scale-105 transform flex items-center justify-center hover:shadow-md hover:shadow-purple-200/50 dark:hover:shadow-purple-900/30"
+        title="Importer dans le chat"
+        aria-label="Importer dans le chat"
+      >
+        <span className="i-ph:chat-circle-text h-5 w-5 text-purple-600 dark:text-purple-400" />
+      </button>
 
-<button
-  onClick={() => toggleFavorite(project)}
-  className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-800/30 hover:scale-105 transform flex items-center justify-center"
-  title={project.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-  aria-label={project.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
->
-  <span className={`h-5 w-5 ${project.favorite ? 'text-yellow-500 i-ph:star-fill' : 'text-yellow-500 dark:text-yellow-400 i-ph:star'}`} />
-</button>
+      <button
+        onClick={() => toggleFavorite(project)}
+        className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-yellow-50/80 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-800/40 hover:scale-105 transform flex items-center justify-center hover:shadow-md hover:shadow-yellow-200/50 dark:hover:shadow-yellow-900/30"
+        title={project.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        aria-label={project.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+      >
+        <span className={`h-5 w-5 ${project.favorite ? 'text-yellow-500 i-ph:star-fill' : 'text-yellow-500 dark:text-yellow-400 i-ph:star'}`} />
+      </button>
 
-<button
-  onClick={() => deleteProject(project)}
-  className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-800/30 hover:scale-105 transform flex items-center justify-center"
-  title="Supprimer"
-  aria-label="Supprimer"
->
-  <span className="i-ph:trash h-5 w-5 text-red-500 dark:text-red-400" />
-</button>
-                      </div>
-                    </div>
+      <button
+        onClick={() => deleteProject(project)}
+        className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-red-50/80 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-800/40 hover:scale-105 transform flex items-center justify-center hover:shadow-md hover:shadow-red-200/50 dark:hover:shadow-red-900/30"
+        title="Supprimer"
+        aria-label="Supprimer"
+      >
+        <span className="i-ph:trash h-5 w-5 text-red-500 dark:text-red-400" />
+      </button>
+    </div>
+  </div>
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 group-hover:line-clamp-3 transition-all duration-300 flex-grow">{project.description}</p>
+  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 group-hover:line-clamp-3 transition-all duration-300 flex-grow">{project.description}</p>
 
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {project.languages.slice(0, 3).map(lang => (
-                        <motion.span
-                          key={lang}
-                          whileHover={{ scale: 1.1 }}
-                          className="px-2 py-1 text-xs font-medium rounded-full bg-purple-50 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800 shadow-sm"
-                        >
-                          {lang}
-                        </motion.span>
-                      ))}
-                      {project.languages.length > 3 && (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                          +{project.languages.length - 3}
-                        </span>
-                      )}
-                    </div>
+  <div className="flex flex-wrap gap-2 mb-4">
+    {project.languages.slice(0, 3).map(lang => (
+      <motion.span
+        key={lang}
+        whileHover={{ scale: 1.08, y: -2 }}
+        className="px-3 py-1 text-xs font-medium rounded-full bg-purple-50/80 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800/50 shadow-sm backdrop-blur-sm"
+      >
+        {lang}
+      </motion.span>
+    ))}
+    {project.languages.length > 3 && (
+      <motion.span 
+        whileHover={{ scale: 1.08, y: -2 }}
+        className="px-3 py-1 text-xs font-medium rounded-full bg-gray-50/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-600/50 shadow-sm backdrop-blur-sm"
+      >
+        +{project.languages.length - 3}
+      </motion.span>
+    )}
+  </div>
 
-                    <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 border-t dark:border-gray-700 pt-3 mt-auto">
-                      {project.stars !== undefined && (
-                        <motion.div 
-                          className="flex items-center gap-1"
-                          whileHover={{ scale: 1.1 }}
-                          title="Stars"
-                        >
-                          <span className="i-ph:star text-yellow-500" />
-                          {project.stars}
-                        </motion.div>
-                      )}
-                      {project.forks !== undefined && (
-                        <motion.div 
-                          className="flex items-center gap-1"
-                          whileHover={{ scale: 1.1 }}
-                          title="Forks"
-                        >
-                          <span className="i-ph:git-fork text-blue-500" />
-                          {project.forks}
-                        </motion.div>
-                      )}
-                      {project.updatedAt && (
-                        <motion.div 
-                          className="flex items-center gap-1 ml-auto"
-                          whileHover={{ scale: 1.1 }}
-                          title="Dernière mise à jour"
-                        >
-                          <span className="i-ph:clock text-green-500" />
-                          {new Date(project.updatedAt).toLocaleDateString()}
-                        </motion.div>
-                      )}
-                    </div>
-                  </motion.div>
+  <div className="flex items-center gap-4 text-xs font-medium text-gray-600 dark:text-gray-300 border-t dark:border-gray-700/50 pt-4 mt-auto">
+    {project.stars !== undefined && (
+      <motion.div 
+        className="flex items-center gap-1.5"
+        whileHover={{ scale: 1.1, y: -1 }}
+        title="Stars"
+      >
+        <span className="i-ph:star text-yellow-500" />
+        {project.stars.toLocaleString()}
+      </motion.div>
+    )}
+    {project.forks !== undefined && (
+      <motion.div 
+        className="flex items-center gap-1.5"
+        whileHover={{ scale: 1.1, y: -1 }}
+        title="Forks"
+      >
+        <span className="i-ph:git-fork text-blue-500" />
+        {project.forks.toLocaleString()}
+      </motion.div>
+    )}
+    {project.updatedAt && (
+      <motion.div 
+        className="flex items-center gap-1.5 ml-auto"
+        whileHover={{ scale: 1.1, y: -1 }}
+        title="Dernière mise à jour"
+      >
+        <span className="i-ph:clock text-green-500" />
+        {new Date(project.updatedAt).toLocaleDateString()}
+      </motion.div>
+    )}
+  </div>
+</motion.div>
                 ))}
             </div>
           )}
