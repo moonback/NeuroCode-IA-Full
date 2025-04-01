@@ -70,10 +70,10 @@ export const Artifact = memo(({ messageId }: ArtifactProps) => {
       <div className="flex">
         <button
           className="flex items-stretch bg-bolt-elements-artifacts-background hover:bg-bolt-elements-artifacts-backgroundHover w-full overflow-hidden"
-          onClick={() => {
-            const showWorkbench = workbenchStore.showWorkbench.get();
-            workbenchStore.showWorkbench.set(!showWorkbench);
-          }}
+          // onClick={() => {
+          //   const showWorkbench = workbenchStore.showWorkbench.get();
+          //   workbenchStore.showWorkbench.set(!showWorkbench);
+          // }}
         >
           {artifact.type == 'bundled' && (
             <>
@@ -89,7 +89,7 @@ export const Artifact = memo(({ messageId }: ArtifactProps) => {
           )}
           <div className="px-5 p-3.5 w-full text-left">
             <div className="w-full text-bolt-elements-textPrimary font-medium leading-5 text-sm">{artifact?.title}</div>
-            <div className="w-full w-full text-bolt-elements-textSecondary text-xs mt-0.5">Click to open Workbench</div>
+            {/* <div className="w-full w-full t:ext-bolt-elements-textSecondary text-xs mt-0.5">Click to open Workbench</div> */}
           </div>
         </button>
         <div className="bg-bolt-elements-artifacts-borderColor w-[1px]" />
@@ -232,6 +232,7 @@ async function handleButtonAction(action: ButtonAction) {
 
 const ActionList = memo(({ actions }: ActionListProps) => {
   const [clickedButtons, setClickedButtons] = useState<Set<string>>(new Set());
+  const [skipClicked, setSkipClicked] = useState(false); // Nouvel état pour suivre si "Ignorer" a été cliqué
 
   const handleButtonClick = (action: ButtonAction) => {
     const buttonId = `${action.artifactId}-${action.value}`;
@@ -241,10 +242,14 @@ const ActionList = memo(({ actions }: ActionListProps) => {
       setClickedButtons((prev) => {
         const newSet = new Set(prev);
         newSet.add(buttonId);
-
         return newSet;
       });
-      handleButtonAction(action); // Pass the full action
+      
+      if (action.value === 'skip') {
+        setSkipClicked(true); // Mettre à jour l'état si c'est "Ignorer" qui a été cliqué
+      }
+      
+      handleButtonAction(action);
     } else {
       console.log('Button already clicked:', buttonId);
     }
@@ -273,8 +278,8 @@ const ActionList = memo(({ actions }: ActionListProps) => {
               >
                 {!isButtonClicked ? (
                   <div className="mt-4 flex gap-3 justify-center">
-                    {/* Only show buttons if no installation is in progress */}
-                    {!Array.from(clickedButtons).some(id => id.includes('proceed')) && (
+                    {/* Only show buttons if no installation is in progress AND skip hasn't been clicked */}
+                    {!Array.from(clickedButtons).some(id => id.includes('proceed')) && !skipClicked && (
                       <button
                         onClick={() => handleButtonClick(buttonAction)}
                         className={classNames(
