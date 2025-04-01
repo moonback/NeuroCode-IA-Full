@@ -13,6 +13,7 @@ interface Project {
   stars?: number;
   forks?: number;
   updatedAt?: string;
+  favorite?: boolean;
 }
 
 interface Filters {
@@ -20,6 +21,7 @@ interface Filters {
   dateRange: 'all' | 'week' | 'month' | 'year';
   minStars: number;
   sortBy: 'updated' | 'stars' | 'name';
+  showFavorites: boolean;
 }
 
 export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; onImportToChat?: (project: Project) => void }) => {
@@ -32,10 +34,22 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
     language: '',
     dateRange: 'all',
     minStars: 0,
-    sortBy: 'updated'
+    sortBy: 'updated',
+    showFavorites: false
   });
   
   const allLanguages = [...new Set(projects.flatMap(p => p.languages))].sort();
+
+  const toggleFavorite = (projectToUpdate: Project) => {
+    const updatedProjects = projects.map(project => 
+      project.name === projectToUpdate.name 
+        ? { ...project, favorite: !project.favorite }
+        : project
+    );
+    setProjects(updatedProjects);
+    setLocalStorage('github_projects', updatedProjects);
+    toast.success(projectToUpdate.favorite ? 'Projet retiré des favoris' : 'Projet ajouté aux favoris');
+  };
 
   const deleteProject = (projectToDelete: Project) => {
     const updatedProjects = projects.filter(project => project.name !== projectToDelete.name);
@@ -95,7 +109,12 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
   useEffect(() => {
     const savedProjects = getLocalStorage('github_projects');
     if (savedProjects) {
-      setProjects(savedProjects);
+      const initializedProjects = savedProjects.map((project: { favorite: undefined; }) => ({
+        ...project,
+        favorite: project.favorite === undefined ? false : project.favorite
+      }));
+      setProjects(initializedProjects);
+      setLocalStorage('github_projects', initializedProjects);
     }
     setLoading(false);
   }, []);
@@ -139,7 +158,7 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
           value={githubUrl}
           onChange={(e) => setGithubUrl(e.target.value)}
           placeholder="Entrez l'URL du dépôt GitHub"
-          className="flex-1 px-3 py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+          className="flex-1 px-3 text-white py-2 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
         />
         <button
           onClick={importGithubProject}
@@ -171,6 +190,15 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
             {allLanguages.map(lang => (
               <option key={lang} value={lang}>{lang}</option>
             ))}
+            <div className="flex items-center gap-2 ml-2">
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, showFavorites: !prev.showFavorites }))}
+                className={`p-2 rounded-lg ${filters.showFavorites ? 'bg-yellow-400' : 'bg-gray-200 dark:bg-gray-700'} hover:opacity-90 transition-opacity`}
+                title="Afficher uniquement les favoris"
+              >
+                <span className={`h-5 w-5 ${filters.showFavorites ? 'i-ph:star-fill' : 'i-ph:star'}`} />
+              </button>
+            </div>
           </select>
           <select
             value={filters.dateRange}
@@ -215,6 +243,7 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
         <div className="space-y-3">
           {projects
             .filter(project => {
+              if (filters.showFavorites && !project.favorite) return false;
               if (filters.language && !project.languages.includes(filters.language)) return false;
               if (filters.minStars && (project.stars || 0) < filters.minStars) return false;
               if (filters.dateRange !== 'all' && project.updatedAt) {
@@ -265,6 +294,13 @@ export const ProjectList = ({ onClose, onImportToChat }: { onClose: () => void; 
                       title="Importer dans le chat"
                     >
                       <span className="i-ph:chat-circle-text h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    </button>
+                    <button
+                      onClick={() => toggleFavorite(project)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+                      title={project.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    >
+                      <span className={`h-5 w-5 ${project.favorite ? 'text-yellow-400 i-ph:star-fill' : 'text-gray-600 dark:text-gray-400 i-ph:star'}`} />
                     </button>
                     <button
                       onClick={() => deleteProject(project)}
