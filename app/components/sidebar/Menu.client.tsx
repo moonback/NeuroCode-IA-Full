@@ -38,7 +38,7 @@ const menuVariants = {
   },
 } satisfies Variants;
 
-type DialogContent = { type: 'delete'; item: ChatHistoryItem } | null;
+type DialogContent = { type: 'delete'; item: ChatHistoryItem } | { type: 'delete-multiple'; items: ChatHistoryItem[] } | null;
 
 function CurrentDateTime() {
   const [dateTime, setDateTime] = useState(new Date());
@@ -234,31 +234,51 @@ export const Menu = () => {
                 <span className="inline-block i-lucide:message-square h-4 w-4" />
                 <span className="text-sm font-medium">Démarrer une nouvelle discussion</span>
               </a>
-              <button
-                onClick={() => {
-                  setIsSelectionMode(!isSelectionMode);
-                  if (!isSelectionMode) {
-                    setSelectedItems([]);
-                  }
-                }}
-                className={classNames(
-                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
-                  isSelectionMode
-                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+              <div className="flex gap-2">
+                {isSelectionMode && (
+                  <>
+                    <button
+                      onClick={() => setSelectedItems(list.map(item => item.id))}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      title="Sélectionner tout"
+                    >
+                      <span className="i-ph:check-square-offset-fill text-lg" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedItems([])}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      title="Effacer la sélection"
+                    >
+                      <span className="i-ph:selection-slash text-lg" />
+                    </button>
+                  </>
                 )}
-                title="Mode sélection multiple"
-              >
-                <span className="i-ph:check-square-duotone text-lg" />
-              </button>
+                <button
+                  onClick={() => {
+                    setIsSelectionMode(!isSelectionMode);
+                    if (!isSelectionMode) {
+                      setSelectedItems([]);
+                    }
+                  }}
+                  className={classNames(
+                    'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+                    isSelectionMode
+                      ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  )}
+                  title="Mode sélection multiple"
+                >
+                  <span className="i-ph:check-square-duotone text-lg" />
+                </button>
+              </div>
             </div>
             {isSelectionMode && selectedItems.length > 0 && (
               <button
                 onClick={() => {
-                  const itemsToDelete = list.filter(item => selectedItems.includes(item.id));
-                  deleteItems(itemsToDelete);
-                  setIsSelectionMode(false);
-                  setSelectedItems([]);
+                  setDialogContent({
+                    type: 'delete-multiple',
+                    items: list.filter(item => selectedItems.includes(item.id))
+                  });
                 }}
                 className="w-full flex gap-2 items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
               >
@@ -313,31 +333,52 @@ export const Menu = () => {
                 </div>
               ))}
               <Dialog onBackdrop={closeDialog} onClose={closeDialog}>
-                {dialogContent?.type === 'delete' && (
+                {(dialogContent?.type === 'delete' || dialogContent?.type === 'delete-multiple') && (
                   <>
                     <div className="p-6 bg-white dark:bg-gray-950">
-                      <DialogTitle className="text-gray-900 dark:text-white">Suprimer la conversation ?</DialogTitle>
+                      <DialogTitle className="text-gray-900 dark:text-white">
+                        {dialogContent.type === 'delete' ? 'Supprimer la conversation ?' : 'Supprimer les conversations ?'}
+                      </DialogTitle>
                       <DialogDescription className="mt-2 text-gray-600 dark:text-gray-400">
-                        <p>
-                        Vous êtes sur le point de supprimer {' '}
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {dialogContent.item.description}
-                          </span>
+                        {dialogContent.type === 'delete' ? (
+                          <p>
+                            Vous êtes sur le point de supprimer {' '}
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {dialogContent.item.description}
+                            </span>
+                          </p>
+                        ) : (
+                          <p>
+                            Vous êtes sur le point de supprimer {' '}
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {dialogContent.items.length} conversations
+                            </span>
+                          </p>
+                        )}
+                        <p className="mt-2">
+                          {dialogContent.type === 'delete' 
+                            ? 'Êtes-vous sûr de vouloir supprimer cette discussion ?'
+                            : 'Êtes-vous sûr de vouloir supprimer ces discussions ?'}
                         </p>
-                        <p className="mt-2">Êtes-vous sûr de vouloir supprimer cette discussion ?</p>
                       </DialogDescription>
                       <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-500/30">
-                        ⚠️ Cette action est irréversible - toutes les données de la discussion seront définitivement perdues !
+                        ⚠️ Cette action est irréversible - toutes les données {dialogContent.type === 'delete' ? 'de la discussion' : 'des discussions'} seront définitivement perdues !
                       </div>
                     </div>
                     <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
                       <DialogButton type="secondary" onClick={closeDialog}>
-                      Annuler
+                        Annuler
                       </DialogButton>
                       <DialogButton
                         type="danger"
                         onClick={(event) => {
-                          deleteItem(event, dialogContent.item);
+                          if (dialogContent.type === 'delete') {
+                            deleteItem(event, dialogContent.item);
+                          } else {
+                            deleteItems(dialogContent.items);
+                            setIsSelectionMode(false);
+                            setSelectedItems([]);
+                          }
                           closeDialog();
                         }}
                       >
