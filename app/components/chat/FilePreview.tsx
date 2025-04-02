@@ -145,27 +145,41 @@ const formatFileSize = (bytes: number): string => {
 };
 
   return (
-    <div className="flex flex-wrap overflow-x-auto -mt-1 gap-1.5 ml-1 mb-1">
+    <div className="flex flex-wrap overflow-x-auto -mt-1 gap-2 ml-2 mb-2">
       {files.map((file, index) => (
         <div key={file.name + file.size} className="relative">
-        <div className="relative pt-2 pr-2">
+        <div className="relative pt-3 pr-3">
           {imageDataList[index] === 'loading-image' ? (
             // Renders loading indicator for images in process
-            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-md p-1.5 min-w-[35px] h-[28px] border border-gray-700 shadow-sm">
-              <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-sm animate-spin"></div>
-              <div className="text-[8px] text-bolt-elements-textSecondary mt-0.5">Loading...</div>
+            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-lg p-2 min-w-[40px] h-[32px] border border-gray-700 shadow-lg">
+              <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-base animate-spin"></div>
+              <div className="text-[10px] text-bolt-elements-textSecondary mt-1">Loading...</div>
             </div>
           ) : imageDataList[index] && imageDataList[index] !== 'non-image' ? (
             // Renders image for already loaded image types
-            <div className="flex flex-col items-center bg-bolt-elements-background-depth-3 rounded-md p-1.5 border border-gray-700 shadow-sm">
-              <div className="relative overflow-hidden" style={{ maxWidth: '70px', maxHeight: '45px' }}>
+            <div className="flex flex-col items-center bg-bolt-elements-background-depth-3 rounded-lg p-2 border border-gray-700 shadow-lg">
+              <div className="relative overflow-hidden" style={{ maxWidth: '80px', maxHeight: '55px' }}>
                 <img
                   src={imageDataList[index]}
                   alt={file.name}
-                  className="object-contain max-h-[45px] max-w-[70px]"
+                  className="object-contain max-h-[55px] max-w-[80px]"
                 />
-                {/* UI Analysis Button - only appears for images and if we have the provider and the callback */}
-                {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
+                
+              </div>
+              <div className="text-[10px] text-bolt-elements-textSecondary mt-1 max-w-[80px] truncate">
+                {file.name}
+              </div>
+              <div className="text-[10px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
+
+              {/* UI analysis indicator available */}
+              {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
+                <div className="mt-1.5 flex items-center justify-center text-[9px] text-indigo-400 bg-indigo-900/30 rounded-lg px-2 py-1 border border-indigo-500/50 hover:bg-indigo-900/40 transition-colors">
+                  <div className="i-ph:magic-wand-fill mr-1.5 text-[11px]" />
+                  <span className="font-medium">Analyse UI</span>
+                </div>
+              )}
+              {/* UI Analysis Button - only appears for images and if we have the provider and the callback */}
+              {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
                   <UIAnalysisButton
                     imageData={imageDataList[index]}
                     model={model}
@@ -173,53 +187,40 @@ const formatFileSize = (bytes: number): string => {
                     onAnalysisComplete={onUiAnalysisComplete}
                   />
                 )}
-              </div>
-              <div className="text-[8px] text-bolt-elements-textSecondary mt-0.5 max-w-[70px] truncate">
-                {file.name}
-              </div>
-              <div className="text-[8px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
-
-              {/* UI analysis indicator available */}
-              {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
-                <div className="mt-1 flex items-center justify-center text-[7px] text-indigo-400 bg-indigo-900/30 rounded px-1 py-0.5 border border-indigo-500/50">
-                  <div className="i-ph:magic-wand-fill mr-0.5 text-[8px]" />
-                  <span>UI Análise</span>
-                </div>
-              )}
             </div>
           ) : isPdf(file) && getPdfThumbnail(file) ? (
             // Renders PDF thumbnail
-            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-md p-1.5 min-w-[35px] border border-gray-700 shadow-sm">
+            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-lg p-2 min-w-[40px] border border-gray-700 shadow-lg">
               <div className="relative">
                 <img
                   src={getPdfThumbnail(file)?.dataUrl}
                   alt={`${file.name} (page 1)`}
-                  className="max-h-[45px] max-w-[70px] border border-gray-800 rounded object-contain"
+                  className="max-h-[55px] max-w-[80px] border border-gray-800 rounded-lg object-contain"
                 />
-                <div className="absolute bottom-0 right-0 bg-black bg-opacity-70 text-white text-[7px] px-0.5 rounded-tl">
+                <div className="absolute bottom-0 right-0 bg-black bg-opacity-70 text-white text-[9px] px-1 rounded-tl">
                   {getPdfThumbnail(file)?.pageCount || '?'} pgs
                 </div>
               </div>
-              <div className="text-[8px] text-bolt-elements-textSecondary mt-0.5 max-w-[70px] truncate">
+              <div className="text-[10px] text-bolt-elements-textSecondary mt-1 max-w-[80px] truncate">
                 {file.name}
               </div>
-              <div className="text-[8px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
+              <div className="text-[10px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
             </div>
           ) : (
             // Renders icon for other file types
-            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-md p-1.5 min-w-[35px] h-[70px] border border-gray-700 shadow-sm">
-              <div className={`${getFileIcon(file.type)} w-5 h-5 text-bolt-elements-textSecondary`} />
-              <div className="text-[8px] text-bolt-elements-textSecondary mt-0.5 max-w-[70px] truncate">
+            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-lg p-2 min-w-[40px] h-[80px] border border-gray-700 shadow-lg">
+              <div className={`${getFileIcon(file.type)} w-6 h-6 text-bolt-elements-textSecondary`} />
+              <div className="text-[10px] text-bolt-elements-textSecondary mt-1 max-w-[80px] truncate">
                 {file.name}
               </div>
-              <div className="text-[8px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
+              <div className="text-[10px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
             </div>
           )}
           <button
             onClick={() => onRemove(index)}
-            className="absolute top-0.5 right-0.5 z-10 bg-black rounded-full w-4 h-4 shadow-md hover:bg-gray-900 transition-colors flex items-center justify-center"
+            className="absolute top-1 right-1 z-10 bg-black rounded-full w-5 h-5 shadow-lg hover:bg-gray-900 transition-colors flex items-center justify-center"
           >
-            <div className="i-ph:x w-2 h-2 text-gray-200" />
+            <div className="i-ph:x w-3 h-3 text-gray-200" />
           </button>
         </div>
         </div>
