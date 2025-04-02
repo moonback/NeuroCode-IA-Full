@@ -37,14 +37,14 @@ const FeatureCard = memo(
         'hover:bg-bolt-elements-background-depth-2',
         'transition-all duration-300 ease-out',
         'rounded-xl overflow-hidden',
-        'shadow-md hover:shadow-lg',
-        'border border-bolt-elements-borderColor/20 hover:border-bolt-elements-borderColor/50',
-        'transform hover:-translate-y-1'
+        'shadow-sm hover:shadow-xl',
+        'border border-bolt-elements-borderColor/10 hover:border-bolt-elements-borderColor/30',
+        'transform hover:-translate-y-0.5'
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ delay: index * 0.1, type: 'spring', stiffness: 100 }}
+      whileHover={{ scale: 1.01 }}
+      transition={{ delay: index * 0.05, type: 'spring', stiffness: 120, damping: 15 }}
     >
       <div className="p-6 space-y-4">
         <div className="flex items-center justify-between">
@@ -53,16 +53,17 @@ const FeatureCard = memo(
               feature.icon, 
               'w-8 h-8 p-1.5 rounded-lg',
               'text-white',
-              'bg-gradient-to-br from-violet-400 to-violet-600',
-              'shadow-sm'
+              'bg-gradient-to-br from-violet-400/90 to-violet-600',
+              'shadow-md group-hover:shadow-lg group-hover:from-violet-500 group-hover:to-violet-700',
+              'transform group-hover:scale-105 transition-all duration-300'
             )} />
             <div className="flex items-center gap-2">
               <h4 className="font-semibold text-lg text-bolt-elements-textPrimary group-hover:text-violet-500 transition-colors">{feature.title}</h4>
               {feature.beta && (
-                <span className="px-3 py-1 text-xs rounded-full bg-blue-500/10 text-blue-500 font-semibold shadow-sm group-hover:bg-blue-500/20 transition-colors">Bêta</span>
+                <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-500 shadow-sm ring-1 ring-blue-500/20 group-hover:bg-blue-500/20 group-hover:ring-blue-500/30 transition-all duration-300">Bêta</span>
               )}
               {feature.experimental && (
-                <span className="px-3 py-1 text-xs rounded-full bg-orange-500/10 text-orange-500 font-semibold shadow-sm group-hover:bg-orange-500/20 transition-colors">
+                <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-orange-500/10 text-orange-500 shadow-sm ring-1 ring-orange-500/20 group-hover:bg-orange-500/20 group-hover:ring-orange-500/30 transition-all duration-300">
                   Expérimental
                 </span>
               )}
@@ -74,9 +75,9 @@ const FeatureCard = memo(
             className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-bolt-elements-borderColor/50"
           />
         </div>
-        <p className="text-sm text-bolt-elements-textSecondary leading-relaxed group-hover:text-bolt-elements-textPrimary transition-colors">{feature.description}</p>
+        <p className="text-sm text-bolt-elements-textSecondary/90 leading-relaxed group-hover:text-bolt-elements-textPrimary/90 transition-colors duration-300">{feature.description}</p>
         {feature.tooltip && (
-          <p className="text-xs text-bolt-elements-textTertiary/80 italic group-hover:text-bolt-elements-textSecondary/80 transition-colors">
+          <p className="text-xs text-bolt-elements-textTertiary/70 italic group-hover:text-bolt-elements-textSecondary/70 transition-colors duration-300">
             {feature.tooltip}
           </p>
         )}
