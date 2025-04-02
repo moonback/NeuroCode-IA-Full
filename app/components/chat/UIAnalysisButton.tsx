@@ -167,30 +167,30 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
               eventSource.close();
               clearTimeout(timeoutId);
 
-              // Verificar se obtivemos algum texto
+              // Vérifier si nous avons obtenu du texte
               if (!result || result.trim() === '') {
                 eventSource.close();
-                reject(new Error('Nenhum texto foi gerado pela análise'));
+                reject(new Error('Aucun texte n\'a été généré par l\'analyse'));
 
                 return;
               }
 
-              // Verifica se o resultado contém as tags esperadas antes de atualizar
+              // Vérifie si le résultat contient les balises attendues avant la mise à jour
               const containsStructure =
                 result.includes('<summary_title>') &&
                 result.includes('<image_analysis>') &&
                 result.includes('<development_planning>') &&
                 result.includes('<implementation_requirements>');
 
-              // Atualiza o texto no input incrementalmente
+              // Met à jour le texte dans l'input de manière incrémentale
               if (containsStructure) {
                 onAnalysisComplete(result);
               } else if (result.trim() !== '') {
                 /*
-                 * Se ainda não temos a estrutura completa, continuamos mostrando a mensagem de processamento
-                 * mas adicionamos o texto que está chegando para dar feedback visual
+                 * Si nous n'avons pas encore la structure complète, nous continuons à afficher le message de traitement
+                 * mais nous ajoutons le texte qui arrive pour donner un retour visuel
                  */
-                onAnalysisComplete('Gerando análise da interface UI/UX...\n\n' + result);
+                onAnalysisComplete('Génération de l\'analyse de l\'interface UI/UX...\n\n' + result);
               }
 
               toast.update(toastId, {
@@ -355,9 +355,9 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
     toast.update(toastId, {
       render: (
         <div>
-          <div className="font-bold">Análise concluída!</div>
+          <div className="font-bold">Analyse terminée !</div>
           <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
-            Prompt estruturado gerado com sucesso.
+            Prompt structurée générée avec succès.
           </div>
         </div>
       ),
@@ -372,28 +372,40 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
         <button
           onClick={analyzeUI}
           disabled={disabled || isAnalyzing}
-          className={`absolute top-0 left-0 z-10 bg-indigo-700 hover:bg-indigo-600 disabled:bg-gray-700 
-                      rounded-bl-md rounded-tr-md p-1 shadow-md transition-colors flex items-center justify-center
-                      ${isAnalyzing ? 'cursor-wait' : 'cursor-pointer'}
-                      animate-pulse-slow border border-indigo-500`}
+          className={`
+            absolute top-0 left-0 z-10
+            bg-indigo-700 hover:bg-indigo-600 disabled:bg-gray-700 
+            rounded-bl-md rounded-tr-md
+            p-2 shadow-lg
+            transition-all duration-200 ease-in-out
+            flex items-center justify-center gap-2
+            ${isAnalyzing ? 'cursor-wait opacity-75' : 'cursor-pointer hover:scale-105'}
+            ${!disabled && !isAnalyzing && 'animate-pulse-slow'}
+            border-2 border-indigo-500 hover:border-indigo-400
+            focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50
+          `}
+          aria-label="Analyser l'interface utilisateur/UX"
         >
           {isAnalyzing ? (
-            <div className="i-svg-spinners:90-ring-with-bg text-white text-sm animate-spin"></div>
+            <div className="i-svg-spinners:90-ring-with-bg text-white text-base animate-spin"></div>
           ) : (
-            <div className="i-ph:magic-wand text-white text-sm"></div>
+            <div className="i-ph:magic-wand text-white text-base transform hover:rotate-12 transition-transform"></div>
           )}
         </button>
       </Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
-          className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary p-2 rounded-md text-xs border border-bolt-elements-borderColor max-w-xs"
+          className="bg-gray-800 text-white p-3 rounded-lg text-sm border border-gray-700 max-w-sm shadow-lg"
           sideOffset={5}
         >
-          <p className="font-semibold">Analyser l'interface utilisateur/UX</p>
-          <div className="text-bolt-elements-textSecondary mt-1">
-          c'était une invite structurée basée sur l'image de l'interface
+          <p className="font-bold text-indigo-400">Analyse UI/UX intelligente</p>
+          <div className="text-gray-300 mt-2 leading-relaxed">
+            Générer une analyse détaillée et des recommandations basées sur l'image de l'interface
           </div>
-          <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
+          <div className="text-gray-400 text-xs mt-2 italic">
+            Utilise l'IA pour extraire les meilleures pratiques UI/UX
+          </div>
+          <Tooltip.Arrow className="fill-gray-800" />
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>
