@@ -34,6 +34,14 @@ export class PromptLibrary {
       description: 'Version expérimentale du prompt optimisée pour réduire la consommation de tokens',
       get: (options) => optimized(options),
     },
+    chatOnly: {
+      label: 'Chat uniquement',
+      description: 'Prompt spécialisé pour les interactions de chat sans workbench',
+      get: (options) => `Vous êtes un assistant de chat spécialisé. 
+        Vous ne devez pas interagir avec le workbench.
+        Vos réponses doivent être concises et orientées vers la conversation.
+        Contexte actuel : ${options.cwd}`,
+    },
   };
   static getList() {
     return Object.entries(this.library).map(([key, value]) => {
