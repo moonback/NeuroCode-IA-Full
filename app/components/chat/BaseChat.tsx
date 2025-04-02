@@ -360,7 +360,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
 
         toast.info(
           <div>
-            <div className="font-bold">Image attached:</div>
+            <div className="font-bold">Image ci-jointe :</div>
             <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
               {file.name} ({Math.round(file.size / 1024)} KB)
             </div>
@@ -374,15 +374,15 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
 
         const toastId = toast.info(
           <div>
-            <div className="font-bold">PDF attached:</div>
+            <div className="font-bold">PDF ci-joint :</div>
             <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
-              {file.name} ({fileSize} KB){isLargePdf ? ' - Large file, processing may take longer' : ''}
+              {file.name} ({fileSize} KB){isLargePdf ? ' - Fichier volumineux, le traitement peut prendre plus de temps' : ''}
             </div>
             <div className="mt-2">
               <div className="w-full bg-gray-700 rounded-full h-2.5 mb-1">
                 <div className="bg-blue-600 h-2.5 rounded-full w-1/4"></div>
               </div>
-              <div className="text-xs text-gray-400">Extracting text...</div>
+              <div className="text-xs text-gray-400">Extraction de texte...</div>
             </div>
           </div>,
           { autoClose: false },
@@ -397,11 +397,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             toast.update(toastId, {
               render: (
                 <div>
-                  <div className="font-bold">PDF processed successfully:</div>
+                  <div className="font-bold">PDF traité avec succès:</div>
                   <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
                     {file.name} ({fileSize} KB)
                   </div>
-                  <div className="mt-1 text-xs text-green-400">Text extracted and ready to send</div>
+                  <div className="mt-1 text-xs text-green-400">Texte extrait et prêt à être envoyé</div>
                 </div>
               ),
               autoClose: 3000,
@@ -414,12 +414,12 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             toast.update(toastId, {
               render: (
                 <div>
-                  <div className="font-bold">Error processing PDF:</div>
+                  <div className="font-bold">Erreur lors du traitement du PDF:</div>
                   <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
                     {file.name} ({fileSize} KB)
                   </div>
                   <div className="mt-1 text-xs text-red-400">
-                    The file will be attached but text extraction had issues
+                  Le fichier sera joint mais l'extraction du texte a rencontré des problèmes
                   </div>
                 </div>
               ),
@@ -442,7 +442,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       ) {
         toast.info(
           <div>
-            <div className="font-bold">Document file attached:</div>
+            <div className="font-bold">Fichier de document joint :</div>
             <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded flex items-center">
               <div
                 className={
@@ -455,7 +455,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               <div>
                 <div>{file.name}</div>
                 <div className="text-xs text-gray-400">
-                  {Math.round(file.size / 1024)} KB - Text will be extracted when sending
+                  {Math.round(file.size / 1024)} KB - Le texte sera extrait lors de l'envoi
                 </div>
               </div>
             </div>
@@ -469,7 +469,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       // For other file types, maintain previous behavior
       toast.info(
         <div>
-          <div className="font-bold">File attached:</div>
+          <div className="font-bold">Fichier joint :</div>
           <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
             {file.name} ({Math.round(file.size / 1024)} KB)
           </div>
@@ -512,7 +512,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           const filteredFiles = clipboardFiles.filter((file) => file.size <= MAX_FILE_SIZE);
 
           if (filteredFiles.length < clipboardFiles.length) {
-            toast.warning('Some files were ignored because they exceed the maximum size of 100MB.');
+            toast.warning('Certains fichiers ont été ignorés car ils dépassent la taille maximale de 100 Mo.');
 
             // Continue only with valid files
             processPastedFiles(filteredFiles);
