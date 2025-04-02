@@ -4,7 +4,7 @@ import { stripIndents } from '~/utils/stripIndent';
 import type { ProviderInfo } from '~/types/model';
 import { getApiKeysFromCookie, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
- 
+
 export async function action(args: ActionFunctionArgs) {
   return uiAnalysisAction(args);
 }
@@ -81,7 +81,7 @@ async function streamToText(stream: ReadableStream, transformer?: (text: string)
       // Vérifier la taille totale
       totalSize += value.length;
       if (totalSize > MAX_RESPONSE_SIZE) {
-        throw new Error('Response size limit exceeded');
+        throw new Error('La limite de taille de réponse a été dépassée');
       }
 
       result += decoder.decode(value, { stream: true });
@@ -91,7 +91,7 @@ async function streamToText(stream: ReadableStream, transformer?: (text: string)
 
     return transformer ? transformer(result) : result;
   } catch (error) {
-    logger.error('Error in streamToText:', error);
+    logger.error('Erreur dans streamToText :', error);
     throw error;
   } finally {
     reader.releaseLock();
@@ -105,7 +105,7 @@ function textToSSE(text: string): ReadableStream {
   const encoder = new TextEncoder();
   const chunks = text.split('\n');
 
-  logger.debug(`Converting text to SSE. Size: ${text.length}, Lines: ${chunks.length}`);
+  logger.debug(`Conversion de texte en SSE. Taille : ${text.length}, Lignes: ${chunks.length}`);
 
   return new ReadableStream({
     start(controller) {
@@ -152,7 +152,7 @@ async function uiAnalysisLoader({ request }: LoaderFunctionArgs) {
     logger.warn(`Analysis with ID ${id} not found in cache`);
 
     // Return a waiting message, as processing may be ongoing
-    return new Response(textToSSE('Waiting for analysis processing. Please wait...'), {
+    return new Response(textToSSE('En attente de traitement de l\'analyse. Veuillez patienter…'), {
       status: 200,
       headers: {
         'Content-Type': 'text/event-stream',
@@ -168,8 +168,8 @@ async function uiAnalysisLoader({ request }: LoaderFunctionArgs) {
 
   // If the stream is empty (still processing), send a waiting message
   if (cacheEntry.stream === textToSSE('')) {
-    logger.debug(`Cache for ID ${id} exists, but is still empty (processing)`);
-    return new Response(textToSSE('Processing analysis. Please wait...'), {
+    logger.debug(`Cache pour l'ID ${id} existe, mais est encore vide (en cours de traitement)`);
+    return new Response(textToSSE('Analyse en cours. Veuillez patienter...'), {
       status: 200,
       headers: {
         'Content-Type': 'text/event-stream',
@@ -285,33 +285,7 @@ async function uiAnalysisAction({ context, request }: ActionFunctionArgs) {
                 <summary_title>
                 Create detailed components with these requirements:
 
-                1. Component Architecture:
-                   - Use the 'use client' directive in all client-side rendered components
-                   - Implement pure components when possible for rendering optimization
-                   - Follow the component composition pattern for reusability and maintainability
-
-                2. Styling and Responsiveness:
-                   - Use exclusively Tailwind CSS utility classes for styling
-                   - Implement complete responsive design with mobile-first breakpoints
-                   - Ensure adequate contrast between background and text colors (accessibility)
-
-                3. Visual Resources:
-                   - Use the lucide-react package for icons (DO NOT use other UI libraries)
-                   - For placeholder images, use photos from picsum.photos (format: https://picsum.photos/seed/{id}/{width}/{height})
-                   - Configure remotePatterns in next.config.js to enable images from picsum.photos
-
-                4. Project Structure:
-                   - Create a root layout.tsx file encapsulating common navigation elements
-                   - Properly implement navigation (left sidebar, top header)
-                   - Use grid layouts precisely for element alignment
-
-                5. Best Practices:
-                   - Use path aliases (@/) for all imports
-                   - Keep component imports organized by category
-                   - Update src/app/page.tsx with comprehensive code for the main page
-                   - Properly implement the root route (page.tsx)
-                   - Fully and coherently implement all requested functionalities
-                </summary_title>
+                
 
                 <image_analysis>
                 Navigation Elements:
@@ -403,8 +377,9 @@ async function uiAnalysisAction({ context, request }: ActionFunctionArgs) {
       options: {
         system:
           'You are an expert in UX/UI and front-end development. Your task is to analyze interface images and generate a detailed structured prompt that allows the interface to be recreated. Be extremely precise in analyzing layouts, colors (with exact hexadecimal codes), alignments, components, and structure. Remain strictly faithful to the specified prompt format, filling in all fields with precise technical details.',
-        temperature: 0.5, // Lower for greater accuracy
-        presencePenalty: 0.1, // Small penalty for repetition
+        temperature: 0.5, // Plus bas pour une plus grande précision
+        // maxTokens: 1000, // Limite le nombre de tokens pour éviter les réponses trop longues
+        presencePenalty: 0.1, // Petite pénalité en cas de répétition
       },
     });
 
@@ -453,13 +428,13 @@ async function uiAnalysisAction({ context, request }: ActionFunctionArgs) {
               stream: textToSSE(fullText),
               timestamp: Date.now()
             });
-            logger.debug(`Analysis stored in cache with ID: ${id}, size: ${fullText.length}`);
-            logger.debug(`Cache size: ${analysisCache.size} entries`);
+            logger.debug(`Analyse stockée dans le cache avec ID: ${id}, taille: ${fullText.length}`);
+            logger.debug(`Taille du cache: ${analysisCache.size} entrées`);
           } catch (error) {
-            logger.error(`Error processing stream for cache (ID: ${id}):`, error);
-            // In case of error, ensure the cache has at least an error message
+            logger.error(`Erreur lors du traitement du flux pour le cache (ID: ${id}):`, error);
+            // En cas d'erreur, s'assurer que le cache contient au moins un message d'erreur
             analysisCache.set(id, {
-              stream: textToSSE('Error processing the analysis. Please try again.'),
+              stream: textToSSE('Erreur lors du traitement de l\'analyse. Veuillez réessayer.'),
               timestamp: Date.now()
             });
           }
@@ -511,8 +486,7 @@ async function uiAnalysisAction({ context, request }: ActionFunctionArgs) {
       logger.error('Error processing stream for response:', error);
 
       // Fallback: if an error occurs, return a direct response
-      const textResponse = 'Error processing the UI/UX analysis. Please try again.';
-
+      const textResponse = 'Erreur lors du traitement de l\'analyse UI/UX. Veuillez réessayer.';
       return new Response(textToSSE(textResponse), {
         status: 200,
         headers: {
