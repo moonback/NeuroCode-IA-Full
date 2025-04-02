@@ -135,9 +135,11 @@ export default function FeaturesTab() {
     isLatestBranch,
     contextOptimizationEnabled,
     eventLogs,
+    uiAnalysisEnabled,
     setAutoSelectTemplate,
     enableLatestBranch,
     enableContextOptimization,
+    enableUIAnalysis,
     setEventLogs,
     setPromptId,
     promptId,
@@ -165,6 +167,10 @@ export default function FeaturesTab() {
     if (eventLogs === undefined) {
       setEventLogs(false); // Default: OFF - Journalisation des événements désactivée
     }
+
+    if (uiAnalysisEnabled === undefined) {
+      enableUIAnalysis(true); // Default: ON - Analyse UI/UX activée par défaut
+    }
   }, []); // Only run once on component mount
 
   const handleToggleFeature = useCallback(
@@ -191,6 +197,12 @@ export default function FeaturesTab() {
         case 'eventLogs': {
           setEventLogs(enabled);
           toast(`Journalisation des événements ${enabled ? 'activée' : 'désactivée'}`);
+          break;
+        }
+
+        case 'uiAnalysis': {
+          enableUIAnalysis(enabled);
+          toast(`Analyse UI/UX ${enabled ? 'activée' : 'désactivée'}`);
           break;
         }
 
@@ -234,6 +246,14 @@ export default function FeaturesTab() {
         icon: 'i-ph:list-bullets',
         enabled: eventLogs,
         tooltip: 'Activé par défaut. Fonctionnalité pour enregistrer les logs détaillés des événements du système et des actions de l\'utilisateur. Utile pour le débogage mais peut affecter les performances.',
+      },
+      {
+        id: 'uiAnalysis',
+        title: 'Analyse UI/UX',
+        description: 'Activer le bouton d\'analyse intelligente des interfaces utilisateur',
+        icon: 'i-ph:magic-wand',
+        enabled: uiAnalysisEnabled,
+        tooltip: 'Activé par défaut. Cette fonctionnalité permet d\'analyser les interfaces utilisateur et de générer des recommandations d\'amélioration.',
       },
     ],
     beta: [],
