@@ -4,7 +4,7 @@ import { stripIndents } from '~/utils/stripIndent';
 import type { ProviderInfo } from '~/types/model';
 import { getApiKeysFromCookie, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
-
+ 
 export async function action(args: ActionFunctionArgs) {
   return uiAnalysisAction(args);
 }
