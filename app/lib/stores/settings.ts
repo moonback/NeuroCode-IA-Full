@@ -161,7 +161,7 @@ const getInitialSettings = () => {
     eventLogs: getStoredBoolean(SETTINGS_KEYS.EVENT_LOGS, true),
     promptId: isBrowser ? localStorage.getItem(SETTINGS_KEYS.PROMPT_ID) || 'default' : 'default',
     developerMode: getStoredBoolean(SETTINGS_KEYS.DEVELOPER_MODE, false),
-    uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, true),
+    uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
   };
 };
 
