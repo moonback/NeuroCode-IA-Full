@@ -26,12 +26,12 @@ export class PromptLibrary {
   > = {
     default: {
       label: 'Officiel',
-      description: 'This is the battle tested default system Prompt',
+      description: 'Prompt système par défaut testé et approuvé',
       get: (options) => getSystemPrompt(options.cwd, options.supabase),
     },
     optimized: {
       label: 'Optimiser ',
-      description: 'an Experimental version of the prompt for lower token usage',
+      description: 'Version expérimentale du prompt optimisée pour réduire la consommation de tokens',
       get: (options) => optimized(options),
     },
   };
