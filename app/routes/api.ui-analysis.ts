@@ -19,16 +19,56 @@ const logger = createScopedLogger('api.ui-analysis');
  * Temporary storage to avoid reprocessing images
  * In practice, this would be better implemented with a Redis cache or similar
  */
-const analysisCache = new Map<string, ReadableStream>();
+const MAX_CACHE_SIZE = 100; // Limite maximale d'entrées dans le cache
+const CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
+
+interface CacheEntry {
+  stream: ReadableStream;
+  timestamp: number;
+}
+
+const analysisCache = new Map<string, CacheEntry>();
+
+function cleanupCache() {
+  const now = Date.now();
+  let entriesRemoved = 0;
+
+  // Supprimer les entrées expirées
+  for (const [id, entry] of analysisCache.entries()) {
+    if (now - entry.timestamp > CACHE_EXPIRY_MS) {
+      analysisCache.delete(id);
+      entriesRemoved++;
+    }
+  }
+
+  // Si le cache est toujours trop grand, supprimer les entrées les plus anciennes
+  if (analysisCache.size > MAX_CACHE_SIZE) {
+    const sortedEntries = Array.from(analysisCache.entries())
+      .sort(([, a], [, b]) => a.timestamp - b.timestamp);
+
+    const entriesToRemove = sortedEntries.slice(0, analysisCache.size - MAX_CACHE_SIZE);
+    for (const [id] of entriesToRemove) {
+      analysisCache.delete(id);
+      entriesRemoved++;
+    }
+  }
+
+  if (entriesRemoved > 0) {
+    logger.debug(`Cache nettoyé: ${entriesRemoved} entrées supprimées`);
+  }
+}
 
 /**
  * Helper function to convert a stream to text and apply transformations
  * This approach is more straightforward and better handles formatting issues
  */
+const MAX_RESPONSE_SIZE = 1024 * 1024; // 1MB limite de taille de réponse
+
 async function streamToText(stream: ReadableStream, transformer?: (text: string) => string): Promise<string> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let result = '';
+  let totalSize = 0;
 
   try {
     while (true) {
@@ -38,12 +78,21 @@ async function streamToText(stream: ReadableStream, transformer?: (text: string)
         break;
       }
 
+      // Vérifier la taille totale
+      totalSize += value.length;
+      if (totalSize > MAX_RESPONSE_SIZE) {
+        throw new Error('Response size limit exceeded');
+      }
+
       result += decoder.decode(value, { stream: true });
     }
     // Last chunk with stream: false to ensure proper decoding
     result += decoder.decode(undefined, { stream: false });
 
     return transformer ? transformer(result) : result;
+  } catch (error) {
+    logger.error('Error in streamToText:', error);
+    throw error;
   } finally {
     reader.releaseLock();
   }
@@ -96,6 +145,8 @@ async function uiAnalysisLoader({ request }: LoaderFunctionArgs) {
 
   logger.debug(`Fetching analysis with ID: ${id}`);
 
+  cleanupCache();
+
   // If the cache is empty for this ID
   if (!analysisCache.has(id)) {
     logger.warn(`Analysis with ID ${id} not found in cache`);
@@ -112,11 +163,11 @@ async function uiAnalysisLoader({ request }: LoaderFunctionArgs) {
   }
 
   // Return the stored stream from the cache
-  const streamResponse = analysisCache.get(id)!;
+  const cacheEntry = analysisCache.get(id)!;
   logger.debug(`Returning analysis from cache with ID: ${id}`);
 
   // If the stream is empty (still processing), send a waiting message
-  if (streamResponse === textToSSE('')) {
+  if (cacheEntry.stream === textToSSE('')) {
     logger.debug(`Cache for ID ${id} exists, but is still empty (processing)`);
     return new Response(textToSSE('Processing analysis. Please wait...'), {
       status: 200,
@@ -128,7 +179,10 @@ async function uiAnalysisLoader({ request }: LoaderFunctionArgs) {
     });
   }
 
-  return new Response(streamResponse, {
+  // Mettre à jour le timestamp pour indiquer que l'entrée est toujours active
+  cacheEntry.timestamp = Date.now();
+
+  return new Response(cacheEntry.stream, {
     status: 200,
     headers: {
       'Content-Type': 'text/event-stream',
@@ -379,7 +433,14 @@ async function uiAnalysisAction({ context, request }: ActionFunctionArgs) {
          * Store the stream directly in the cache (without consuming the entire content)
          * This avoids error 500 from trying to process very large streams
          */
-        analysisCache.set(id, textToSSE('')); // Initially empty
+        // Nettoyer le cache avant d'ajouter une nouvelle entrée
+        cleanupCache();
+
+        // Initialiser l'entrée du cache
+        analysisCache.set(id, {
+          stream: textToSSE(''),
+          timestamp: Date.now()
+        });
 
         // Process the stream in the background and update the cache
         (async () => {
@@ -388,12 +449,19 @@ async function uiAnalysisAction({ context, request }: ActionFunctionArgs) {
             const fullText = await streamToText(clonedStream[0]);
 
             // Update the cache with the complete text
-            analysisCache.set(id, textToSSE(fullText));
+            analysisCache.set(id, {
+              stream: textToSSE(fullText),
+              timestamp: Date.now()
+            });
             logger.debug(`Analysis stored in cache with ID: ${id}, size: ${fullText.length}`);
+            logger.debug(`Cache size: ${analysisCache.size} entries`);
           } catch (error) {
             logger.error(`Error processing stream for cache (ID: ${id}):`, error);
             // In case of error, ensure the cache has at least an error message
-            analysisCache.set(id, textToSSE('Error processing the analysis. Please try again.'));
+            analysisCache.set(id, {
+              stream: textToSSE('Error processing the analysis. Please try again.'),
+              timestamp: Date.now()
+            });
           }
         })();
 
