@@ -172,12 +172,12 @@ const formatFileSize = (bytes: number): string => {
               <div className="text-[10px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
 
               {/* UI analysis indicator available */}
-              {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
-                <div className="mt-1.5 flex items-center justify-center text-[9px] text-indigo-400 bg-indigo-900/30 rounded-lg px-2 py-1 border border-indigo-500/50 hover:bg-indigo-900/40 transition-colors">
-                  <div className="i-ph:magic-wand-fill mr-1.5 text-[11px]" />
-                  <span className="font-medium">Analyse UI</span>
+              {/* {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
+                <div className="mt-2 flex items-center justify-center text-[10px] text-indigo-300 bg-indigo-950/40 rounded-md px-2.5 py-1.5 border border-indigo-400/60 hover:bg-indigo-900/50 hover:text-indigo-200 transition-all duration-200 cursor-pointer shadow-sm">
+                  <div className="i-ph:magic-wand-fill mr-2 text-[12px] opacity-90" />
+                  <span className="font-semibold tracking-wide">Analyze UI</span>
                 </div>
-              )}
+              )} */}
               {/* UI Analysis Button - only appears for images and if we have the provider and the callback */}
               {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
                   <UIAnalysisButton
