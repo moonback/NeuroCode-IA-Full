@@ -131,57 +131,67 @@ const CloudProvidersTab = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <motion.div
-        className="space-y-4"
+        className="space-y-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.4, type: 'spring' }}
       >
-        <div className="flex items-center justify-between gap-4 mt-8 mb-4">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-6 mt-8 mb-6">
+          <div className="flex items-center gap-4">
             <div
               className={classNames(
-                'w-8 h-8 flex items-center justify-center rounded-lg',
-                'bg-bolt-elements-background-depth-3',
-                'text-purple-500',
+                'w-12 h-12 flex items-center justify-center rounded-2xl',
+                'bg-gradient-to-br from-purple-500/10 to-purple-600/10',
+                'text-purple-500 shadow-lg',
+                'transform transition-all duration-300 group-hover:scale-110'
               )}
             >
-              <TbCloudComputing className="w-5 h-5" />
+              <TbCloudComputing className="w-7 h-7" />
             </div>
             <div>
-              <h4 className="text-md font-medium text-bolt-elements-textPrimary">Fournisseurs Cloud</h4>
-              <p className="text-sm text-bolt-elements-textSecondary">Connectez-vous à des modèles et services d'IA basés sur le cloud</p>
+              <h4 className="text-xl font-bold text-bolt-elements-textPrimary">Fournisseurs Cloud</h4>
+              <p className="text-sm text-bolt-elements-textSecondary/90 mt-2 leading-relaxed">
+                Connectez-vous à des modèles et services d'IA basés sur le cloud
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-bolt-elements-textSecondary">Activer tout</span>
-            <Switch checked={categoryEnabled} onCheckedChange={handleToggleCategory} />
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-bolt-elements-textSecondary">Activer tout</span>
+            <Switch 
+              checked={categoryEnabled} 
+              onCheckedChange={handleToggleCategory}
+              className="data-[state=checked]:bg-purple-500"
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredProviders.map((provider, index) => (
             <motion.div
               key={provider.name}
               className={classNames(
-                'rounded-lg border bg-bolt-elements-background text-bolt-elements-textPrimary shadow-sm',
-                'bg-bolt-elements-background-depth-2',
-                'hover:bg-bolt-elements-background-depth-3',
-                'transition-all duration-200',
+                'rounded-2xl border',
+                'bg-gradient-to-br from-bolt-elements-background-depth-2 to-bolt-elements-background-depth-3',
+                'hover:from-bolt-elements-background-depth-3 hover:to-bolt-elements-background-depth-4',
+                'transition-all duration-500',
                 'relative overflow-hidden group',
                 'flex flex-col',
+                'shadow-lg hover:shadow-xl',
+                'border-bolt-elements-borderColor/20 hover:border-purple-500/30'
               )}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.02 }}
+              transition={{ delay: index * 0.1, type: 'spring', stiffness: 100 }}
+              whileHover={{ scale: 1.02, y: -4 }}
             >
-              <div className="absolute top-0 right-0 p-2 flex gap-1">
+              <div className="absolute top-4 right-4 flex gap-2">
                 {URL_CONFIGURABLE_PROVIDERS.includes(provider.name) && (
                   <motion.span
-                    className="px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium"
+                    className="px-3 py-1 text-xs rounded-full bg-purple-500/15 text-purple-400 font-medium
+                             shadow-lg ring-1 ring-purple-500/30 backdrop-blur-sm"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -190,18 +200,25 @@ const CloudProvidersTab = () => {
                 )}
               </div>
 
-              <div className="flex items-start gap-4 p-4">
+              <div className="flex items-start gap-5 p-6">
                 <motion.div
                   className={classNames(
-                    'w-10 h-10 flex items-center justify-center rounded-xl',
-                    'bg-bolt-elements-background-depth-3 group-hover:bg-bolt-elements-background-depth-4',
-                    'transition-all duration-200',
-                    provider.settings.enabled ? 'text-purple-500' : 'text-bolt-elements-textSecondary',
+                    'w-14 h-14 flex items-center justify-center rounded-2xl',
+                    'bg-gradient-to-br',
+                    'transition-all duration-300',
+                    provider.settings.enabled
+                      ? 'from-purple-500/20 to-purple-600/20 text-purple-500'
+                      : 'from-bolt-elements-background-depth-3 to-bolt-elements-background-depth-4 text-bolt-elements-textSecondary',
+                    'shadow-lg group-hover:shadow-xl'
                   )}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <div className={classNames('w-6 h-6', 'transition-transform duration-200', 'group-hover:rotate-12')}>
+                  <div className={classNames(
+                    'w-8 h-8',
+                    'transition-all duration-300',
+                    'group-hover:rotate-12 group-hover:scale-110'
+                  )}>
                     {React.createElement(PROVIDER_ICONS[provider.name as ProviderName] || BsRobot, {
                       className: 'w-full h-full',
                       'aria-label': `${provider.name} logo`,
