@@ -330,12 +330,11 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
         }
       }
     }
-
-    // Se ainda não temos resultados, verificar se o texto bruto contém o formato esperado
+    // Si nous n'avons pas encore de résultats, vérifier si le texte brut contient le format attendu
     if (!result || result.trim() === '') {
-      console.log('Tentando extrair texto da resposta bruta...');
+      console.log('Tentative d\'extraction du texte de la réponse brute...');
 
-      // Se o texto contém o formato esperado, use-o diretamente
+      // Si le texte contient le format attendu, l'utiliser directement
       if (
         text.includes('<summary_title>') ||
         text.includes('<image_analysis>') ||
@@ -345,12 +344,12 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
         result = text;
         onAnalysisComplete(result);
       } else {
-        throw new Error('Nenhum texto foi gerado pela análise');
+        throw new Error('Aucun texte n\'a été généré par l\'analyse');
       }
     }
 
-    // Finalização
-    console.log('Análise concluída com sucesso, tamanho do resultado:', result.length);
+    // Finalisation
+    console.log('Analyse terminée avec succès, taille du résultat:', result.length);
 
     toast.update(toastId, {
       render: (
@@ -374,22 +373,23 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
           disabled={disabled || isAnalyzing}
           className={`
             absolute top-0 left-0 z-10
-            bg-indigo-700 hover:bg-indigo-600 disabled:bg-gray-700 
-            rounded-bl-md rounded-tr-md
-            p-2 shadow-lg
+            bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-600
+            rounded-bl-sm rounded-tr-sm
+            p-1.5 shadow-sm
             transition-all duration-200 ease-in-out
-            flex items-center justify-center gap-2
-            ${isAnalyzing ? 'cursor-wait opacity-75' : 'cursor-pointer hover:scale-105'}
-            ${!disabled && !isAnalyzing && 'animate-pulse-slow'}
-            border-2 border-indigo-500 hover:border-indigo-400
-            focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50
+            flex items-center justify-center
+            ${isAnalyzing ? 'cursor-wait opacity-75' : 'cursor-pointer hover:scale-102'}
+            ${!disabled && !isAnalyzing && 'animate-pulse-subtle'}
+            border border-indigo-400 hover:border-indigo-300
+            focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:ring-opacity-50
+            group
           `}
           aria-label="Analyser l'interface utilisateur/UX"
         >
           {isAnalyzing ? (
-            <div className="i-svg-spinners:90-ring-with-bg text-white text-base animate-spin"></div>
+            <div className="i-svg-spinners:90-ring-with-bg text-white text-sm animate-spin"></div>
           ) : (
-            <div className="i-ph:magic-wand text-white text-base transform hover:rotate-12 transition-transform"></div>
+            <div className="i-ph:magic-wand text-white text-sm transform group-hover:rotate-6 transition-transform"></div>
           )}
         </button>
       </Tooltip.Trigger>
