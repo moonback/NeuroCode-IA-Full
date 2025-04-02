@@ -29,8 +29,8 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
 
     const toastId = toast.info(
       <div>
-        <div className="font-bold">Analisando interface UI/UX...</div>
-        <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">Isso pode levar alguns instantes.</div>
+        <div className="font-bold">Analyse de l'interface UI/UX...</div>
+        <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">Cela peut prendre quelques instants.</div>
       </div>,
       { autoClose: false },
     );
@@ -44,7 +44,7 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
 
       // Texto inicial para informar ao usuário
       onAnalysisComplete(
-        'Gerando análise da interface UI/UX...\n\nEste processo pode levar até 1 minuto, dependendo da complexidade da imagem.',
+        'Analyse de l\'interface UI/UX en cours...\n\nCe processus peut prendre jusqu\'à 1 minute, selon la complexité de l\'image.',
       );
 
       // Preparar os dados para envio
@@ -53,28 +53,28 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
       formData.append('model', model);
       formData.append('provider', JSON.stringify(provider));
 
-      console.log(`Enviando requisição para análise de UI com modelo: ${model}`);
+      console.log(`Envoi d'une demande d'analyse de l'interface utilisateur avec le modèle : ${model}`);
 
       // Abordagem 1: Usando EventSource para processar SSE de forma nativa
       try {
         // Primeiro tentamos usar a abordagem nativa de SSE (mais confiável para streaming)
         await processWithEventSource(formData, onAnalysisComplete, toastId.toString());
       } catch (eventSourceError) {
-        console.warn('Falha no processamento com EventSource, tentando método alternativo:', eventSourceError);
+        console.warn('Le traitement avec EventSource a échoué, essayez une méthode alternative :', eventSourceError);
         // Se falhar, tentamos a abordagem com fetch
         await processWithFetch(formData, onAnalysisComplete, toastId.toString());
       }
     } catch (error) {
-      console.error('Erro na análise de UI:', error);
+      console.error('Erreur dans l\'analyse de l\'interface utilisateur :', error);
       // Insere uma mensagem de erro no input
-      onAnalysisComplete('Erro na análise de interface. Por favor, tente novamente.');
+      onAnalysisComplete('Erreur dans l\'analyse de l\'interface. Veuillez réessayer.');
 
       toast.update(toastId, {
         render: (
           <div>
-            <div className="font-bold">Erro na análise</div>
+            <div className="font-bold">Erreur d'analyse</div>
             <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
-              {error instanceof Error ? error.message : 'Ocorreu um erro desconhecido'}
+              {error instanceof Error ? error.message : 'Une erreur inconnue s\'est produite'}
             </div>
           </div>
         ),
@@ -99,7 +99,7 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
       const uniqueId = Date.now().toString();
       const url = `/api/ui-analysis?id=${uniqueId}`;
 
-      console.log('Iniciando análise de UI com ID:', uniqueId);
+      console.log('Démarrage de l\'analyse de l\'interface utilisateur avec l\'ID :', uniqueId);
 
       // Enviamos os dados primeiro com o ID no URL para associar ao cache
       fetch(`/api/ui-analysis?id=${uniqueId}`, {
@@ -108,7 +108,7 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
       })
         .then((response) => {
           if (!response.ok) {
-            throw new Error(`Erro na resposta do servidor: ${response.status} ${response.statusText}`);
+            throw new Error(`Erreur dans la réponse du serveur : ${response.status} ${response.statusText}`);
           }
 
           // Aguardamos a resposta JSON para confirmar que o processamento foi iniciado
@@ -116,10 +116,10 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
         })
         .then((_data) => {
           if (!_data || !_data.status || _data.status !== 'processing') {
-            throw new Error('Resposta inválida do servidor durante inicialização da análise');
+            throw new Error('Réponse non valide du serveur lors de l\'initialisation de l\'analyse');
           }
 
-          console.log('Processamento iniciado no servidor, ID:', _data.id);
+          console.log('Traitement initié par le serveur, ID:', _data.id);
 
           /*
            * Aumentamos o delay para garantir que o cache esteja pronto no servidor
@@ -132,7 +132,7 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
            * Se o fetch for bem sucedido e o servidor respondeu com status "processing",
            * agora podemos criar o EventSource
            */
-          console.log('Iniciando EventSource para receber os dados...');
+          console.log('Démarrage d\'EventSource pour recevoir des données...');
 
           // Criamos o EventSource com retry automático
           const eventSource = new EventSource(url);
@@ -142,7 +142,7 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
 
           // Definimos um timeout para garantir que não ficamos esperando indefinidamente
           const timeoutId = setTimeout(() => {
-            console.warn('Timeout ao aguardar dados do EventSource');
+            console.warn('Délai d\'attente des données d\'EventSource');
             eventSource.close();
 
             // Se já temos algum resultado, usamos ele mesmo incompleto
@@ -196,9 +196,9 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
               toast.update(toastId, {
                 render: (
                   <div>
-                    <div className="font-bold">Análise concluída!</div>
+                    <div className="font-bold">Analyse terminée !</div>
                     <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
-                      Prompt estruturado gerado com sucesso.
+                    Invite structurée générée avec succès.
                     </div>
                   </div>
                 ),
@@ -227,7 +227,7 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
                 onAnalysisComplete(result);
               } else if (result.trim() !== '') {
                 // Se ainda não temos a estrutura completa, continuamos mostrando a mensagem de processamento
-                onAnalysisComplete('Gerando análise da interface UI/UX...\n\n' + result);
+                onAnalysisComplete('Génération d\'analyses d\'interface UI/UX...\n\n' + result);
               }
             } catch (e) {
               console.error('Erro processando evento:', e);
@@ -389,9 +389,9 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
           className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary p-2 rounded-md text-xs border border-bolt-elements-borderColor max-w-xs"
           sideOffset={5}
         >
-          <p className="font-semibold">Analisar UI/UX</p>
+          <p className="font-semibold">Analyser l'interface utilisateur/UX</p>
           <div className="text-bolt-elements-textSecondary mt-1">
-            Gera um prompt estruturado baseado na imagem de interface
+          c'était une invite structurée basée sur l'image de l'interface
           </div>
           <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
         </Tooltip.Content>
