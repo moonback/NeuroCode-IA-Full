@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import type { ProviderInfo } from '~/types/model';
+import { useSettings } from '~/lib/hooks/useSettings';
 
 interface UIAnalysisButtonProps {
   imageData: string;
@@ -19,6 +20,11 @@ const uiAnalysisButton: React.FC<UIAnalysisButtonProps> = ({
   onAnalysisComplete,
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { uiAnalysisEnabled } = useSettings();
+
+  if (!uiAnalysisEnabled) {
+    return null;
+  }
 
   const analyzeUI = async () => {
     if (!imageData || disabled || isAnalyzing) {
