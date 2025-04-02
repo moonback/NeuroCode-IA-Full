@@ -223,6 +223,26 @@ export default function FeaturesTab() {
         enabled: isLatestBranch,
         tooltip: 'Désactivé par défaut. Activez cette fonctionnalité pour recevoir les mises à jour de la branche de développement principale. Attention : les mises à jour peuvent introduire des changements non testés.',
       },
+      
+      {
+        id: 'eventLogs',
+        title: 'Journalisation des événements',
+        description: 'Activer la journalisation détaillée des événements et des actions de l\'utilisateur',
+        icon: 'i-ph:list-bullets',
+        enabled: eventLogs,
+        tooltip: 'Activé par défaut. Fonctionnalité pour enregistrer les logs détaillés des événements du système et des actions de l\'utilisateur. Utile pour le débogage mais peut affecter les performances.',
+      },
+      
+    ],
+    beta: [
+      {
+        id: 'uiAnalysis',
+        title: 'Analyse UI/UX',
+        description: 'Activer le bouton d\'analyse intelligente des interfaces utilisateur',
+        icon: 'i-ph:magic-wand',
+        enabled: uiAnalysisEnabled,
+        tooltip: 'Activé par défaut. Cette fonctionnalité permet d\'analyser les interfaces utilisateur et de générer des recommandations d\'amélioration.',
+      },
       {
         id: 'autoSelectTemplate',
         title: 'Sélection automatique du modèle',
@@ -239,24 +259,7 @@ export default function FeaturesTab() {
         enabled: contextOptimizationEnabled,
         tooltip: 'Désactivé par défaut. Activez cette fonctionnalité pour optimiser le contexte des réponses IA. Cela peut augmenter la précision mais aussi la consommation de ressources.',
       },
-      {
-        id: 'eventLogs',
-        title: 'Journalisation des événements',
-        description: 'Activer la journalisation détaillée des événements et des actions de l\'utilisateur',
-        icon: 'i-ph:list-bullets',
-        enabled: eventLogs,
-        tooltip: 'Activé par défaut. Fonctionnalité pour enregistrer les logs détaillés des événements du système et des actions de l\'utilisateur. Utile pour le débogage mais peut affecter les performances.',
-      },
-      {
-        id: 'uiAnalysis',
-        title: 'Analyse UI/UX',
-        description: 'Activer le bouton d\'analyse intelligente des interfaces utilisateur',
-        icon: 'i-ph:magic-wand',
-        enabled: uiAnalysisEnabled,
-        tooltip: 'Activé par défaut. Cette fonctionnalité permet d\'analyser les interfaces utilisateur et de générer des recommandations d\'amélioration.',
-      },
     ],
-    beta: [],
   };
 
   return (
@@ -321,14 +324,18 @@ export default function FeaturesTab() {
             <motion.div
               key={prompt.id}
               className={classNames(
-                'p-5 rounded-xl cursor-pointer',
+                'p-6 rounded-2xl cursor-pointer',
                 'border-2',
                 'transition-all duration-300 ease-out',
+                'bg-gradient-to-br from-bolt-elements-background-depth-1 to-bolt-elements-background-depth-2',
+                'hover:from-bolt-elements-background-depth-2 hover:to-bolt-elements-background-depth-3',
                 promptId === prompt.id
-                  ? 'bg-violet-500/10 border-violet-500/30 shadow-violet-500/5'
-                  : 'hover:bg-bolt-elements-background-depth-3 border-bolt-elements-borderColor/20 hover:border-bolt-elements-borderColor/40'
+                  ? 'border-violet-500/40 shadow-violet-500/10'
+                  : 'border-bolt-elements-borderColor/20 hover:border-violet-500/30',
+                'shadow-lg hover:shadow-xl',
+                'transform hover:-translate-y-1'
               )}
-              whileHover={{ scale: 1.03, y: -4 }}
+              whileHover={{ scale: 1.02 }}
               onClick={() => {
                 setPromptId(prompt.id);
                 toast(`Prompt sélectionné : ${prompt.label}`);
@@ -337,20 +344,30 @@ export default function FeaturesTab() {
               <div className="flex items-start gap-4">
                 <div className={classNames(
                   'p-3 rounded-xl shrink-0',
-                  'bg-bolt-elements-background-depth-3 shadow-inner',
+                  'bg-gradient-to-br from-violet-400/10 to-violet-600/10',
                   'transition-all duration-300 ease-out',
-                  promptId === prompt.id ? 'text-violet-500 bg-violet-500/10' : 'text-bolt-elements-textSecondary'
+                  promptId === prompt.id 
+                    ? 'text-violet-500 bg-violet-500/10 shadow-violet-500/10' 
+                    : 'text-bolt-elements-textSecondary',
+                  'shadow-inner hover:shadow-md'
                 )}>
                   <div className="i-ph:file-text text-2xl transform group-hover:scale-110 transition-transform duration-300" />
                 </div>
                 <div className="space-y-2 flex-1">
                   <h5 className={classNames(
                     'font-semibold text-lg leading-tight',
-                    promptId === prompt.id ? 'text-violet-500' : 'text-bolt-elements-textPrimary'
+                    promptId === prompt.id 
+                      ? 'text-violet-500' 
+                      : 'text-bolt-elements-textPrimary group-hover:text-violet-500 transition-colors'
                   )}>
                     {prompt.label}
                   </h5>
-                  <p className="text-sm text-bolt-elements-textSecondary/80 line-clamp-3">
+                  <p className={classNames(
+                    'text-sm leading-relaxed line-clamp-3',
+                    promptId === prompt.id
+                      ? 'text-violet-500/90'
+                      : 'text-bolt-elements-textSecondary/80 group-hover:text-bolt-elements-textSecondary/90 transition-colors'
+                  )}>
                     {prompt.description}
                   </p>
                 </div>
