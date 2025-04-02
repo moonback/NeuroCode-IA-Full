@@ -553,7 +553,7 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
           content: [
             {
               type: 'text',
-              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${targetedFilesPrefix}${userUpdateArtifact}${messageContent}${contentWithFilesInfo}`,
+              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${targetedFilesPrefix}${userUpdateArtifact}${contentWithFilesInfo}`,
             },
             ...imageDataList
             .map((imageData, _index) => {
@@ -583,7 +583,7 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
           content: [
             {
               type: 'text',
-              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${targetedFilesPrefix}${messageContent}${contentWithFilesInfo}`,
+              text: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${targetedFilesPrefix}${contentWithFilesInfo}`,
             },
             ...imageDataList
               .map((imageData, _index) => {
