@@ -77,7 +77,7 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="px-4 hover:bg-bolt-elements-item-backgroundActive flex items-center gap-2"
           >
-            {isDeploying ? `Deploying to ${deployingTo}...` : 'Deploy'}
+            {isDeploying ? `Déploiement vers ${deployingTo}...` : 'Deployer'}
             <div
               className={classNames('i-ph:caret-down w-4 h-4 transition-transform', isDropdownOpen ? 'rotate-180' : '')}
             />
@@ -103,7 +103,7 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
                 src="https://cdn.simpleicons.org/netlify"
               />
               <span className="mx-auto">
-                {!netlifyConn.user ? 'No Netlify Account Connected' : 'Deploy to Netlify'}
+                {!netlifyConn.user ? 'Aucun compte Netlify connecté' : 'Deployer sur Netlify'}
               </span>
               {netlifyConn.user && <NetlifyDeploymentLink />}
             </Button>
@@ -124,7 +124,7 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
                 src="https://cdn.simpleicons.org/vercel/white"
                 alt="vercel"
               />
-              <span className="mx-auto">{!vercelConn.user ? 'No Vercel Account Connected' : 'Deploy to Vercel'}</span>
+              <span className="mx-auto">{!vercelConn.user ? 'Aucun compte Vercel connecté' : 'Deployer sur Vercel'}</span>
               {vercelConn.user && <VercelDeploymentLink />}
             </Button>
             <Button
@@ -132,7 +132,7 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
               disabled
               className="flex items-center w-full rounded-md px-4 py-2 text-sm text-bolt-elements-textTertiary gap-2"
             >
-              <span className="sr-only">Coming Soon</span>
+              <span className="sr-only">À venir</span>
               <img
                 className="w-5 h-5"
                 height="24"
@@ -141,7 +141,7 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
                 src="https://cdn.simpleicons.org/cloudflare"
                 alt="cloudflare"
               />
-              <span className="mx-auto">Deploy to Cloudflare (Coming Soon)</span>
+              <span className="mx-auto">Déployer sur Cloudflare (bientôt disponible)</span>
             </Button>
           </div>
         )}
