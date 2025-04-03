@@ -156,24 +156,27 @@ const formatFileSize = (bytes: number): string => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex items-center justify-center w-8 h-8 bg-violet-500/10 rounded-full hover:bg-violet-500/30 text-violet-400 hover:text-violet-500 transition-all duration-200"
+            className="flex items-center justify-center w-8 h-8 bg-violet-500/10 rounded-full hover:bg-violet-500/30 text-violet-400 hover:text-violet-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
             aria-label={isCollapsed ? 'Expand files' : 'Collapse files'}
+            title={isCollapsed ? 'Afficher les fichiers joints' : 'Masquer les fichiers joints'}
           >
             <div 
               className={`i-ph:caret-${isCollapsed ? 'right' : 'down'} w-4 h-4 transition-transform duration-200`}
               style={{ transform: isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+              aria-hidden="true"
             />
           </button>
-          <span className="text-sm text-gray-300">
+          <span className="text-sm text-gray-300 font-medium">
           Fichiers joints ({files.length})
           </span>
         </div>
         {hasMoreFiles && !isCollapsed && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="text-xs bg-transparent text-violet-400 hover:text-violet-300 transition-colors"
+            className="text-xs bg-transparent text-violet-400 hover:text-violet-300 transition-colors focus:outline-none focus:underline"
+            aria-label={showAll ? 'Afficher moins de fichiers' : `Afficher tous les fichiers ${files.length}`}
           >
-            {showAll ? 'Afficher moins' : `Tout afficher (${files.length})`}
+            {showAll ? 'Afficher moins' : `Afficher tout (${files.length})`}
           </button>
         )}
       </div>
