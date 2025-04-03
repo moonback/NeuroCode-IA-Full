@@ -14,7 +14,7 @@ if (typeof window !== 'undefined' && !GlobalWorkerOptions.workerSrc) {
 interface FilePreviewProps {
   files: File[];
   imageDataList: string[];
-  onRemove: (index: number) => void;
+  onRemove: (index: number) => void; // -1 means remove all
   model?: string;
   provider?: ProviderInfo;
   onUiAnalysisComplete?: (prompt: string) => void;
@@ -34,6 +34,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   onUiAnalysisComplete,
 }) => {
   const [pdfThumbnails, setPdfThumbnails] = useState<Record<string, PDFThumbnailData>>({});
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [showAll, setShowAll] = useState(true);
 
   useEffect(() => {
     // Process PDF thumbnails
@@ -144,87 +146,128 @@ const formatFileSize = (bytes: number): string => {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 };
 
-  return (
-    <div className="flex flex-wrap overflow-x-auto -mt-1 gap-2 ml-2 mb-2">
-      {files.map((file, index) => (
-        <div key={file.name + file.size} className="relative">
-        <div className="relative pt-3 pr-3">
-          {imageDataList[index] === 'loading-image' ? (
-            // Renders loading indicator for images in process
-            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-lg p-2 min-w-[40px] h-[32px] border border-gray-700 shadow-lg">
-              <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-base animate-spin"></div>
-              <div className="text-[10px] text-bolt-elements-textSecondary mt-1">Loading...</div>
-            </div>
-          ) : imageDataList[index] && imageDataList[index] !== 'non-image' ? (
-            // Renders image for already loaded image types
-            <div className="flex flex-col items-center bg-bolt-elements-background-depth-3 rounded-lg p-2 border border-gray-700 shadow-lg">
-              <div className="relative overflow-hidden" style={{ maxWidth: '80px', maxHeight: '55px' }}>
-                <img
-                  src={imageDataList[index]}
-                  alt={file.name}
-                  className="object-contain max-h-[55px] max-w-[80px]"
-                />
-                
-              </div>
-              <div className="text-[10px] text-bolt-elements-textSecondary mt-1 max-w-[80px] truncate">
-                {file.name}
-              </div>
-              <div className="text-[10px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
+  const visibleFiles = showAll ? files : files.slice(0, 3);
+  const hasMoreFiles = files.length > 3;
 
-              {/* UI analysis indicator available */}
-              {/* {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
-                <div className="mt-2 flex items-center justify-center text-[10px] text-indigo-300 bg-indigo-950/40 rounded-md px-2.5 py-1.5 border border-indigo-400/60 hover:bg-indigo-900/50 hover:text-indigo-200 transition-all duration-200 cursor-pointer shadow-sm">
-                  <div className="i-ph:magic-wand-fill mr-2 text-[12px] opacity-90" />
-                  <span className="font-semibold tracking-wide">Analyze UI</span>
-                </div>
-              )} */}
-              {/* UI Analysis Button - only appears for images and if we have the provider and the callback */}
-              {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
-                  <UIAnalysisButton
-                    imageData={imageDataList[index]}
-                    model={model}
-                    provider={provider}
-                    onAnalysisComplete={onUiAnalysisComplete}
-                  />
+  return (
+    <div className="relative bg-gray-900/30 rounded-lg p-2 mb-2">
+      {/* Header with collapse/expand control */}
+      <div className="flex items-center justify-between mb-2 px-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="flex items-center justify-center w-8 h-8 bg-violet-500/10 rounded-full hover:bg-violet-500/30 text-violet-400 hover:text-violet-500 transition-all duration-200"
+            aria-label={isCollapsed ? 'Expand files' : 'Collapse files'}
+          >
+            <div 
+              className={`i-ph:caret-${isCollapsed ? 'right' : 'down'} w-4 h-4 transition-transform duration-200`}
+              style={{ transform: isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+            />
+          </button>
+          <span className="text-sm text-gray-300">
+          Fichiers joints ({files.length})
+          </span>
+        </div>
+        {hasMoreFiles && !isCollapsed && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="text-xs bg-transparent text-violet-400 hover:text-violet-300 transition-colors"
+          >
+            {showAll ? 'Afficher moins' : `Tout afficher (${files.length})`}
+          </button>
+        )}
+      </div>
+
+      {/* Files container with collapse/expand animation */}
+      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'h-0' : 'h-auto'}`}>
+        <div className="flex flex-wrap gap-3 p-2">
+          {visibleFiles.map((file, index) => (
+            <div 
+              key={file.name + file.size + index} 
+              className="relative group transition-all duration-200 hover:scale-[1.02]"
+            >
+              <div className="relative p-1.5 bg-white/5 rounded-xl border border-gray-700/50 shadow-md hover:border-gray-600/70 transition-colors">
+                {imageDataList[index] === 'loading-image' ? (
+                  <div className="flex flex-col items-center justify-center p-3 w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-900/70">
+                    <div className="i-svg-spinners:90-ring-with-bg text-blue-400 text-xl animate-spin"></div>
+                    <div className="text-xs text-gray-400 mt-2">Chargement...</div>
+                  </div>
+                ) : imageDataList[index] && imageDataList[index] !== 'non-image' ? (
+                  <div className="flex flex-col items-center">
+                    <div className="relative overflow-hidden rounded-lg" style={{ width: '100px', height: '80px' }}>
+                      <img
+                        src={imageDataList[index]}
+                        alt={file.name}
+                        className="object-cover w-full h-full"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5">
+                        <div className="text-[9px] text-white/90 truncate w-full">
+                          {file.name}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1.5">{formatFileSize(file.size)}</div>
+                    {file.type.startsWith('image/') && provider && onUiAnalysisComplete && (
+                      <UIAnalysisButton
+                        imageData={imageDataList[index]}
+                        model={model}
+                        provider={provider}
+                        onAnalysisComplete={onUiAnalysisComplete}
+                      />
+                    )}
+                  </div>
+                ) : isPdf(file) && getPdfThumbnail(file) ? (
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-[100px] h-[80px] rounded-lg overflow-hidden">
+                      <img
+                        src={getPdfThumbnail(file)?.dataUrl}
+                        alt={`${file.name} (page 1)`}
+                        className="object-contain w-full h-full bg-white/5"
+                      />
+                      <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[8px] px-1.5 py-0.5 rounded">
+                        {getPdfThumbnail(file)?.pageCount || '?'} pages
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5">
+                        <div className="text-[9px] text-white/90 truncate w-full">
+                          {file.name}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1.5">{formatFileSize(file.size)}</div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-3 w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-900/70">
+                    <div className={`${getFileIcon(file.type)} w-8 h-8 text-blue-400`} />
+                    <div className="text-xs text-gray-300 mt-2 text-center truncate w-full px-1">
+                      {file.name}
+                    </div>
+                    <div className="text-[10px] text-gray-500 mt-0.5">
+                      {formatFileSize(file.size)}
+                    </div>
+                  </div>
                 )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(index);
+                  }}
+                  className="absolute -top-2 -right-2 z-10 bg-red-500 rounded-full w-5 h-5 shadow-lg hover:bg-red-600 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
+                  aria-label={`Supprimer ${file.name}`}
+                >
+                  <div className="i-ph:x-bold w-2.5 h-2.5 text-white" />
+                </button>
+              </div>
             </div>
-          ) : isPdf(file) && getPdfThumbnail(file) ? (
-            // Renders PDF thumbnail
-            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-lg p-2 min-w-[40px] border border-gray-700 shadow-lg">
-              <div className="relative">
-                <img
-                  src={getPdfThumbnail(file)?.dataUrl}
-                  alt={`${file.name} (page 1)`}
-                  className="max-h-[55px] max-w-[80px] border border-gray-800 rounded-lg object-contain"
-                />
-                <div className="absolute bottom-0 right-0 bg-black bg-opacity-70 text-white text-[9px] px-1 rounded-tl">
-                  {getPdfThumbnail(file)?.pageCount || '?'} pgs
-                </div>
-              </div>
-              <div className="text-[10px] text-bolt-elements-textSecondary mt-1 max-w-[80px] truncate">
-                {file.name}
-              </div>
-              <div className="text-[10px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
-            </div>
-          ) : (
-            // Renders icon for other file types
-            <div className="flex flex-col items-center justify-center bg-bolt-elements-background-depth-3 rounded-lg p-2 min-w-[40px] h-[80px] border border-gray-700 shadow-lg">
-              <div className={`${getFileIcon(file.type)} w-6 h-6 text-bolt-elements-textSecondary`} />
-              <div className="text-[10px] text-bolt-elements-textSecondary mt-1 max-w-[80px] truncate">
-                {file.name}
-              </div>
-              <div className="text-[10px] text-bolt-elements-textTertiary">{formatFileSize(file.size)}</div>
+          ))}
+          
+          {/* Preview counter for collapsed state */}
+          {!showAll && hasMoreFiles && !isCollapsed && (
+            <div className="flex items-center justify-center w-[100px] h-[100px] rounded-lg border border-gray-700/50 bg-gray-800/30">
+              <div className="text-gray-400 text-sm">+{files.length - 3} fichiers</div>
             </div>
           )}
-          <button
-            onClick={() => onRemove(index)}
-            className="absolute top-1 right-1 z-10 bg-black rounded-full w-5 h-5 shadow-lg hover:bg-gray-900 transition-colors flex items-center justify-center"
-          >
-            <div className="i-ph:x w-3 h-3 text-gray-200" />
-          </button>
         </div>
-        </div>
-      ))}
+      </div>
     </div>
   );
 };
