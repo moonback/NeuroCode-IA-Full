@@ -144,12 +144,7 @@ function ShellCodeBlock({ classsName, code }: ShellCodeBlockProps) {
     <div
       className={classNames('text-xs', classsName)}
       dangerouslySetInnerHTML={{
-        __html: shellHighlighter.codeToHtml(code, {
-          lang: 'shell',
-          theme: 'dark-plus',
-        }),
-        __html: safeShellHighlight(code, theme),
-
+        __html: safeShellHighlight(code, theme)
       }}
     ></div>
   );
