@@ -16,6 +16,7 @@ interface FeatureToggle {
   beta?: boolean;
   experimental?: boolean;
   tooltip?: string;
+  disabled?: boolean; // Add disabled property
 }
 
 const FeatureCard = memo(
@@ -27,62 +28,85 @@ const FeatureCard = memo(
     feature: FeatureToggle;
     index: number;
     onToggle: (id: string, enabled: boolean) => void;
-  }) => (
-    <motion.div
-      key={feature.id}
-      layoutId={feature.id}
-      className={classNames(
-        'relative group cursor-pointer',
-        'bg-bolt-elements-background-depth-1',
-        'hover:bg-bolt-elements-background-depth-2',
-        'transition-all duration-300 ease-out',
-        'rounded-xl overflow-hidden',
-        'shadow-sm hover:shadow-md',
-        'border border-bolt-elements-borderColor/10',
-        'transform hover:scale-[1.02]'
-      )}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ delay: index * 0.03, type: 'spring', stiffness: 120, damping: 20 }}
-    >
-      <div className="p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={classNames(
-              feature.icon, 
-              'w-10 h-10 p-2 rounded-xl',
-              'text-white',
-              'bg-gradient-to-br from-violet-500 to-violet-600',
-              'shadow-sm group-hover:shadow-md'
-            )} />
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-lg text-bolt-elements-textPrimary">{feature.title}</h4>
-              {feature.beta && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400">Bêta</span>
-              )}
-              {feature.experimental && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-500/10 text-orange-400">
-                  Expérimental
-                </span>
-              )}
-            </div>
-          </div>
-          <Switch 
-            checked={feature.enabled} 
-            onCheckedChange={(checked) => onToggle(feature.id, checked)}
-            className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-bolt-elements-borderColor/30 h-5 w-9"
-          />
-        </div>
-        <p className="text-sm text-bolt-elements-textSecondary/90 leading-relaxed">{feature.description}</p>
-        {feature.tooltip && (
-          <p className="text-xs text-bolt-elements-textTertiary/70 italic mt-1">
-            {feature.tooltip}
-          </p>
+  }) => {
+    const isDisabled = feature.disabled ?? false; // Check if feature is disabled
+
+    return (
+      <motion.div
+        key={feature.id}
+        layoutId={feature.id}
+        className={classNames(
+          'relative group', // Base class
+          'bg-bolt-elements-background-depth-1',
+          // Use object syntax for conditional classes
+          { 'hover:bg-bolt-elements-background-depth-2': !isDisabled },
+          'transition-all duration-300 ease-out',
+          'rounded-xl overflow-hidden',
+          // Apply base shadow always, and hover shadow conditionally
+          'shadow-sm',
+          { 'hover:shadow-md': !isDisabled },
+          'border border-bolt-elements-borderColor/10',
+           // Conditional transform
+          { 'transform hover:scale-[1.02]': !isDisabled },
+          // Opacity and cursor styling when disabled
+          isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
         )}
-      </div>
-    </motion.div>
-  ),
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        // Only apply motion hover effect if not disabled
+        whileHover={!isDisabled ? { scale: 1.02 } : {}}
+        transition={{ delay: index * 0.03, type: 'spring', stiffness: 120, damping: 20 }}
+      >
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            {/* Icon and Title */}
+            <div className="flex items-center gap-3">
+              <div className={classNames(
+                feature.icon, 
+                'w-10 h-10 p-2 rounded-xl',
+                'text-white',
+                'bg-gradient-to-br from-violet-500 to-violet-600',
+                'shadow-sm group-hover:shadow-md'
+              )} />
+              <div className="flex items-center gap-2">
+                <h4 className="font-semibold text-lg text-bolt-elements-textPrimary">{feature.title}</h4>
+                {feature.beta && (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400">Bêta</span>
+                )}
+                {feature.experimental && (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-500/10 text-orange-400">
+                    Expérimental
+                  </span>
+                )}
+              </div>
+            </div>
+             {/* Switch component */}
+             <Switch
+                checked={feature.enabled}
+                // Only call onToggle if not disabled
+                onCheckedChange={(checked) => !isDisabled && onToggle(feature.id, checked)}
+                className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-bolt-elements-borderColor/30 h-5 w-9"
+                disabled={isDisabled} // Pass disabled state to the Switch
+             />
+          </div>
+          <p className="text-sm text-bolt-elements-textSecondary/90 leading-relaxed">{feature.description}</p>
+          
+          {/* Conditionally render development message if disabled */}
+          {isDisabled && (
+            <p className="text-xs text-yellow-500/90 font-medium mt-2">
+              (Fonctionnalité en cours de développement)
+            </p>
+          )}
+
+          {feature.tooltip && (
+            <p className="text-xs text-bolt-elements-textTertiary/70 italic mt-1">
+              {feature.tooltip}
+            </p>
+          )}
+        </div>
+      </motion.div>
+    );
+  },
 );
 
 const FeatureSection = memo(
@@ -239,8 +263,10 @@ export default function FeaturesTab() {
         title: 'Analyse UI/UX',
         description: 'Activer le bouton d\'analyse intelligente des interfaces utilisateur',
         icon: 'i-ph:magic-wand',
-        enabled: uiAnalysisEnabled,
-        tooltip: 'Activé par défaut. Cette fonctionnalité permet d\'analyser les interfaces utilisateur et de générer des recommandations d\'amélioration.',
+        enabled: uiAnalysisEnabled, // Keep existing state logic
+        // Update tooltip and add disabled flag
+        tooltip: 'Cette fonctionnalité est temporairement désactivée et sera bientôt disponible.',
+        disabled: true, // Disable this feature
       },
       {
         id: 'autoSelectTemplate',
