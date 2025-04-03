@@ -187,6 +187,13 @@ export const Menu = () => {
     setIsSettingsOpen(false);
   };
 
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      setSelectedItems([]); // Clear selected items when exiting selection mode
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -231,7 +238,6 @@ export const Menu = () => {
                 href="/"
                 className="flex gap-2 items-center bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg px-4 py-2 transition-colors"
               >
-                {/* <span className="inline-block i-lucide:message-square h-4 w-4" /> */}
                 <span className="text-sm font-medium">Nouvelle discussion</span>
               </a>
               <div className="flex gap-3">
@@ -254,12 +260,7 @@ export const Menu = () => {
                   </>
                 )}
                 <button
-                  onClick={() => {
-                    setIsSelectionMode(!isSelectionMode);
-                    if (!isSelectionMode) {
-                      setSelectedItems([]);
-                    }
-                  }}
+                  onClick={toggleSelectionMode}
                   className={classNames(
                     'flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md',
                     isSelectionMode
