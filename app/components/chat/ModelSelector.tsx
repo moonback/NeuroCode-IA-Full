@@ -157,8 +157,7 @@ export const ModelSelector = ({
     return (
       <div className="mb-2 p-4 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-prompt-background text-bolt-elements-textPrimary">
         <p className="text-center">
-          No providers are currently enabled. Please enable at least one provider in the settings to start using the
-          chat.
+        Aucun fournisseur n'est actuellement activé. Veuillez activer au moins un fournisseur dans les paramètres pour commencer à utiliser le chat.
         </p>
       </div>
     );
@@ -232,7 +231,7 @@ export const ModelSelector = ({
 
         {isModelDropdownOpen && (
           <div
-            className="absolute z-10 w-full mt-1 py-1 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2  shadow-lg"
+            className="absolute z-10 w-full mt-1 py-1 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-prompt-background text-bolt-elements-textPrimary  shadow-lg"
             role="listbox"
             id="model-listbox"
           >
@@ -243,7 +242,7 @@ export const ModelSelector = ({
                   type="text"
                   value={modelSearchQuery}
                   onChange={(e) => setModelSearchQuery(e.target.value)}
-                  placeholder="Search models..."
+                  placeholder="Rechercher des modèles..."
                   className={classNames(
                     'w-full pl-8 pr-3 py-1.5 rounded-md text-sm',
                     'bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor',
@@ -253,7 +252,7 @@ export const ModelSelector = ({
                   )}
                   onClick={(e) => e.stopPropagation()}
                   role="searchbox"
-                  aria-label="Search models"
+                  aria-label="Rechercher des modèles"
                 />
                 <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
                   <span className="i-ph:magnifying-glass text-bolt-elements-textTertiary" />
@@ -306,7 +305,7 @@ export const ModelSelector = ({
                       <span className="truncate">{modelOption.label}</span>
                       {modelOption.features?.reasoning && (
                         <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium whitespace-nowrap">
-                          Reasoning
+                          Raisonnement
                         </span>
                       )}
                     </div>
