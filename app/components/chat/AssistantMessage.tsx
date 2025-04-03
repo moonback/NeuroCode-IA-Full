@@ -107,11 +107,11 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
           )}
           {reasoning && (
             <button
-              className="flex items-center gap-1 text-bolt-elements-item-contentAccent"
+              className="flex bg-bolt-elements-background-depth-3 items-center gap-1 text-bolt-elements-item-contentAccent hover:bg-bolt-elements-background-depth-2 rounded-md px-2 py-1 text-sm"
               onClick={() => setShowReasoning(!showReasoning)}
             >
               <span className="i-ph:brain" />
-              <span>{showReasoning ? 'Hide reasoning' : 'Show reasoning'}</span>
+              <span>{showReasoning ? 'Raisonnement' : 'Raisonnement'}</span>
             </button>
           )}
           {usage && (
