@@ -33,37 +33,36 @@ const FeatureCard = memo(
       layoutId={feature.id}
       className={classNames(
         'relative group cursor-pointer',
-        'bg-gradient-to-br from-bolt-elements-background-depth-1 to-bolt-elements-background-depth-2',
-        'hover:from-bolt-elements-background-depth-2 hover:to-bolt-elements-background-depth-3',
-        'transition-all duration-500 ease-out',
-        'rounded-2xl overflow-hidden',
-        'shadow-lg hover:shadow-2xl',
-        'border border-bolt-elements-borderColor/20 hover:border-violet-500/30',
-        'transform hover:-translate-y-1'
+        'bg-bolt-elements-background-depth-1',
+        'hover:bg-bolt-elements-background-depth-2',
+        'transition-all duration-300 ease-out',
+        'rounded-xl overflow-hidden',
+        'shadow-sm hover:shadow-md',
+        'border border-bolt-elements-borderColor/10',
+        'transform hover:scale-[1.02]'
       )}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
-      transition={{ delay: index * 0.05, type: 'spring', stiffness: 100, damping: 20 }}
+      transition={{ delay: index * 0.03, type: 'spring', stiffness: 120, damping: 20 }}
     >
-      <div className="p-8 space-y-6">
+      <div className="p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className={classNames(
               feature.icon, 
-              'w-12 h-12 p-2.5 rounded-2xl',
+              'w-10 h-10 p-2 rounded-xl',
               'text-white',
-              'bg-gradient-to-br from-violet-400 to-violet-600',
-              'shadow-xl group-hover:shadow-2xl group-hover:from-violet-500 group-hover:to-violet-700',
-              'transform group-hover:scale-110 transition-all duration-500'
+              'bg-gradient-to-br from-violet-500 to-violet-600',
+              'shadow-sm group-hover:shadow-md'
             )} />
-            <div className="flex items-center gap-3">
-              <h4 className="font-bold text-xl text-bolt-elements-textPrimary group-hover:text-violet-500 transition-colors">{feature.title}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-lg text-bolt-elements-textPrimary">{feature.title}</h4>
               {feature.beta && (
-                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/15 text-blue-400 shadow-lg ring-1 ring-blue-500/30 group-hover:bg-blue-500/25 group-hover:ring-blue-500/40 transition-all duration-500">Bêta</span>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400">Bêta</span>
               )}
               {feature.experimental && (
-                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-orange-500/15 text-orange-400 shadow-lg ring-1 ring-orange-500/30 group-hover:bg-orange-500/25 group-hover:ring-orange-500/40 transition-all duration-500">
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-500/10 text-orange-400">
                   Expérimental
                 </span>
               )}
@@ -72,12 +71,12 @@ const FeatureCard = memo(
           <Switch 
             checked={feature.enabled} 
             onCheckedChange={(checked) => onToggle(feature.id, checked)}
-            className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-bolt-elements-borderColor/50 h-6 w-11"
+            className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-bolt-elements-borderColor/30 h-5 w-9"
           />
         </div>
-        <p className="text-base text-bolt-elements-textSecondary/90 leading-relaxed group-hover:text-bolt-elements-textPrimary/90 transition-colors duration-500">{feature.description}</p>
+        <p className="text-sm text-bolt-elements-textSecondary/90 leading-relaxed">{feature.description}</p>
         {feature.tooltip && (
-          <p className="text-sm text-bolt-elements-textTertiary/70 italic group-hover:text-bolt-elements-textSecondary/70 transition-colors duration-500">
+          <p className="text-xs text-bolt-elements-textTertiary/70 italic mt-1">
             {feature.tooltip}
           </p>
         )}
@@ -268,7 +267,7 @@ export default function FeaturesTab() {
         title="Fonctionnalités essentielles"
         features={features.stable}
         icon="i-ph:check-circle"
-        description="Fonctionnalités essentielles activées par défaut pour un performance optimale"
+        description="Fonctionnalités principales pour une expérience optimale"
         onToggleFeature={handleToggleFeature}
       />
 
@@ -277,7 +276,7 @@ export default function FeaturesTab() {
           title="Fonctionnalités bêta"
           features={features.beta}
           icon="i-ph:test-tube"
-          description="Nouvelles fonctionnalités prêtes à être testées mais qui peuvent avoir des bords rugueux"
+          description="Nouvelles fonctionnalités en phase de test"
           onToggleFeature={handleToggleFeature}
         />
       )}
@@ -285,55 +284,45 @@ export default function FeaturesTab() {
       <motion.div
         layout
         className={classNames(
-          'bg-bolt-elements-background-depth-2',
-          'hover:bg-bolt-elements-background-depth-3',
-          'transition-all duration-300 ease-out',
-          'rounded-2xl p-8',
-          'group',
-          'flex flex-col gap-8',
-          'shadow-lg hover:shadow-xl'
+          'bg-bolt-elements-background-depth-1',
+          'rounded-xl p-6',
+          'shadow-sm'
         )}
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
+        transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
       >
-        <div className="flex items-center gap-6">
-          <div
-            className={classNames(
-              'p-4 rounded-2xl text-3xl',
-              'bg-gradient-to-br from-violet-400/10 to-violet-600/10',
-              'group-hover:from-violet-400/20 group-hover:to-violet-600/20',
-              'transition-all duration-300 ease-out',
-              'text-violet-500 shadow-inner'
-            )}
-          >
-            <div className="i-ph:book transform group-hover:scale-110 transition-transform duration-300" />
+        <div className="flex items-center gap-4 mb-6">
+          <div className={classNames(
+            'p-3 rounded-lg text-2xl',
+            'bg-bolt-elements-background-depth-2',
+            'text-violet-500'
+          )}>
+            <div className="i-ph:book" />
           </div>
           <div>
-            <h4 className="text-xl font-bold text-bolt-elements-textPrimary group-hover:text-violet-500 transition-colors duration-300">
+            <h4 className="text-lg font-semibold text-bolt-elements-textPrimary">
               Bibliothèque de prompts
             </h4>
-            <p className="text-sm text-bolt-elements-textSecondary/90 mt-2 max-w-lg">
-              Sélectionnez un prompt système prédéfini pour optimiser vos interactions
+            <p className="text-sm text-bolt-elements-textSecondary/90 mt-1 max-w-lg">
+              Sélectionnez un prompt système prédéfini
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {PromptLibrary.getList().map((prompt) => (
             <motion.div
               key={prompt.id}
               className={classNames(
-                'p-6 rounded-2xl cursor-pointer',
-                'border-2',
-                'transition-all duration-300 ease-out',
-                'bg-gradient-to-br from-bolt-elements-background-depth-1 to-bolt-elements-background-depth-2',
-                'hover:from-bolt-elements-background-depth-2 hover:to-bolt-elements-background-depth-3',
+                'p-4 rounded-lg cursor-pointer',
+                'bg-bolt-elements-background-depth-1',
+                'hover:bg-bolt-elements-background-depth-2',
+                'border border-bolt-elements-borderColor/10',
+                'shadow-sm hover:shadow-md',
                 promptId === prompt.id
-                  ? 'border-violet-500/40 shadow-violet-500/10'
-                  : 'border-bolt-elements-borderColor/20 hover:border-violet-500/30',
-                'shadow-lg hover:shadow-xl',
-                'transform hover:-translate-y-1'
+                  ? 'border-violet-500/40'
+                  : 'border-transparent'
               )}
               whileHover={{ scale: 1.02 }}
               onClick={() => {
@@ -341,32 +330,30 @@ export default function FeaturesTab() {
                 toast(`Prompt sélectionné : ${prompt.label}`);
               }}
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3">
                 <div className={classNames(
-                  'p-3 rounded-xl shrink-0',
-                  'bg-gradient-to-br from-violet-400/10 to-violet-600/10',
-                  'transition-all duration-300 ease-out',
+                  'p-2 rounded-lg',
+                  'bg-bolt-elements-background-depth-2',
                   promptId === prompt.id 
-                    ? 'text-violet-500 bg-violet-500/10 shadow-violet-500/10' 
-                    : 'text-bolt-elements-textSecondary',
-                  'shadow-inner hover:shadow-md'
+                    ? 'text-violet-500' 
+                    : 'text-bolt-elements-textSecondary'
                 )}>
-                  <div className="i-ph:file-text text-2xl transform group-hover:scale-110 transition-transform duration-300" />
+                  <div className="i-ph:file-text text-xl" />
                 </div>
-                <div className="space-y-2 flex-1">
+                <div className="space-y-1 flex-1">
                   <h5 className={classNames(
-                    'font-semibold text-lg leading-tight',
+                    'font-medium text-base',
                     promptId === prompt.id 
                       ? 'text-violet-500' 
-                      : 'text-bolt-elements-textPrimary group-hover:text-violet-500 transition-colors'
+                      : 'text-bolt-elements-textPrimary'
                   )}>
                     {prompt.label}
                   </h5>
                   <p className={classNames(
-                    'text-sm leading-relaxed line-clamp-3',
+                    'text-xs leading-relaxed line-clamp-3',
                     promptId === prompt.id
                       ? 'text-violet-500/90'
-                      : 'text-bolt-elements-textSecondary/80 group-hover:text-bolt-elements-textSecondary/90 transition-colors'
+                      : 'text-bolt-elements-textSecondary/80'
                   )}>
                     {prompt.description}
                   </p>
