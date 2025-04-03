@@ -234,22 +234,22 @@ export const Menu = () => {
                 {/* <span className="inline-block i-lucide:message-square h-4 w-4" /> */}
                 <span className="text-sm font-medium">Nouvelle discussion</span>
               </a>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 {isSelectionMode && (
                   <>
                     <button
                       onClick={() => setSelectedItems(list.map(item => item.id))}
-                      className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md"
                       title="Sélectionner tout"
                     >
-                      <span className="i-ph:check-square-offset-fill text-lg" />
+                      <span className="i-ph:check-square-offset-fill text-lg transform hover:scale-110 transition-transform" />
                     </button>
                     <button
                       onClick={() => setSelectedItems([])}
-                      className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md"
                       title="Effacer la sélection"
                     >
-                      <span className="i-ph:selection-slash text-lg" />
+                      <span className="i-ph:selection-slash text-lg transform hover:scale-110 transition-transform" />
                     </button>
                   </>
                 )}
@@ -261,30 +261,42 @@ export const Menu = () => {
                     }
                   }}
                   className={classNames(
-                    'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+                    'flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md',
                     isSelectionMode
-                      ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                      ? 'bg-purple-50 dark:bg-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/40'
+                      : 'bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   )}
                   title="Mode sélection multiple"
                 >
-                  <span className="i-ph:check-square-duotone text-lg" />
+                  <span className="i-ph:check-square-duotone text-lg transform hover:scale-110 transition-transform" />
                 </button>
               </div>
             </div>
             {isSelectionMode && selectedItems.length > 0 && (
-              <button
-                onClick={() => {
-                  setDialogContent({
-                    type: 'delete-multiple',
-                    items: list.filter(item => selectedItems.includes(item.id))
-                  });
-                }}
-                className="w-full flex gap-2 items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
-              >
-                <span className="inline-block i-ph:trash h-4 w-4" />
-                <span className="text-sm font-medium">Supprimer la sélection ({selectedItems.length})</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setDialogContent({
+                      type: 'delete-multiple',
+                      items: list.filter(item => selectedItems.includes(item.id))
+                    });
+                  }}
+                  className="flex-1 flex gap-2 items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
+                >
+                  <span className="inline-block i-ph:trash h-4 w-4" />
+                  <span className="text-sm font-medium">Supprimer ({selectedItems.length})</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const selectedChats = list.filter(item => selectedItems.includes(item.id));
+                    selectedChats.forEach(chat => exportChat(chat.id));
+                  }}
+                  className="flex gap-2 items-center justify-center bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg px-4 py-2 transition-colors"
+                >
+                  <span className="inline-block i-ph:export h-4 w-4" />
+                  <span className="text-sm font-medium">Exporter</span>
+                </button>
+              </div>
             )}
             
             <div className="relative w-full">
