@@ -3,6 +3,7 @@ import type { ProviderInfo, ProviderConfig, ModelInfo } from './types';
 import type { IProviderSetting } from '~/types/model';
 import { createOpenAI } from '@ai-sdk/openai';
 import { LLMManager } from './manager';
+import { applyMiddleware, modelSupportsReasoning } from './middleware';
 
 export abstract class BaseProvider implements ProviderInfo {
   abstract name: string;
@@ -53,6 +54,54 @@ export abstract class BaseProvider implements ProviderInfo {
       apiKey,
     };
   }
+
+  // Method to get the model with appropriate middleware applied
+  getModelWithMiddleware(options: {
+    model: string;
+    serverEnv?: Env;
+    apiKeys?: Record<string, string>;
+    providerSettings?: Record<string, IProviderSetting>;
+  }): LanguageModelV1 {
+    // Get the base model instance
+    const baseModel = this.getModelInstance(options);
+
+    // Find the model info to check features
+    const modelInfo = this.findModelInfo(options.model);
+
+    // Apply middleware based on model features
+    return applyMiddleware(baseModel, modelInfo);
+  }
+
+  // Helper to find model info for a given model name
+  findModelInfo(modelName: string): ModelInfo {
+    // Check static models first
+    const staticModel = this.staticModels.find((model) => model.name === modelName);
+
+    if (staticModel) {
+      return staticModel;
+    }
+
+    // Check dynamic models if available
+    if (this.cachedDynamicModels?.models) {
+      const dynamicModel = this.cachedDynamicModels.models.find((model) => model.name === modelName);
+
+      if (dynamicModel) {
+        return dynamicModel;
+      }
+    }
+
+    // If model not found, create a basic model info with reasoning if supported
+    return {
+      name: modelName,
+      label: modelName,
+      provider: this.name,
+      maxTokenAllowed: 8000,
+      features: {
+        reasoning: modelSupportsReasoning(modelName),
+      },
+    };
+  }
+
   getModelsFromCache(options: {
     apiKeys?: Record<string, string>;
     providerSettings?: Record<string, IProviderSetting>;
@@ -93,12 +142,21 @@ export abstract class BaseProvider implements ProviderInfo {
     },
     models: ModelInfo[],
   ) {
+    // Enhance dynamic models with reasoning capability if applicable
+    const enhancedModels = models.map((model) => ({
+      ...model,
+      features: {
+        ...model.features,
+        reasoning: model.features?.reasoning || modelSupportsReasoning(model.name),
+      },
+    }));
+
     const cacheId = this.getDynamicModelsCacheKey(options);
 
     // console.log('caching dynamic models',this.name,cacheId);
     this.cachedDynamicModels = {
       cacheId,
-      models,
+      models: enhancedModels,
     };
   }
 

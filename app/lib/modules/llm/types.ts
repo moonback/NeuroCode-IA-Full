@@ -6,6 +6,10 @@ export interface ModelInfo {
   label: string;
   provider: string;
   maxTokenAllowed: number;
+  features?: {
+    reasoning?: boolean;
+    imageGeneration?: boolean;
+  };
 }
 
 export interface ProviderInfo {

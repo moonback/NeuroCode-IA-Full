@@ -213,7 +213,14 @@ export const ModelSelector = ({
           tabIndex={0}
         >
           <div className="flex items-center justify-between">
-            <div className="truncate">{modelList.find((m) => m.name === model)?.label || 'Select model'}</div>
+            <div className="truncate flex items-center gap-2">
+              <span>{modelList.find((m) => m.name === model)?.label || 'Select model'}</span>
+              {modelList.find((m) => m.name === model)?.features?.reasoning && (
+                <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium whitespace-nowrap">
+                  Reasoning
+                </span>
+              )}
+            </div>
             <div
               className={classNames(
                 'i-ph:caret-down w-4 h-4 text-bolt-elements-textSecondary opacity-75',
@@ -278,18 +285,14 @@ export const ModelSelector = ({
                 filteredModels.map((modelOption, index) => (
                   <div
                     ref={(el) => (optionsRef.current[index] = el)}
-                    key={index}
+                    key={`${modelOption.provider}-${modelOption.name}`}
                     role="option"
                     aria-selected={model === modelOption.name}
                     className={classNames(
-                      'px-3 py-2 text-sm cursor-pointer',
-                      'hover:bg-bolt-elements-background-depth-3',
-                      'text-bolt-elements-textPrimary',
-                      'outline-none',
-                      model === modelOption.name || focusedIndex === index
-                        ? 'bg-bolt-elements-background-depth-2'
-                        : undefined,
-                      focusedIndex === index ? 'ring-1 ring-inset ring-bolt-elements-focus' : undefined,
+                      'flex items-center justify-between px-4 py-2 cursor-pointer text-sm',
+                      'hover:bg-bolt-elements-prompt-background-hover',
+                      focusedIndex === index ? 'bg-bolt-elements-prompt-background-hover' : undefined,
+                      'transition-colors duration-100',
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -299,7 +302,17 @@ export const ModelSelector = ({
                     }}
                     tabIndex={focusedIndex === index ? 0 : -1}
                   >
-                    {modelOption.label}
+                    <div className="flex items-center gap-2">
+                      <span className="truncate">{modelOption.label}</span>
+                      {modelOption.features?.reasoning && (
+                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium whitespace-nowrap">
+                          Reasoning
+                        </span>
+                      )}
+                    </div>
+                    {modelOption.name === model && (
+                      <div className="i-ph:check w-4 h-4 text-bolt-elements-textSecondary" />
+                    )}
                   </div>
                 ))
               )}

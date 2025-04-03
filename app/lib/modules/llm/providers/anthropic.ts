@@ -18,6 +18,9 @@ export default class AnthropicProvider extends BaseProvider {
       label: 'Claude 3.7 Sonnet',
       provider: 'Anthropic',
       maxTokenAllowed: 8000,
+      features: {
+        reasoning: true,
+      },
     },
     {
       name: 'claude-3-5-sonnet-latest',
@@ -76,27 +79,55 @@ export default class AnthropicProvider extends BaseProvider {
       label: `${m.display_name}`,
       provider: this.name,
       maxTokenAllowed: 32000,
+
+      // Add features based on model capabilities
+      features: {
+        reasoning: m.id.includes('claude-3-7') || m.id.includes('claude-3-5'),
+      },
     }));
   }
 
-  getModelInstance: (options: {
+  getModelInstance(options: {
     model: string;
     serverEnv: Env;
     apiKeys?: Record<string, string>;
     providerSettings?: Record<string, IProviderSetting>;
-  }) => LanguageModelV1 = (options) => {
-    const { apiKeys, providerSettings, serverEnv, model } = options;
+  }): LanguageModelV1 {
+    const { model, serverEnv, apiKeys, providerSettings } = options;
     const { apiKey } = this.getProviderBaseUrlAndKey({
       apiKeys,
-      providerSettings,
+      providerSettings: providerSettings?.[this.name],
       serverEnv: serverEnv as any,
       defaultBaseUrlKey: '',
       defaultApiTokenKey: 'ANTHROPIC_API_KEY',
     });
-    const anthropic = createAnthropic({
+
+    if (!apiKey) {
+      throw new Error(`Missing API key for ${this.name} provider`);
+    }
+
+    // Find model info to check if it supports reasoning
+    const modelInfo = this.findModelInfo(model);
+    const supportsReasoning = modelInfo.features?.reasoning;
+
+    // Configure anthropic with reasoning settings if supported
+    const anthropicOptions: any = {
       apiKey,
-    });
+
+      // Use the latest API version
+      anthropicVersion: '2023-06-01',
+    };
+
+    // Add reasoning-specific options for Claude models
+    if (supportsReasoning) {
+      anthropicOptions.providerOptions = {
+        system:
+          'When you need to think step-by-step about a problem, please use the <think></think> XML tags to show your reasoning.',
+      };
+    }
+
+    const anthropic = createAnthropic(anthropicOptions);
 
     return anthropic(model);
-  };
+  }
 }

@@ -11,6 +11,7 @@ import { WORK_DIR } from '~/utils/constants';
 import { generateId } from '~/utils/fileUtils';
 import type { ButtonAction } from '~/types/actions';
 import type { Message } from 'ai';
+import { createScopedLogger } from '~/utils/logger';
 
 const highlighterOptions = {
   langs: ['shell'],
@@ -137,6 +138,8 @@ interface ShellCodeBlockProps {
 }
 
 function ShellCodeBlock({ classsName, code }: ShellCodeBlockProps) {
+  const theme = document.documentElement.classList.contains('dark') ? 'dark-plus' : 'light-plus';
+
   return (
     <div
       className={classNames('text-xs', classsName)}
@@ -145,11 +148,65 @@ function ShellCodeBlock({ classsName, code }: ShellCodeBlockProps) {
           lang: 'shell',
           theme: 'dark-plus',
         }),
+        __html: safeShellHighlight(code, theme),
+
       }}
     ></div>
   );
 }
 
+// Add these safety constants and utilities for Shiki
+const artifactLogger = createScopedLogger('Artifact');
+const MAX_SHELL_LENGTH = 50000; // Maximum shell output length to highlight
+const MAX_LINE_LENGTH = 5000; // Maximum line length before truncating
+
+/**
+ * Safely highlight shell code with error handling
+ * @param content Shell content to highlight
+ * @param theme Theme to use for highlighting
+ * @returns HTML string with highlighted shell content or safe fallback
+ */
+function safeShellHighlight(content: string, theme: string): string {
+  try {
+    if (!content || content.length > MAX_SHELL_LENGTH) {
+      artifactLogger.warn(`Shell content too large (${content?.length || 0} chars). Using plain text.`);
+      return escapeHtml(content);
+    }
+
+    // Check for overly long lines that could cause memory issues
+    if (content.includes('\n')) {
+      const lines = content.split('\n');
+      const hasLongLines = lines.some((line) => line.length > MAX_LINE_LENGTH);
+
+      if (hasLongLines) {
+        artifactLogger.warn('Shell content has very long lines. Truncating for safety.');
+        content = lines
+          .map((line) =>
+            line.length > MAX_LINE_LENGTH ? `${line.substring(0, MAX_LINE_LENGTH)}... [truncated]` : line,
+          )
+          .join('\n');
+      }
+    }
+
+    // Apply shell highlighting with error handling
+    return shellHighlighter.codeToHtml(content, { lang: 'shell', theme });
+  } catch (error) {
+    artifactLogger.error('Shell highlighting error:', error);
+    return `<pre><code>${escapeHtml(content)}</code></pre>`;
+  }
+}
+
+/**
+ * Escape HTML special characters for safe rendering
+ */
+function escapeHtml(text: string): string {
+  return (text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 interface ActionListProps {
   actions: ActionState[];
 }

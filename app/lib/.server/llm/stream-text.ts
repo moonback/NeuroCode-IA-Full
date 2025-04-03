@@ -11,7 +11,9 @@ import { createFilesContext, extractPropertiesFromMessage } from './utils';
 import { getFilePaths } from './select-context';
 
 export type Messages = Message[];
-
+// Batch size for chunking responses - helps to smooth out streaming
+const STREAM_BATCH_INTERVAL = 80; // milliseconds
+const STREAM_BATCH_SIZE = 120; // characters
 export interface StreamingOptions extends Omit<Parameters<typeof _streamText>[0], 'model'> {
   supabaseConnection?: {
     isConnected: boolean;
@@ -21,6 +23,64 @@ export interface StreamingOptions extends Omit<Parameters<typeof _streamText>[0]
       supabaseUrl?: string;
     };
   };
+  onFinish?: (props: {
+    text: string;
+    finishReason?: string;
+    usage?: {
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+    };
+    reasoning?: string;
+  }) => void | Promise<void>;
+
+  // New option to control response smoothing
+  smoothStreaming?: boolean;
+}
+
+// Function to sanitize reasoning output to prevent XML/tag related errors
+export function sanitizeReasoningOutput(content: string): string {
+  try {
+    // Remove or escape problematic tags that might cause rendering issues
+    let sanitized = content;
+
+    // Convert actual XML tags to safe HTML entities
+    sanitized = sanitized.replace(/<(\/?)think>/g, '&lt;$1think&gt;');
+
+    // Ensure any incomplete tags are properly closed or removed
+    const openTags = (sanitized.match(/<[^/>][^>]*>/g) || []).length;
+    const closeTags = (sanitized.match(/<\/[^>]+>/g) || []).length;
+
+    if (openTags > closeTags) {
+      // We have unclosed tags - simplest approach is to wrap in a safe format
+      sanitized = `<div class="__boltThought__">${sanitized}</div>`;
+    }
+
+    return sanitized;
+  } catch (error) {
+    logger.error('Error sanitizing reasoning output:', error);
+
+    // Return a safe version if sanitization fails
+    return content;
+  }
+}
+/**
+ * Optimize context buffer when it's too large
+ * This reduces the token count for very large context windows
+ */
+function optimizeContextBuffer(context: string, maxLength: number = 100000): string {
+  if (context.length <= maxLength) {
+    return context;
+  }
+
+  // If context is too large, keep the start and end but trim the middle
+  const halfMax = Math.floor(maxLength / 2);
+
+  return (
+    context.substring(0, halfMax) +
+    `\n\n... [Context truncated to reduce size] ...\n\n` +
+    context.substring(context.length - halfMax)
+  );
 }
 
 const logger = createScopedLogger('stream-text');
@@ -112,13 +172,31 @@ export async function streamText(props: {
         credentials: options?.supabaseConnection?.credentials || undefined,
       },
     }) ?? getSystemPrompt();
+// Use reasoning prompt for models that support reasoning when no specific prompt is requested
+if (!promptId && modelDetails?.features?.reasoning) {
+  systemPrompt =
+    PromptLibrary.getPropmtFromLibrary('reasoning', {
+      cwd: WORK_DIR,
+      allowedHtmlElements: allowedHTMLElements,
+      modificationTagName: MODIFICATIONS_TAG_NAME,
+      supabase: {
+        isConnected: options?.supabaseConnection?.isConnected || false,
+        hasSelectedProject: options?.supabaseConnection?.hasSelectedProject || false,
+        credentials: options?.supabaseConnection?.credentials || undefined,
+      },
+    }) ?? systemPrompt; // Fall back to the existing system prompt if reasoning prompt fails
+}
 
   if (files && contextFiles && contextOptimization) {
-    const codeContext = createFilesContext(contextFiles, true);
-    const filePaths = getFilePaths(files);
+    // Optimization: Only create context if there are files
+    if (Object.keys(contextFiles).length > 0) {
+      const codeContext = createFilesContext(contextFiles, true);
+      const filePaths = getFilePaths(files);
 
-    systemPrompt = `${systemPrompt}
-Below are all the files present in the project:
+ // Optimize context buffer if it's too large
+ const optimizedCodeContext = optimizeContextBuffer(codeContext);
+
+ systemPrompt = `${systemPrompt}Below are all the files present in the project:
 ---
 ${filePaths.join('\n')}
 ---
@@ -126,16 +204,21 @@ ${filePaths.join('\n')}
 Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fullfill current user request.
 CONTEXT BUFFER:
 ---
-${codeContext}
+${optimizedCodeContext}
 ---
 `;
-
+}
     if (summary) {
+        // Optimize summary if it's too long
+        const optimizedSummary =
+        summary.length > 10000
+          ? summary.substring(0, 5000) + '\n[Summary truncated...]\n' + summary.substring(summary.length - 5000)
+          : summary;
       systemPrompt = `${systemPrompt}
-      below is the chat history till now
+below is the chat history till now
 CHAT SUMMARY:
 ---
-${props.summary}
+${optimizedSummary}
 ---
 `;
 
@@ -171,6 +254,17 @@ ${props.summary}
  // Store original messages for reference
  const originalMessages = [...messages];
  const hasMultimodalContent = originalMessages.some((msg) => Array.isArray(msg.content));
+ // Create enhanced options with streaming improvements
+ const enhancedOptions = {
+  ...options,
+
+  // Add batch options for smoother streaming if requested
+  ...(options?.smoothStreaming !== false && {
+    streamingGranularity: 'character',
+    streamBatchSize: STREAM_BATCH_SIZE,
+    streamBatchInterval: STREAM_BATCH_INTERVAL,
+  }),
+};
 
  try {
    if (hasMultimodalContent) {
@@ -202,38 +296,46 @@ ${props.summary}
            })
          : [{ type: 'text', text: typeof msg.content === 'string' ? msg.content : String(msg.content || '') }],
      }));
-
+// Get model with middleware applied
+const llmManager = LLMManager.getInstance();
+const model = llmManager.getModelInstance({
+  model: modelDetails.name,
+  provider: provider.name,
+  serverEnv,
+  apiKeys,
+  providerSettings,
+});
      return await _streamText({
-       model: provider.getModelInstance({
-         model: modelDetails.name,
-         serverEnv,
-         apiKeys,
-         providerSettings,
-       }),
+      model,
+
        system: systemPrompt,
        maxTokens: dynamicMaxTokens,
        messages: multimodalMessages as any,
-       ...options,
-     });
+       ...enhancedOptions,
+      });
    } else {
      // For non-multimodal content, we use the standard approach
      const normalizedTextMessages = processedMessages.map((msg) => ({
        role: msg.role === 'system' || msg.role === 'user' || msg.role === 'assistant' ? msg.role : 'user',
        content: typeof msg.content === 'string' ? msg.content : String(msg.content || ''),
      }));
-
+// Get model with middleware applied
+const llmManager = LLMManager.getInstance();
+const model = llmManager.getModelInstance({
+  model: modelDetails.name,
+  provider: provider.name,
+  serverEnv,
+  apiKeys,
+  providerSettings,
+});
      return await _streamText({
-       model: provider.getModelInstance({
-         model: modelDetails.name,
-         serverEnv,
-         apiKeys,
-         providerSettings,
-       }),
+      model,
+
        system: systemPrompt,
        maxTokens: dynamicMaxTokens,
        messages: convertToCoreMessages(normalizedTextMessages),
-       ...options,
-     });
+       ...enhancedOptions,
+      });
    }
  } catch (error: any) {
    // Special handling for format errors
@@ -271,20 +373,22 @@ ${props.summary}
          ],
        };
      });
-
+     const fallbackModel = LLMManager.getInstance().getModelInstance({
+      model: modelDetails.name,
+      provider: provider.name,
+      apiKeys,
+      providerSettings,
+      serverEnv: serverEnv as any,
+    });
      // Try one more time with the fallback format
      return await _streamText({
-       model: provider.getModelInstance({
-         model: modelDetails.name,
-         serverEnv,
-         apiKeys,
-         providerSettings,
-       }),
+      model: fallbackModel,
+
        system: systemPrompt,
        maxTokens: dynamicMaxTokens,
        messages: fallbackMessages as any,
-       ...options,
-     });
+       ...enhancedOptions,
+      });
    }
 
    // If it's not a format error, re-throw the original error

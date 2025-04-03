@@ -2,7 +2,12 @@ import { type ActionFunctionArgs } from '@remix-run/cloudflare';
 import { createDataStream, generateId } from 'ai';
 import { MAX_RESPONSE_SEGMENTS, MAX_TOKENS, type FileMap } from '~/lib/.server/llm/constants';
 import { CONTINUE_PROMPT } from '~/lib/common/prompts/prompts';
-import { streamText, type Messages, type StreamingOptions } from '~/lib/.server/llm/stream-text';
+import {
+  streamText,
+  type Messages,
+  type StreamingOptions,
+  sanitizeReasoningOutput,
+} from '~/lib/.server/llm/stream-text';
 import SwitchableStream from '~/lib/.server/llm/switchable-stream';
 import type { IProviderSetting } from '~/types/model';
 import { createScopedLogger } from '~/utils/logger';
@@ -190,7 +195,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         const options: StreamingOptions = {
           supabaseConnection: supabase,
           toolChoice: 'none',
-          onFinish: async ({ text: content, finishReason, usage }) => {
+          smoothStreaming: true,
+          onFinish: async ({ text: content, finishReason, usage, reasoning }) => {
             logger.debug('usage', JSON.stringify(usage));
 
             if (usage) {
@@ -198,6 +204,17 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               cumulativeUsage.promptTokens += usage.promptTokens || 0;
               cumulativeUsage.totalTokens += usage.totalTokens || 0;
             }
+// If reasoning is available, sanitize it before writing to dataStream
+if (reasoning) {
+  // Sanitize the reasoning output to prevent rendering issues
+  const sanitizedReasoning =
+    typeof sanitizeReasoningOutput === 'function' ? sanitizeReasoningOutput(reasoning) : reasoning;
+
+  dataStream.writeMessageAnnotation({
+    type: 'reasoning',
+    value: sanitizedReasoning,
+  });
+}
 
             if (finishReason !== 'length') {
               dataStream.writeMessageAnnotation({
@@ -255,6 +272,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             result.mergeIntoDataStream(dataStream);
 
             (async () => {
+                // Small delay to allow buffer initialization
+          await new Promise((resolve) => setTimeout(resolve, 15));
               for await (const part of result.fullStream) {
                 if (part.type === 'error') {
                   const error: any = part.error;
@@ -292,6 +311,9 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         });
 
         (async () => {
+           // Small delay to allow buffer initialization
+           await new Promise((resolve) => setTimeout(resolve, 15));
+
           for await (const part of result.fullStream) {
             if (part.type === 'error') {
               const error: any = part.error;
