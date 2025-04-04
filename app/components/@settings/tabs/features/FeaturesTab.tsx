@@ -33,37 +33,36 @@ const FeatureCard = memo(
       layoutId={feature.id}
       className={classNames(
         'relative group cursor-pointer',
-        'bg-gradient-to-br from-bolt-elements-background-depth-1 to-bolt-elements-background-depth-2',
-        'hover:from-bolt-elements-background-depth-2 hover:to-bolt-elements-background-depth-3',
-        'transition-all duration-500 ease-out',
-        'rounded-2xl overflow-hidden',
-        'shadow-lg hover:shadow-2xl',
-        'border border-bolt-elements-borderColor/20 hover:border-violet-500/30',
+        'bg-bolt-elements-background-depth-1',
+        'hover:bg-bolt-elements-background-depth-2',
+        'transition-all duration-300 ease-out',
+        'rounded-xl overflow-hidden',
+        'shadow-md hover:shadow-lg',
+        'border border-bolt-elements-borderColor/20 hover:border-bolt-elements-borderColor/50',
         'transform hover:-translate-y-1'
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
-      transition={{ delay: index * 0.05, type: 'spring', stiffness: 100, damping: 20 }}
+      transition={{ delay: index * 0.1, type: 'spring', stiffness: 100 }}
     >
-      <div className="p-8 space-y-6">
+      <div className="p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className={classNames(
               feature.icon, 
-              'w-12 h-12 p-2.5 rounded-2xl',
+              'w-8 h-8 p-1.5 rounded-lg',
               'text-white',
               'bg-gradient-to-br from-violet-400 to-violet-600',
-              'shadow-xl group-hover:shadow-2xl group-hover:from-violet-500 group-hover:to-violet-700',
-              'transform group-hover:scale-110 transition-all duration-500'
+              'shadow-sm'
             )} />
-            <div className="flex items-center gap-3">
-              <h4 className="font-bold text-xl text-bolt-elements-textPrimary group-hover:text-violet-500 transition-colors">{feature.title}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-lg text-bolt-elements-textPrimary group-hover:text-violet-500 transition-colors">{feature.title}</h4>
               {feature.beta && (
-                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/15 text-blue-400 shadow-lg ring-1 ring-blue-500/30 group-hover:bg-blue-500/25 group-hover:ring-blue-500/40 transition-all duration-500">Bêta</span>
+                <span className="px-3 py-1 text-xs rounded-full bg-blue-500/10 text-blue-500 font-semibold shadow-sm group-hover:bg-blue-500/20 transition-colors">Bêta</span>
               )}
               {feature.experimental && (
-                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-orange-500/15 text-orange-400 shadow-lg ring-1 ring-orange-500/30 group-hover:bg-orange-500/25 group-hover:ring-orange-500/40 transition-all duration-500">
+                <span className="px-3 py-1 text-xs rounded-full bg-orange-500/10 text-orange-500 font-semibold shadow-sm group-hover:bg-orange-500/20 transition-colors">
                   Expérimental
                 </span>
               )}
@@ -72,12 +71,12 @@ const FeatureCard = memo(
           <Switch 
             checked={feature.enabled} 
             onCheckedChange={(checked) => onToggle(feature.id, checked)}
-            className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-bolt-elements-borderColor/50 h-6 w-11"
+            className="data-[state=checked]:bg-violet-500 data-[state=unchecked]:bg-bolt-elements-borderColor/50"
           />
         </div>
-        <p className="text-base text-bolt-elements-textSecondary/90 leading-relaxed group-hover:text-bolt-elements-textPrimary/90 transition-colors duration-500">{feature.description}</p>
+        <p className="text-sm text-bolt-elements-textSecondary leading-relaxed group-hover:text-bolt-elements-textPrimary transition-colors">{feature.description}</p>
         {feature.tooltip && (
-          <p className="text-sm text-bolt-elements-textTertiary/70 italic group-hover:text-bolt-elements-textSecondary/70 transition-colors duration-500">
+          <p className="text-xs text-bolt-elements-textTertiary/80 italic group-hover:text-bolt-elements-textSecondary/80 transition-colors">
             {feature.tooltip}
           </p>
         )}
