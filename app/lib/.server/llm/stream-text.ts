@@ -9,6 +9,7 @@ import { LLMManager } from '~/lib/modules/llm/manager';
 import { createScopedLogger } from '~/utils/logger';
 import { createFilesContext, extractPropertiesFromMessage } from './utils';
 import { getFilePaths } from './select-context';
+import { estimateMessagesTokens, estimateTokens } from './token-counter';
 
 export type Messages = Message[];
 // Batch size for chunking responses - helps to smooth out streaming
@@ -84,6 +85,118 @@ function optimizeContextBuffer(context: string, maxLength: number = 100000): str
 }
 
 const logger = createScopedLogger('stream-text');
+/**
+ * Truncate messages to fit within token limit
+ * Prioritizes keeping the most recent messages
+ */
+function truncateMessagesToFitTokenLimit<T extends { role: string; content: any }>(
+  messages: T[],
+  systemPromptTokens: number,
+  maxContextTokens: number,
+  reservedCompletionTokens: number = 8000,
+): T[] {
+  // Calculate available tokens for messages
+  const availableTokens = maxContextTokens - systemPromptTokens - reservedCompletionTokens;
+
+  if (availableTokens <= 0) {
+    logger.warn(`Not enough tokens available for messages. System prompt is too large (${systemPromptTokens} tokens)`);
+
+    // Keep only the latest message in extreme cases
+    return messages.length > 0 ? [messages[messages.length - 1]] : [];
+  }
+
+  // Start with full message set
+  let currentMessages = [...messages];
+  let currentTokenCount = estimateMessagesTokens(currentMessages as unknown as Message[]);
+
+  // If we're within limits, return all messages
+  if (currentTokenCount <= availableTokens) {
+    return currentMessages;
+  }
+
+  logger.warn(
+    `Messages (${currentTokenCount} tokens) exceed available token budget (${availableTokens}). Truncating...`,
+  );
+
+  /* First try to remove messages from the middle (keep system and recent) */
+  const systemMessages = currentMessages.filter((msg) => msg.role === 'system');
+  const userAssistantMessages = currentMessages.filter((msg) => msg.role !== 'system');
+
+  // Preserve the last few exchanges (user-assistant pairs)
+  while (currentTokenCount > availableTokens && userAssistantMessages.length > 2) {
+    // Remove the oldest non-system message
+    userAssistantMessages.shift();
+
+    // Recalculate with remaining messages
+    currentMessages = [...systemMessages, ...userAssistantMessages];
+    currentTokenCount = estimateMessagesTokens(currentMessages as unknown as Message[]);
+  }
+
+  // If still too large, truncate the content of system messages
+  if (currentTokenCount > availableTokens && systemMessages.length > 0) {
+    for (let i = 0; i < systemMessages.length && currentTokenCount > availableTokens; i++) {
+      const currentSystemMsg = systemMessages[i];
+      const systemContent =
+        typeof currentSystemMsg.content === 'string'
+          ? currentSystemMsg.content
+          : JSON.stringify(currentSystemMsg.content);
+
+      // Truncate the system message to fit
+      const currentSystemTokens = estimateTokens(systemContent);
+      const tokensToCut = Math.min(
+        currentSystemTokens - 200, // Leave at least 200 tokens
+        currentTokenCount - availableTokens + 100, // Cut enough with some buffer
+      );
+
+      if (tokensToCut > 0) {
+        const percentToKeep = Math.max(0.1, (currentSystemTokens - tokensToCut) / currentSystemTokens);
+        const truncatedLength = Math.floor(systemContent.length * percentToKeep);
+
+        // Update system message with truncated content
+        systemMessages[i] = {
+          ...currentSystemMsg,
+          content: systemContent.substring(0, truncatedLength) + '\n[Content truncated to fit token limit]',
+        };
+
+        // Recalculate tokens
+        currentMessages = [...systemMessages, ...userAssistantMessages];
+        currentTokenCount = estimateMessagesTokens(currentMessages as unknown as Message[]);
+      }
+    }
+  }
+
+  // If still too large, truncate the most recent user message as last resort
+  if (currentTokenCount > availableTokens && userAssistantMessages.length > 0) {
+    const lastUserMsgIndex = userAssistantMessages.findIndex((msg) => msg.role === 'user');
+
+    if (lastUserMsgIndex >= 0) {
+      const userMsg = userAssistantMessages[lastUserMsgIndex];
+      const userContent = typeof userMsg.content === 'string' ? userMsg.content : JSON.stringify(userMsg.content);
+
+      const currentUserTokens = estimateTokens(userContent);
+      const tokensToCut = Math.min(
+        currentUserTokens - 100, // Leave at least 100 tokens
+        currentTokenCount - availableTokens + 50, // Cut enough with buffer
+      );
+
+      if (tokensToCut > 0) {
+        const percentToKeep = Math.max(0.4, (currentUserTokens - tokensToCut) / currentUserTokens);
+        const truncatedLength = Math.floor(userContent.length * percentToKeep);
+
+        userAssistantMessages[lastUserMsgIndex] = {
+          ...userMsg,
+          content: userContent.substring(0, truncatedLength) + '\n[Content truncated to fit token limit]',
+        };
+      }
+    }
+
+    currentMessages = [...systemMessages, ...userAssistantMessages];
+  }
+
+  logger.info(`Messages truncated to ${estimateMessagesTokens(currentMessages as unknown as Message[])} tokens`);
+
+  return currentMessages;
+}
 
 export async function streamText(props: {
   messages: Omit<Message, 'id'>[];
@@ -305,12 +418,24 @@ const model = llmManager.getModelInstance({
   apiKeys,
   providerSettings,
 });
+ // Estimate tokens and truncate if needed to prevent context length errors
+ const systemPromptTokens = estimateTokens(systemPrompt);
+ const maxContextTokens = modelDetails.maxTokenAllowed || MAX_TOKENS;
+
+ // Truncate messages if they exceed token limits
+ const truncatedMessages = truncateMessagesToFitTokenLimit(
+   multimodalMessages,
+   systemPromptTokens,
+   maxContextTokens,
+ );
+
+ logger.info(`Using ${truncatedMessages.length} messages out of ${multimodalMessages.length} after token check`);
      return await _streamText({
       model,
 
        system: systemPrompt,
        maxTokens: dynamicMaxTokens,
-       messages: multimodalMessages as any,
+       messages: truncatedMessages as any,
        ...enhancedOptions,
       });
    } else {
@@ -328,12 +453,27 @@ const model = llmManager.getModelInstance({
   apiKeys,
   providerSettings,
 });
+ // Estimate tokens and truncate if needed to prevent context length errors
+ const systemPromptTokens = estimateTokens(systemPrompt);
+ const maxContextTokens = modelDetails.maxTokenAllowed || MAX_TOKENS;
+
+ // Truncate messages if they exceed token limits
+ const truncatedMessages = truncateMessagesToFitTokenLimit(
+   normalizedTextMessages,
+   systemPromptTokens,
+   maxContextTokens,
+ );
+
+ logger.info(
+   `Using ${truncatedMessages.length} messages out of ${normalizedTextMessages.length} after token check`,
+ );
+
      return await _streamText({
       model,
 
        system: systemPrompt,
        maxTokens: dynamicMaxTokens,
-       messages: convertToCoreMessages(normalizedTextMessages),
+       messages: convertToCoreMessages(truncatedMessages),
        ...enhancedOptions,
       });
    }
