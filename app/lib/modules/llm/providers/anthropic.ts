@@ -20,6 +20,7 @@ export default class AnthropicProvider extends BaseProvider {
       maxTokenAllowed: 8000,
       features: {
         reasoning: true,
+        imageGeneration: true,
       },
     },
     {
@@ -27,22 +28,55 @@ export default class AnthropicProvider extends BaseProvider {
       label: 'Claude 3.5 Sonnet (new)',
       provider: 'Anthropic',
       maxTokenAllowed: 8000,
+      features: {
+        imageGeneration: true,
+      },
     },
     {
       name: 'claude-3-5-sonnet-20240620',
       label: 'Claude 3.5 Sonnet (old)',
       provider: 'Anthropic',
       maxTokenAllowed: 8000,
+      features: {
+        imageGeneration: true,
+      },
     },
     {
       name: 'claude-3-5-haiku-latest',
       label: 'Claude 3.5 Haiku (new)',
       provider: 'Anthropic',
       maxTokenAllowed: 8000,
+      features: {
+        imageGeneration: true,
+      },
     },
-    { name: 'claude-3-opus-latest', label: 'Claude 3 Opus', provider: 'Anthropic', maxTokenAllowed: 8000 },
-    { name: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet', provider: 'Anthropic', maxTokenAllowed: 8000 },
-    { name: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku', provider: 'Anthropic', maxTokenAllowed: 8000 },
+    {
+      name: 'claude-3-opus-latest',
+      label: 'Claude 3 Opus',
+      provider: 'Anthropic',
+      maxTokenAllowed: 8000,
+      features: {
+        imageGeneration: true,
+      },
+    },
+    {
+      name: 'claude-3-sonnet-20240229',
+      label: 'Claude 3 Sonnet',
+      provider: 'Anthropic',
+      maxTokenAllowed: 8000,
+      features: {
+        imageGeneration: true,
+      },
+    },
+    {
+      name: 'claude-3-haiku-20240307',
+      label: 'Claude 3 Haiku',
+      provider: 'Anthropic',
+      maxTokenAllowed: 8000,
+      features: {
+        imageGeneration: true,
+      },
+    },
   ];
 
   async getDynamicModels(
@@ -83,6 +117,7 @@ export default class AnthropicProvider extends BaseProvider {
       // Add features based on model capabilities
       features: {
         reasoning: m.id.includes('claude-3-7') || m.id.includes('claude-3-5'),
+        imageGeneration: m.id.includes('claude-3'),
       },
     }));
   }
