@@ -178,6 +178,7 @@ export function modelSupportsReasoning(modelName: string): boolean {
     'deepseek-r1',
   ];
 
-  // Check if the model name contains any of the reasoning model identifiers
-  return reasoningModels.some((reasoningModel) => modelName.toLowerCase().includes(reasoningModel.toLowerCase()));
+  return reasoningModels.some((reasoningModel) => 
+    modelName.toLowerCase().includes(reasoningModel.toLowerCase())
+  );
 }
