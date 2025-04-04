@@ -2,100 +2,47 @@ import type { LanguageModelV1, LanguageModelV1Middleware, LanguageModelV1StreamP
 import { extractReasoningMiddleware, wrapLanguageModel } from 'ai';
 import type { ModelInfo } from './types';
 
-/**
- * Applies middleware to a language model based on its features
- *
- * @param model The language model to wrap
- * @param modelInfo The model information including supported features
- * @returns The wrapped language model with applied middleware
- */
 export function applyMiddleware(model: LanguageModelV1, modelInfo: ModelInfo): LanguageModelV1 {
   let wrappedModel = model;
 
-  // Apply reasoning middleware if model supports reasoning
+  // Apply middleware based on supported features
+  const middlewareStack: LanguageModelV1Middleware[] = [];
+
+  // Add reasoning middleware if supported
   if (modelInfo.features?.reasoning) {
-    // Special handling for Anthropic models which need more robust tag handling
-    if (modelInfo.provider === 'Anthropic') {
-      wrappedModel = wrapLanguageModel({
-        model: wrappedModel,
-        middleware: createCustomReasoningMiddleware(),
-      });
-    } else {
-      // Standard reasoning middleware for other providers
-      wrappedModel = wrapLanguageModel({
-        model: wrappedModel,
-        middleware: extractReasoningMiddleware({ tagName: 'think' }),
-      });
-    }
+    middlewareStack.push(
+      modelInfo.provider === 'Anthropic'
+        ? createCustomReasoningMiddleware()
+        : extractReasoningMiddleware({ tagName: 'think' })
+    );
   }
 
-  /*
-   * Add more middleware for other features as needed
-   * For example, for image generation, sources, etc.
-   */
+  // Apply all middleware in the stack
+  for (const middleware of middlewareStack) {
+    wrappedModel = wrapLanguageModel({
+      model: wrappedModel,
+      middleware,
+    });
+  }
 
   return wrappedModel;
 }
 
-/**
- * Create a custom reasoning middleware that safely handles Anthropic's XML output
- * This creates a more robust extraction that can handle Claude's sometimes inconsistent XML formatting
- */
 function createCustomReasoningMiddleware(): LanguageModelV1Middleware {
   return {
     middlewareVersion: 'v1',
     wrapGenerate: async ({ doGenerate }) => {
-      const result = await doGenerate();
-
-      if (result.text) {
-        const processed = processReasoningInText(result.text);
-        return {
-          ...result,
-          text: processed.text,
-          reasoning: processed.reasoning || result.reasoning,
-        };
+      try {
+        const result = await doGenerate();
+        return result.text ? processTextWithReasoning(result) : result;
+      } catch (error) {
+        console.error('Error in reasoning middleware generate:', error);
+        throw error;
       }
-
-      return result;
     },
     wrapStream: async ({ doStream }) => {
       const stream = await doStream();
-
-      // Return a new stream with the same interface but with processed reasoning
-      return {
-        ...stream,
-
-        // Must keep the original methods and properties
-        [Symbol.asyncIterator]() {
-          // Cast to any to avoid type compatibility issues
-          const originalIterator = (stream as any)[Symbol.asyncIterator]();
-
-          return {
-            async next() {
-              const { done, value } = await originalIterator.next();
-
-              if (done || !value) {
-                return { done, value };
-              }
-
-              // Process reasoning in text chunks
-              if ('text' in value && typeof value.text === 'string') {
-                const processed = processReasoningInText(value.text);
-                return {
-                  done,
-                  value: {
-                    ...value,
-                    text: processed.text,
-                    reasoning: processed.reasoning || (value as any).reasoning,
-                  } as LanguageModelV1StreamPart,
-                };
-              }
-
-              return { done, value };
-            },
-          };
-        },
-      };
+      return createProcessedStream(stream);
     },
   };
 }
@@ -173,12 +120,56 @@ export function modelSupportsReasoning(modelName: string): boolean {
     'mistral-large',
 
     // DeepSeek
-    'deepseek-coder',
+    'deepseek-Reasoner',
     'deepseek-v2',
     'deepseek-r1',
   ];
 
-  return reasoningModels.some((reasoningModel) => 
-    modelName.toLowerCase().includes(reasoningModel.toLowerCase())
-  );
+  // Check if the model name contains any of the reasoning model identifiers
+  return reasoningModels.some((reasoningModel) => modelName.toLowerCase().includes(reasoningModel.toLowerCase()));
+}
+
+function processTextWithReasoning(result: any) {
+  const processed = processReasoningInText(result.text);
+  return {
+    ...result,
+    text: processed.text,
+    reasoning: processed.reasoning || result.reasoning,
+  };
+}
+
+function createProcessedStream(stream: any) {
+  return {
+    ...stream,
+    [Symbol.asyncIterator]() {
+      const originalIterator = stream[Symbol.asyncIterator]();
+      return {
+        async next() {
+          try {
+            const { done, value } = await originalIterator.next();
+            if (done || !value) return { done, value };
+            
+            return {
+              done,
+              value: ('text' in value && typeof value.text === 'string')
+                ? processStreamChunk(value)
+                : value
+            };
+          } catch (error) {
+            console.error('Error processing stream chunk:', error);
+            throw error;
+          }
+        }
+      };
+    }
+  };
+}
+
+function processStreamChunk(value: any): LanguageModelV1StreamPart {
+  const processed = processReasoningInText(value.text);
+  return {
+    ...value,
+    text: processed.text,
+    reasoning: processed.reasoning || value.reasoning,
+  } as LanguageModelV1StreamPart;
 }
