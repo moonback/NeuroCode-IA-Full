@@ -3,7 +3,12 @@ import type { ProviderInfo, ProviderConfig, ModelInfo } from './types';
 import type { IProviderSetting } from '~/types/model';
 import { createOpenAI } from '@ai-sdk/openai';
 import { LLMManager } from './manager';
-import { applyMiddleware, modelSupportsReasoning } from './middleware';
+import {
+  applyMiddleware,
+  modelSupportsReasoning,
+  modelSupportsImageGeneration,
+  modelSupportsStructuredOutput,
+} from './middleware';
 
 export abstract class BaseProvider implements ProviderInfo {
   abstract name: string;
@@ -90,7 +95,7 @@ export abstract class BaseProvider implements ProviderInfo {
       }
     }
 
-    // If model not found, create a basic model info with reasoning if supported
+    // If model not found, create a basic model info with auto-detected features
     return {
       name: modelName,
       label: modelName,
@@ -98,6 +103,8 @@ export abstract class BaseProvider implements ProviderInfo {
       maxTokenAllowed: 8000,
       features: {
         reasoning: modelSupportsReasoning(modelName),
+        imageGeneration: modelSupportsImageGeneration(modelName),
+        structuredOutput: modelSupportsStructuredOutput(modelName),
       },
     };
   }
@@ -142,12 +149,14 @@ export abstract class BaseProvider implements ProviderInfo {
     },
     models: ModelInfo[],
   ) {
-    // Enhance dynamic models with reasoning capability if applicable
+    // Enhance dynamic models with auto-detected capabilities
     const enhancedModels = models.map((model) => ({
       ...model,
       features: {
         ...model.features,
         reasoning: model.features?.reasoning || modelSupportsReasoning(model.name),
+        imageGeneration: model.features?.imageGeneration || modelSupportsImageGeneration(model.name),
+        structuredOutput: model.features?.structuredOutput || modelSupportsStructuredOutput(model.name),
       },
     }));
 
