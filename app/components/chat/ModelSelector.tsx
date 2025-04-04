@@ -157,7 +157,8 @@ export const ModelSelector = ({
     return (
       <div className="mb-2 p-4 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-prompt-background text-bolt-elements-textPrimary">
         <p className="text-center">
-        Aucun fournisseur n'est actuellement activé. Veuillez activer au moins un fournisseur dans les paramètres pour commencer à utiliser le chat.
+          No providers are currently enabled. Please enable at least one provider in the settings to start using the
+          chat.
         </p>
       </div>
     );
@@ -183,7 +184,11 @@ export const ModelSelector = ({
         className="flex-1 p-2 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-prompt-background text-bolt-elements-textPrimary focus:outline-none focus:ring-2 focus:ring-bolt-elements-focus transition-all"
       >
         {providerList.map((provider: ProviderInfo) => (
-          <option key={provider.name} value={provider.name}>
+          <option
+            key={provider.name}
+            value={provider.name}
+            className="text-bolt-elements-textPrimary bg-bolt-elements-background-depth-2"
+          >
             {provider.name}
           </option>
         ))}
@@ -213,10 +218,12 @@ export const ModelSelector = ({
         >
           <div className="flex items-center justify-between">
             <div className="truncate flex items-center gap-2">
-              {modelList.find((m) => m.name === model)?.features?.reasoning && (
-                <div className="i-ph:brain text-purple-500 w-4 h-4" />
-              )}
               <span>{modelList.find((m) => m.name === model)?.label || 'Select model'}</span>
+              {modelList.find((m) => m.name === model)?.features?.reasoning && (
+                <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium whitespace-nowrap">
+                  Reasoning
+                </span>
+              )}
             </div>
             <div
               className={classNames(
@@ -229,7 +236,7 @@ export const ModelSelector = ({
 
         {isModelDropdownOpen && (
           <div
-            className="absolute z-10 w-full mt-1 py-1 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-prompt-background text-bolt-elements-textPrimary  shadow-lg"
+            className="absolute z-10 w-full mt-1 py-1 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2  shadow-lg"
             role="listbox"
             id="model-listbox"
           >
@@ -240,7 +247,7 @@ export const ModelSelector = ({
                   type="text"
                   value={modelSearchQuery}
                   onChange={(e) => setModelSearchQuery(e.target.value)}
-                  placeholder="Rechercher des modèles..."
+                  placeholder="Search models..."
                   className={classNames(
                     'w-full pl-8 pr-3 py-1.5 rounded-md text-sm',
                     'bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor',
@@ -250,7 +257,7 @@ export const ModelSelector = ({
                   )}
                   onClick={(e) => e.stopPropagation()}
                   role="searchbox"
-                  aria-label="Rechercher des modèles"
+                  aria-label="Search models"
                 />
                 <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
                   <span className="i-ph:magnifying-glass text-bolt-elements-textTertiary" />
@@ -279,35 +286,33 @@ export const ModelSelector = ({
               ) : filteredModels.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-bolt-elements-textTertiary">No models found</div>
               ) : (
-                filteredModels.map((modelOption, index) => (
+                filteredModels.map((model, index) => (
                   <div
+                    key={model.name}
                     ref={(el) => (optionsRef.current[index] = el)}
-                    key={`${modelOption.provider}-${modelOption.name}`}
-                    role="option"
-                    aria-selected={model === modelOption.name}
-                    className={classNames(
-                      'flex items-center justify-between px-4 py-2 cursor-pointer text-sm',
-                      'hover:bg-bolt-elements-prompt-background-hover',
-                      focusedIndex === index ? 'bg-bolt-elements-prompt-background-hover' : undefined,
-                      'transition-colors duration-100',
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setModel?.(modelOption.name);
+                    onClick={() => {
+                      setModel?.(model.name);
                       setIsModelDropdownOpen(false);
                       setModelSearchQuery('');
                     }}
-                    tabIndex={focusedIndex === index ? 0 : -1}
+                    onMouseEnter={() => setFocusedIndex(index)}
+                    className={classNames(
+                      'cursor-pointer px-3 py-2 text-sm rounded-md mx-1',
+                      focusedIndex === index
+                        ? 'bg-bolt-elements-focus/20 text-bolt-elements-textPrimary'
+                        : 'hover:bg-bolt-elements-hover text-bolt-elements-textPrimary',
+                    )}
+                    role="option"
+                    aria-selected={focusedIndex === index}
                   >
                     <div className="flex items-center gap-2">
-                      {modelOption.features?.reasoning && (
-                        <div className="i-ph:brain text-purple-500 w-4 h-4" />
+                      <div className="truncate">{model.label}</div>
+                      {model.features?.reasoning && (
+                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium whitespace-nowrap">
+                          Reasoning
+                        </span>
                       )}
-                      <span className="truncate">{modelOption.label}</span>
                     </div>
-                    {modelOption.name === model && (
-                      <div className="i-ph:check w-4 h-4 text-bolt-elements-textSecondary" />
-                    )}
                   </div>
                 ))
               )}
