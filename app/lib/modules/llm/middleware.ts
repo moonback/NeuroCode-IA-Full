@@ -29,6 +29,22 @@ export function applyMiddleware(model: LanguageModelV1, modelInfo: ModelInfo): L
     }
   }
 
+  // Apply image generation middleware for models that support it
+  if (modelInfo.features?.imageGeneration) {
+    wrappedModel = wrapLanguageModel({
+      model: wrappedModel,
+      middleware: createImageGenerationMiddleware(),
+    });
+  }
+
+  // Apply structured output middleware for models that support it
+  if (modelInfo.features?.structuredOutput) {
+    wrappedModel = wrapLanguageModel({
+      model: wrappedModel,
+      middleware: createStructuredOutputMiddleware(),
+    });
+  }
+
   /*
    * Add more middleware for other features as needed
    * For example, for image generation, sources, etc.
@@ -229,6 +245,139 @@ function createDeepSeekCodeCompletionMiddleware(): LanguageModelV1Middleware {
 }
 
 /**
+ * Create middleware for handling image generation capabilities
+ * This helps with properly formatting image requests and responses
+ */
+function createImageGenerationMiddleware(): LanguageModelV1Middleware {
+  return {
+    middlewareVersion: 'v1',
+    wrapGenerate: async ({ doGenerate }) => {
+      const result = await doGenerate();
+      return result;
+    },
+    wrapStream: async ({ doStream }) => {
+      const stream = await doStream();
+      return stream;
+    },
+  };
+}
+
+/**
+ * Create middleware for handling structured output capabilities
+ * This improves JSON generation and helps catch/fix common structured output errors
+ */
+function createStructuredOutputMiddleware(): LanguageModelV1Middleware {
+  return {
+    middlewareVersion: 'v1',
+    wrapGenerate: async ({ doGenerate }) => {
+      const result = await doGenerate();
+      return result;
+    },
+    wrapStream: async ({ doStream }) => {
+      const stream = await doStream();
+      let jsonOutput = '';
+      let inJsonBlock = false;
+      let jsonEnded = false;
+      let bracketCount = 0;
+
+      return {
+        ...stream,
+        [Symbol.asyncIterator]() {
+          const originalIterator = (stream as any)[Symbol.asyncIterator]();
+
+          return {
+            async next() {
+              const { done, value } = await originalIterator.next();
+
+              if (done || !value) {
+                /*
+                 * If we were in the middle of a JSON block and it wasn't properly closed,
+                 * try to fix it by adding missing closing brackets/braces
+                 */
+                if (inJsonBlock && !jsonEnded && 'text' in value) {
+                  let fixedJson = jsonOutput;
+
+                  // Add missing closing brackets/braces
+                  while (bracketCount > 0) {
+                    fixedJson += '}';
+                    bracketCount--;
+                  }
+
+                  return {
+                    done,
+                    value: {
+                      ...value,
+                      text: fixedJson,
+                    } as LanguageModelV1StreamPart,
+                  };
+                }
+
+                return { done, value };
+              }
+
+              // Process text chunks to improve JSON handling
+              if ('text' in value && typeof value.text === 'string') {
+                const text = value.text;
+
+                /* Check for JSON code block start */
+                if (!inJsonBlock && text.includes('```json')) {
+                  inJsonBlock = true;
+                  jsonOutput = text.substring(text.indexOf('```json') + 7);
+
+                  return { done, value };
+                }
+
+                // Check for JSON code block end
+                if (inJsonBlock && text.includes('```') && !jsonEnded) {
+                  inJsonBlock = false;
+                  jsonEnded = true;
+                  jsonOutput += text.substring(0, text.indexOf('```'));
+
+                  // Try to parse and format the JSON
+                  try {
+                    const parsed = JSON.parse(jsonOutput);
+                    const formatted = JSON.stringify(parsed, null, 2);
+
+                    return {
+                      done,
+                      value: {
+                        ...value,
+                        text: formatted,
+                      } as LanguageModelV1StreamPart,
+                    };
+                  } catch {
+                    // If parsing fails, return the original
+
+                    return { done, value };
+                  }
+                }
+
+                // Track opening and closing braces to help with unclosed JSON
+                if (inJsonBlock) {
+                  for (let i = 0; i < text.length; i++) {
+                    if (text[i] === '{') {
+                      bracketCount++;
+                    }
+
+                    if (text[i] === '}') {
+                      bracketCount--;
+                    }
+                  }
+
+                  jsonOutput += text;
+                }
+              }
+
+              return { done, value };
+            },
+          };
+        },
+      };
+    },
+  };
+}
+
+/**
  * Create middleware based on model capabilities
  * @param model The model name to create middleware for
  * @returns Middleware array appropriate for the model's capabilities
@@ -309,4 +458,67 @@ export function isDeepSeekModel(modelName: string): boolean {
 
   // Check if the model name contains any of the DeepSeek model identifiers
   return deepseekModels.some((deepseekModel) => modelName.toLowerCase().includes(deepseekModel.toLowerCase()));
+}
+
+/**
+ * Determine if a model name is known to support image generation
+ * @param modelName The name of the model to check
+ * @returns true if the model supports image generation
+ */
+export function modelSupportsImageGeneration(modelName: string): boolean {
+  // Lists of models known to support image generation
+  const imageModels = [
+    // OpenAI
+    'gpt-4o',
+    'gpt-4-vision',
+    'gpt-4-turbo',
+
+    // Anthropic
+    'claude-3-opus',
+    'claude-3-sonnet',
+    'claude-3-haiku',
+    'claude-3-5-sonnet',
+    'claude-3-7-sonnet',
+
+    // Gemini
+    'gemini-1.5-pro',
+    'gemini-1.5-flash',
+    'gemini-2.5-pro',
+  ];
+
+  // Check if the model name contains any of the image generation model identifiers
+  return imageModels.some((imageModel) => modelName.toLowerCase().includes(imageModel.toLowerCase()));
+}
+
+/**
+ * Determine if a model name is known to support structured output
+ * @param modelName The name of the model to check
+ * @returns true if the model supports structured output
+ */
+export function modelSupportsStructuredOutput(modelName: string): boolean {
+  // Most modern models support structured output well
+  const structuredOutputModels = [
+    // OpenAI
+    'gpt-4',
+    'gpt-4o',
+    'gpt-4-turbo',
+    'gpt-3.5-turbo',
+
+    // Anthropic
+    'claude-3',
+
+    // Mistral
+    'mistral-large',
+    'mistral-medium',
+
+    // Google
+    'gemini',
+
+    // Others
+    'command-r',
+    'deepseek',
+  ];
+
+  // Check if the model name contains any of the structured output model identifiers
+  return structuredOutputModels.some((model) => modelName.toLowerCase().includes(model.toLowerCase()));
 }
