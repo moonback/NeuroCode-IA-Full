@@ -15,12 +15,12 @@ export function useVercelDeploy() {
 
   const handleVercelDeploy = async () => {
     if (!vercelConn.user || !vercelConn.token) {
-      toast.error('Please connect to Vercel first in the settings tab!');
+      toast.error('Veuillez d\'abord vous connecter à Vercel dans l\'onglet paramètres !');
       return false;
     }
 
     if (!currentChatId) {
-      toast.error('No active chat found');
+      toast.error('Aucune conversation active trouvée');
       return false;
     }
 
@@ -30,8 +30,22 @@ export function useVercelDeploy() {
       const artifact = workbenchStore.firstArtifact;
 
       if (!artifact) {
-        throw new Error('No active project found');
+        throw new Error('Aucun projet actif trouvé');
       }
+
+      // Create a deployment artifact for visual feedback
+      const deploymentId = `deploy-vercel-project`;
+      workbenchStore.addArtifact({
+        id: deploymentId,
+        messageId: deploymentId,
+        title: 'Déploiement Vercel',
+        type: 'standalone',
+      });
+
+      const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
+
+      // Notify that build is starting
+      deployArtifact.runner.handleDeployAction('building', 'running', { source: 'vercel' });
 
       const actionId = 'build-' + Date.now();
       const actionData: ActionCallbackData = {
@@ -51,8 +65,16 @@ export function useVercelDeploy() {
       await artifact.runner.runAction(actionData);
 
       if (!artifact.runner.buildOutput) {
-        throw new Error('Build failed');
+        // Notify that build failed
+        deployArtifact.runner.handleDeployAction('building', 'failed', {
+          error: 'La compilation a échoué. Vérifiez le terminal pour plus de détails.',
+          source: 'vercel',
+        });
+        throw new Error('La compilation a échoué');
       }
+
+      // Notify that build succeeded and deployment is starting
+      deployArtifact.runner.handleDeployAction('deploying', 'running', { source: 'vercel' });
 
       // Get the build files
       const container = await webcontainer;
@@ -85,7 +107,7 @@ export function useVercelDeploy() {
       }
 
       if (!buildPathExists) {
-        throw new Error('Could not find build output directory. Please check your build configuration.');
+        throw new Error('Impossible de trouver le répertoire de sortie de compilation. Veuillez vérifier votre configuration de build.');
       }
 
       // Get all files recursively
@@ -133,18 +155,30 @@ export function useVercelDeploy() {
 
       if (!response.ok || !data.deploy || !data.project) {
         console.error('Invalid deploy response:', data);
-        throw new Error(data.error || 'Invalid deployment response');
+
+        // Notify that deployment failed
+        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
+          error: data.error || 'Réponse de déploiement invalide',
+          source: 'vercel',
+        });
+        throw new Error(data.error || 'Réponse de déploiement invalide');
       }
 
       if (data.project) {
         localStorage.setItem(`vercel-project-${currentChatId}`, data.project.id);
       }
 
+      // Notify that deployment completed successfully
+      deployArtifact.runner.handleDeployAction('complete', 'complete', {
+        url: data.deploy.url,
+        source: 'vercel',
+      });
+
       toast.success(
         <div>
-          Deployed successfully to Vercel!{' '}
+          Déployé avec succès sur Vercel !{' '}
           <a href={data.deploy.url} target="_blank" rel="noopener noreferrer" className="underline">
-            View site
+            Voir le site
           </a>
         </div>,
       );
@@ -152,8 +186,7 @@ export function useVercelDeploy() {
       return true;
     } catch (err) {
       console.error('Vercel deploy error:', err);
-      toast.error(err instanceof Error ? err.message : 'Vercel deployment failed');
-
+      toast.error(err instanceof Error ? err.message : 'Le déploiement Vercel a échoué');
       return false;
     } finally {
       setIsDeploying(false);

@@ -15,12 +15,12 @@ export function useNetlifyDeploy() {
 
   const handleNetlifyDeploy = async () => {
     if (!netlifyConn.user || !netlifyConn.token) {
-      toast.error('Please connect to Netlify first in the settings tab!');
+      toast.error('Veuillez d\'abord vous connecter à Netlify dans l\'onglet paramètres !');
       return false;
     }
 
     if (!currentChatId) {
-      toast.error('No active chat found');
+      toast.error('Aucune conversation active trouvée');
       return false;
     }
 
@@ -30,9 +30,24 @@ export function useNetlifyDeploy() {
       const artifact = workbenchStore.firstArtifact;
 
       if (!artifact) {
-        throw new Error('No active project found');
+        throw new Error('Aucun projet actif trouvé');
       }
 
+      // Create a deployment artifact for visual feedback
+      const deploymentId = `deploy-artifact`;
+      workbenchStore.addArtifact({
+        id: deploymentId,
+        messageId: deploymentId,
+        title: 'Netlify Deployment',
+        type: 'standalone',
+      });
+
+      const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
+
+      // Notify that build is starting
+      deployArtifact.runner.handleDeployAction('building', 'running', { source: 'netlify' });
+
+      // Set up build action
       const actionId = 'build-' + Date.now();
       const actionData: ActionCallbackData = {
         messageId: 'netlify build',
@@ -51,8 +66,16 @@ export function useNetlifyDeploy() {
       await artifact.runner.runAction(actionData);
 
       if (!artifact.runner.buildOutput) {
-        throw new Error('Build failed');
+        // Notify that build failed
+        deployArtifact.runner.handleDeployAction('building', 'failed', {
+          error: 'La compilation a échoué. Vérifiez le terminal pour plus de détails.',
+          source: 'netlify',
+        });
+        throw new Error('La compilation a échoué');
       }
+
+      // Notify that build succeeded and deployment is starting
+      deployArtifact.runner.handleDeployAction('deploying', 'running', { source: 'netlify' });
 
       // Get the build files
       const container = await webcontainer;
@@ -86,7 +109,7 @@ export function useNetlifyDeploy() {
       }
 
       if (!buildPathExists) {
-        throw new Error('Could not find build output directory. Please check your build configuration.');
+        throw new Error('Impossible de trouver le répertoire de sortie de compilation. Veuillez vérifier votre configuration de build.');
       }
 
       async function getAllFiles(dirPath: string): Promise<Record<string, string>> {
@@ -133,7 +156,13 @@ export function useNetlifyDeploy() {
 
       if (!response.ok || !data.deploy || !data.site) {
         console.error('Invalid deploy response:', data);
-        throw new Error(data.error || 'Invalid deployment response');
+
+        // Notify that deployment failed
+        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
+          error: data.error || 'Réponse de déploiement invalide',
+          source: 'netlify',
+        });
+        throw new Error(data.error || 'Réponse de déploiement invalide');
       }
 
       const maxAttempts = 20; // 2 minutes timeout
@@ -158,7 +187,12 @@ export function useNetlifyDeploy() {
           }
 
           if (deploymentStatus.state === 'error') {
-            throw new Error('Deployment failed: ' + (deploymentStatus.error_message || 'Unknown error'));
+            // Notify that deployment failed
+            deployArtifact.runner.handleDeployAction('deploying', 'failed', {
+              error: 'Le déploiement a échoué : ' + (deploymentStatus.error_message || 'Erreur inconnue'),
+              source: 'netlify',
+            });
+            throw new Error('Le déploiement a échoué : ' + (deploymentStatus.error_message || 'Erreur inconnue'));
           }
 
           attempts++;
@@ -171,7 +205,12 @@ export function useNetlifyDeploy() {
       }
 
       if (attempts >= maxAttempts) {
-        throw new Error('Deployment timed out');
+        // Notify that deployment timed out
+        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
+          error: 'Le déploiement a expiré',
+          source: 'netlify',
+        });
+        throw new Error('Le déploiement a expiré');
       }
 
       // Store the site ID if it's a new site
@@ -179,16 +218,22 @@ export function useNetlifyDeploy() {
         localStorage.setItem(`netlify-site-${currentChatId}`, data.site.id);
       }
 
+      // Notify that deployment completed successfully
+      deployArtifact.runner.handleDeployAction('complete', 'complete', {
+        url: deploymentStatus.ssl_url || deploymentStatus.url,
+        source: 'netlify',
+      });
+
       toast.success(
         <div>
-          Deployed successfully!{' '}
+          Déployé avec succès !{' '}
           <a
             href={deploymentStatus.ssl_url || deploymentStatus.url}
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
           >
-            View site
+            Voir le site
           </a>
         </div>,
       );
@@ -196,8 +241,7 @@ export function useNetlifyDeploy() {
       return true;
     } catch (error) {
       console.error('Deploy error:', error);
-      toast.error(error instanceof Error ? error.message : 'Deployment failed');
-
+      toast.error(error instanceof Error ? error.message : 'Le déploiement a échoué');
       return false;
     } finally {
       setIsDeploying(false);

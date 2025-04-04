@@ -17,7 +17,7 @@ import { extractRelativePath } from '~/utils/diff';
 import { description } from '~/lib/persistence';
 import Cookies from 'js-cookie';
 import { createSampler } from '~/utils/sampler';
-import type { ActionAlert, SupabaseAlert } from '~/types/actions';
+import type { ActionAlert, DeployAlert, SupabaseAlert } from '~/types/actions';
 import type { Message } from 'ai';
 
 const { saveAs } = fileSaver;
@@ -53,8 +53,11 @@ export class WorkbenchStore {
   unsavedFiles: WritableAtom<Set<string>> = import.meta.hot?.data.unsavedFiles ?? atom(new Set<string>());
   actionAlert: WritableAtom<ActionAlert | undefined> =
     import.meta.hot?.data.unsavedFiles ?? atom<ActionAlert | undefined>(undefined);
+    
   supabaseAlert: WritableAtom<SupabaseAlert | undefined> =
     import.meta.hot?.data.unsavedFiles ?? atom<ActionAlert | undefined>(undefined);
+    deployAlert: WritableAtom<DeployAlert | undefined> =
+    import.meta.hot?.data.unsavedFiles ?? atom<DeployAlert | undefined>(undefined);
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
   #globalExecutionQueue = Promise.resolve();
@@ -66,6 +69,8 @@ export class WorkbenchStore {
       import.meta.hot.data.currentView = this.currentView;
       import.meta.hot.data.actionAlert = this.actionAlert;
       import.meta.hot.data.supabaseAlert = this.supabaseAlert;
+      import.meta.hot.data.deployAlert = this.deployAlert;
+
 
       // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();
@@ -127,7 +132,13 @@ export class WorkbenchStore {
   clearSupabaseAlert() {
     this.supabaseAlert.set(undefined);
   }
+  get DeployAlert() {
+    return this.deployAlert;
+  }
 
+  clearDeployAlert() {
+    this.deployAlert.set(undefined);
+  }
   toggleTerminal(value?: boolean) {
     this.#terminalStore.toggleTerminal(value);
   }
@@ -425,6 +436,13 @@ export class WorkbenchStore {
           }
 
           this.supabaseAlert.set(alert);
+        },
+        (alert) => {
+          if (this.#reloadedMessages.has(messageId)) {
+            return;
+          }
+
+          this.deployAlert.set(alert);
         },
       ),
     });
