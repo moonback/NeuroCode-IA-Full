@@ -20,6 +20,7 @@ export default class OpenAIProvider extends BaseProvider {
       maxTokenAllowed: 8000,
       features: {
         reasoning: true,
+        imageGeneration: true,
       },
     },
     {
@@ -29,6 +30,7 @@ export default class OpenAIProvider extends BaseProvider {
       maxTokenAllowed: 16000,
       features: {
         reasoning: true,
+        imageGeneration: true,
       },
     },
     {
@@ -36,6 +38,9 @@ export default class OpenAIProvider extends BaseProvider {
       label: 'GPT-4o Mini',
       provider: 'OpenAI',
       maxTokenAllowed: 8000,
+      features: {
+        imageGeneration: true,
+      },
     },
     {
       name: 'gpt-4-turbo',
@@ -44,6 +49,7 @@ export default class OpenAIProvider extends BaseProvider {
       maxTokenAllowed: 8000,
       features: {
         reasoning: true,
+        imageGeneration: true,
       },
     },
     {
