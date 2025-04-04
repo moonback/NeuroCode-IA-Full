@@ -14,14 +14,14 @@ export default class GithubProvider extends BaseProvider {
 
   // find more in https://github.com/marketplace?type=models
   staticModels: ModelInfo[] = [
-    { nom : 'gpt-4o-mini', label : 'GPT-4o mini', fournisseur : 'Github', maxTokenAllowed : 8000 },
-    { nom : 'o1-mini', étiquette : 'o1-mini', fournisseur : 'Github', maxTokenAllowed : 4 000 }, // nécessite Copilot Pro
-    { nom : 'o1-preview', étiquette : 'o1-preview', fournisseur : 'Github', maxTokenAllowed : 4 000 }, // nécessite Copilot Pro
-    { nom : 'o1', étiquette : 'o1', fournisseur : 'Github', maxTokenAllowed : 4 000 },
-    { nom : 'o3-mini', étiquette : 'o3-mini', fournisseur : 'Github', maxTokenAllowed : 4 000 }, // nécessite Copilot Pro
-    { nom : 'DeepSeek-V3', étiquette : 'DeepSeek-V3', fournisseur : 'Github', maxTokenAllowed : 8 000 },
-    { nom : 'DeepSeek-R1', étiquette : 'DeepSeek-R1', fournisseur : 'Github', maxTokenAllowed : 4 000 },
-    { nom : 'Llama-3.3-70B-Instruct', étiquette : 'Llama-3.3-70B-Instruct', fournisseur : 'Github', maxTokenAllowed : 8 000 },
+    { name: 'gpt-4o-mini', label: 'GPT-4o mini', provider: 'Github', maxTokenAllowed: 8000 },
+    { name: 'o1-mini', label: 'o1-mini', provider: 'Github', maxTokenAllowed: 4000 }, // requires Copilot Pro
+    { name: 'o1-preview', label: 'o1-preview', provider: 'Github', maxTokenAllowed: 4000 }, // requires Copilot Pro
+    { name: 'o1', label: 'o1', provider: 'Github', maxTokenAllowed: 4000 },
+    { name: 'o3-mini', label: 'o3-mini', provider: 'Github', maxTokenAllowed: 4000 }, // requires Copilot Pro
+    { name: 'DeepSeek-V3', label: 'DeepSeek-V3', provider: 'Github', maxTokenAllowed: 8000 },
+    { name: 'DeepSeek-R1', label: 'DeepSeek-R1', provider: 'Github', maxTokenAllowed: 4000 },
+    { name: 'Llama-3.3-70B-Instruct', label: 'Llama-3.3-70B-Instruct', provider: 'Github', maxTokenAllowed: 8000 },
   ] ;
 
   getModelInstance(options: {
