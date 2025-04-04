@@ -213,12 +213,10 @@ export const ModelSelector = ({
         >
           <div className="flex items-center justify-between">
             <div className="truncate flex items-center gap-2">
-              <span>{modelList.find((m) => m.name === model)?.label || 'Select model'}</span>
               {modelList.find((m) => m.name === model)?.features?.reasoning && (
-                <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium whitespace-nowrap">
-                  Reasoning
-                </span>
+                <div className="i-ph:brain text-purple-500 w-4 h-4" />
               )}
+              <span>{modelList.find((m) => m.name === model)?.label || 'Select model'}</span>
             </div>
             <div
               className={classNames(
@@ -302,12 +300,10 @@ export const ModelSelector = ({
                     tabIndex={focusedIndex === index ? 0 : -1}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="truncate">{modelOption.label}</span>
                       {modelOption.features?.reasoning && (
-                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium whitespace-nowrap">
-                          Raisonnement
-                        </span>
+                        <div className="i-ph:brain text-purple-500 w-4 h-4" />
                       )}
+                      <span className="truncate">{modelOption.label}</span>
                     </div>
                     {modelOption.name === model && (
                       <div className="i-ph:check w-4 h-4 text-bolt-elements-textSecondary" />
