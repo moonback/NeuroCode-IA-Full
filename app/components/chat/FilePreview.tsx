@@ -171,15 +171,34 @@ const formatFileSize = (bytes: number): string => {
             Fichiers joints ({files.length})
           </span>
         </div>
-        {hasMoreFiles && !isCollapsed && (
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="text-xs bg-transparent text-violet-400 hover:text-violet-300 transition-colors focus:outline-none focus:underline px-2 py-1 rounded-full hover:bg-violet-500/10"
-            aria-label={showAll ? 'Afficher moins de fichiers' : `Afficher tous les fichiers ${files.length}`}
-          >
-            {showAll ? 'Afficher moins' : `Voir tout (${files.length})`}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Clear all files button - only show when there are files */}
+          {files.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm('Êtes-vous sûr de vouloir supprimer tous les fichiers?')) {
+                  onRemove(-1);
+                }
+              }}
+              className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 px-2 py-1 rounded-full flex items-center gap-1"
+              aria-label="Supprimer tous les fichiers"
+              title="Supprimer tous les fichiers"
+            >
+              <span className="i-ph:trash w-3 h-3"></span>
+              Tout supprimer
+            </button>
+          )}
+          {hasMoreFiles && !isCollapsed && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="text-xs bg-transparent text-violet-400 hover:text-violet-300 transition-colors focus:outline-none focus:underline px-2 py-1 rounded-full hover:bg-violet-500/10"
+              aria-label={showAll ? 'Afficher moins de fichiers' : `Afficher tous les fichiers ${files.length}`}
+            >
+              {showAll ? 'Afficher moins' : `Voir tout (${files.length})`}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Files container with collapse/expand animation */}
