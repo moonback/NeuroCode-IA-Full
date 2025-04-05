@@ -8,6 +8,8 @@ import {
   modelSupportsReasoning,
   modelSupportsImageGeneration,
   modelSupportsStructuredOutput,
+  modelSupportsCodeDiff,
+
 } from './middleware';
 
 export abstract class BaseProvider implements ProviderInfo {
@@ -105,6 +107,8 @@ export abstract class BaseProvider implements ProviderInfo {
         reasoning: modelSupportsReasoning(modelName),
         imageGeneration: modelSupportsImageGeneration(modelName),
         structuredOutput: modelSupportsStructuredOutput(modelName),
+        codeDiff: modelSupportsCodeDiff(modelName),
+
       },
     };
   }
@@ -157,6 +161,8 @@ export abstract class BaseProvider implements ProviderInfo {
         reasoning: model.features?.reasoning || modelSupportsReasoning(model.name),
         imageGeneration: model.features?.imageGeneration || modelSupportsImageGeneration(model.name),
         structuredOutput: model.features?.structuredOutput || modelSupportsStructuredOutput(model.name),
+        codeDiff: model.features?.codeDiff || modelSupportsCodeDiff(model.name),
+
       },
     }));
 

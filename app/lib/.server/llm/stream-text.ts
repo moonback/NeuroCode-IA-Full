@@ -13,8 +13,8 @@ import { estimateMessagesTokens, estimateTokens } from './token-counter';
 
 export type Messages = Message[];
 // Batch size for chunking responses - helps to smooth out streaming
-const STREAM_BATCH_INTERVAL = 80; // milliseconds
-const STREAM_BATCH_SIZE = 120; // characters
+const STREAM_BATCH_INTERVAL = 25; // milliseconds (further reduced from 40ms)
+const STREAM_BATCH_SIZE = 250; // characters (further increased from 200)
 export interface StreamingOptions extends Omit<Parameters<typeof _streamText>[0], 'model'> {
   supabaseConnection?: {
     isConnected: boolean;
@@ -371,12 +371,13 @@ ${optimizedSummary}
  const enhancedOptions = {
   ...options,
 
-  // Add batch options for smoother streaming if requested
-  ...(options?.smoothStreaming !== false && {
-    streamingGranularity: 'character',
-    streamBatchSize: STREAM_BATCH_SIZE,
-    streamBatchInterval: STREAM_BATCH_INTERVAL,
-  }),
+  // Always enable smooth streaming by default with optimized parameters
+  streamingGranularity: 'character',
+  streamBatchSize: STREAM_BATCH_SIZE,
+  streamBatchInterval: STREAM_BATCH_INTERVAL,
+
+  // Optimize real-time processing
+  buffering: false,
 };
 
  try {

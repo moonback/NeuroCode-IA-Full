@@ -45,6 +45,14 @@ export function applyMiddleware(model: LanguageModelV1, modelInfo: ModelInfo): L
     });
   }
 
+  // Apply code diff middleware for models that support it
+  if (modelInfo.features?.codeDiff || modelSupportsCodeDiff(modelInfo.name)) {
+    wrappedModel = wrapLanguageModel({
+      model: wrappedModel,
+      middleware: createCodeDiffMiddleware(),
+    });
+  }
+
   /*
    * Add more middleware for other features as needed
    * For example, for image generation, sources, etc.
@@ -378,6 +386,124 @@ function createStructuredOutputMiddleware(): LanguageModelV1Middleware {
 }
 
 /**
+ * Create middleware for handling code diff capabilities
+ * This helps models properly understand and handle diff format code changes
+ */
+function createCodeDiffMiddleware(): LanguageModelV1Middleware {
+  return {
+    middlewareVersion: 'v1',
+    wrapGenerate: async ({ doGenerate }) => {
+      const result = await doGenerate();
+      return result;
+    },
+    wrapStream: async ({ doStream }) => {
+      const stream = await doStream();
+      let diffOutput = '';
+      let inDiffBlock = false;
+      let diffEnded = false;
+
+      return {
+        ...stream,
+        [Symbol.asyncIterator]() {
+          const originalIterator = (stream as any)[Symbol.asyncIterator]();
+
+          return {
+            async next() {
+              const { done, value } = await originalIterator.next();
+
+              if (done || !value) {
+                /*
+                 * If we were in the middle of a diff block and it wasn't properly closed,
+                 * try to clean it up
+                 */
+                if (inDiffBlock && !diffEnded && 'text' in value) {
+                  let cleanedDiff = diffOutput;
+
+                  // Try to normalize the diff format
+                  cleanedDiff = cleanedDiff.replace(/^[<>+\-]/gm, (match) => {
+                    if (match === '<') {
+                      return '-';
+                    }
+
+                    if (match === '>') {
+                      return '+';
+                    }
+
+                    return match;
+                  });
+
+                  return {
+                    done,
+                    value: {
+                      ...value,
+                      text: cleanedDiff,
+                    } as LanguageModelV1StreamPart,
+                  };
+                }
+
+                return { done, value };
+              }
+
+              // Process text chunks to improve diff handling
+              if ('text' in value && typeof value.text === 'string') {
+                const text = value.text;
+
+                /* Check for diff code block start */
+                if (!inDiffBlock && (text.includes('```diff') || text.includes('```patch'))) {
+                  inDiffBlock = true;
+
+                  const startIndex = text.includes('```diff')
+                    ? text.indexOf('```diff') + 7
+                    : text.indexOf('```patch') + 8;
+                  diffOutput = text.substring(startIndex);
+
+                  return { done, value };
+                }
+
+                // Check for diff code block end
+                if (inDiffBlock && text.includes('```') && !diffEnded) {
+                  inDiffBlock = false;
+                  diffEnded = true;
+                  diffOutput += text.substring(0, text.indexOf('```'));
+
+                  // Format the diff with consistent syntax
+                  const formattedDiff = diffOutput.replace(/^[<>+\-]/gm, (match) => {
+                    if (match === '<') {
+                      return '-';
+                    }
+
+                    if (match === '>') {
+                      return '+';
+                    }
+
+                    return match;
+                  });
+
+                  return {
+                    done,
+                    value: {
+                      ...value,
+                      text: formattedDiff,
+                    } as LanguageModelV1StreamPart,
+                  };
+                }
+
+                // Track diff blocks
+                if (inDiffBlock) {
+                  diffOutput += text;
+                }
+              }
+
+              return { done, value };
+            },
+          };
+        },
+      };
+    },
+  };
+}
+
+/**
  * Create middleware based on model capabilities
  * @param model The model name to create middleware for
  * @returns Middleware array appropriate for the model's capabilities
@@ -406,35 +532,43 @@ export function createMiddlewareForModel(model: string): LanguageModelV1Middlewa
  * @returns true if the model supports reasoning
  */
 export function modelSupportsReasoning(modelName: string): boolean {
-  // Lists of models known to support reasoning
-  const reasoningModels = [
-    // Anthropic
-    'claude-3-7-sonnet',
-    'claude-3-7-haiku',
-    'claude-3-7-opus',
+  // First check if this is a newer model from a provider that supports reasoning
+  const modelNameLower = modelName.toLowerCase();
 
-    // OpenAI
-    'gpt-4o-2024',
-    'gpt-4-turbo',
-    'gpt-4-1106-preview',
-    'gpt-4-0125-preview',
+  /*
+   * Check for model families rather than specific versions
+   * Most advanced models from major providers now support reasoning
+   */
+  const supportsReasoningByFamily = [
+    /* OpenAI models - newer GPT-4 versions have good reasoning */
+    modelNameLower.includes('gpt-4o') ||
+      modelNameLower.includes('gpt-4-turbo') ||
+      modelNameLower.includes('gpt-4-vision'),
 
-    // Amazon Bedrock Claude models
-    'anthropic.claude-3-7-sonnet',
-    'anthropic.claude-3-5-sonnet',
+    /* Claude models - especially newer ones */
+    modelNameLower.includes('claude-3'),
 
-    // Mistral
-    'mistral-large-2',
-    'mistral-large',
+    /* Amazon Bedrock models */
+    modelNameLower.includes('anthropic.claude-3'),
 
-    // DeepSeek
-    'deepseek-coder',
-    'deepseek-v2',
-    'deepseek-r1',
-  ];
+    /* Mistral models - larger variants */
+    modelNameLower.includes('mistral-large'),
 
-  // Check if the model name contains any of the reasoning model identifiers
-  return reasoningModels.some((reasoningModel) => modelName.toLowerCase().includes(reasoningModel.toLowerCase()));
+    /* DeepSeek models */
+    modelNameLower.includes('deepseek-coder') ||
+      modelNameLower.includes('deepseek-v2') ||
+      modelNameLower.includes('deepseek-r1'),
+  ].some(Boolean);
+
+  /*
+   * Additional capability detection based on version numbers
+   * Higher version numbers generally indicate more advanced capabilities
+   */
+  const hasVersionIndicator = /[.-](\d+(\.\d+)?)/.exec(modelNameLower);
+  const versionNumber = hasVersionIndicator ? parseFloat(hasVersionIndicator[1]) : 0;
+  const hasAdvancedVersion = versionNumber >= 3.5;
+
+  return supportsReasoningByFamily || hasAdvancedVersion;
 }
 
 /**
@@ -466,28 +600,26 @@ export function isDeepSeekModel(modelName: string): boolean {
  * @returns true if the model supports image generation
  */
 export function modelSupportsImageGeneration(modelName: string): boolean {
-  // Lists of models known to support image generation
-  const imageModels = [
-    // OpenAI
-    'gpt-4o',
-    'gpt-4-vision',
-    'gpt-4-turbo',
+  const modelNameLower = modelName.toLowerCase();
 
-    // Anthropic
-    'claude-3-opus',
-    'claude-3-sonnet',
-    'claude-3-haiku',
-    'claude-3-5-sonnet',
-    'claude-3-7-sonnet',
+  /*
+   * Most vision-capable models from major providers
+   * Check for model families rather than specific versions
+   */
+  const supportsImageGeneration = [
+    /* OpenAI models */
+    modelNameLower.includes('gpt-4o') ||
+      modelNameLower.includes('gpt-4-vision') ||
+      modelNameLower.includes('gpt-4-turbo'),
 
-    // Gemini
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
-    'gemini-2.5-pro',
-  ];
+    /* Anthropic models */
+    modelNameLower.includes('claude-3'),
 
-  // Check if the model name contains any of the image generation model identifiers
-  return imageModels.some((imageModel) => modelName.toLowerCase().includes(imageModel.toLowerCase()));
+    /* Google models */
+    modelNameLower.includes('gemini'),
+  ].some(Boolean);
+
+  return supportsImageGeneration;
 }
 
 /**
@@ -496,29 +628,87 @@ export function modelSupportsImageGeneration(modelName: string): boolean {
  * @returns true if the model supports structured output
  */
 export function modelSupportsStructuredOutput(modelName: string): boolean {
-  // Most modern models support structured output well
-  const structuredOutputModels = [
-    // OpenAI
-    'gpt-4',
-    'gpt-4o',
-    'gpt-4-turbo',
-    'gpt-3.5-turbo',
+  // First check if this is a newer model from a provider that supports structured output
+  const modelNameLower = modelName.toLowerCase();
 
-    // Anthropic
-    'claude-3',
+  /*
+   * Most modern models support structured output
+   * Check for model families rather than specific versions
+   */
+  const supportsStructuredOutputByFamily = [
+    /* OpenAI models */
+    modelNameLower.includes('gpt-4') || modelNameLower.includes('gpt-3.5'),
 
-    // Mistral
-    'mistral-large',
-    'mistral-medium',
+    /* Claude models - all modern ones support structured output */
+    modelNameLower.includes('claude-3') || modelNameLower.includes('claude-2'),
 
-    // Google
-    'gemini',
+    /* Mistral models */
+    modelNameLower.includes('mistral'),
 
-    // Others
-    'command-r',
-    'deepseek',
-  ];
+    /* Google models */
+    modelNameLower.includes('gemini'),
 
-  // Check if the model name contains any of the structured output model identifiers
-  return structuredOutputModels.some((model) => modelName.toLowerCase().includes(model.toLowerCase()));
+    /* Code-focused models tend to be good with structured output */
+    modelNameLower.includes('coder') || modelNameLower.includes('-code'),
+
+    /* Other known models with structured output support */
+    modelNameLower.includes('command') || modelNameLower.includes('deepseek'),
+  ].some(Boolean);
+
+  /*
+   * Additional capability detection based on version numbers
+   * Higher version numbers generally indicate more advanced capabilities
+   */
+  const hasVersionIndicator = /[.-](\d+(\.\d+)?)/.exec(modelNameLower);
+  const versionNumber = hasVersionIndicator ? parseFloat(hasVersionIndicator[1]) : 0;
+  const hasRecentVersion = versionNumber >= 2.0;
+
+  return supportsStructuredOutputByFamily || hasRecentVersion;
+}
+
+/**
+ * Determine if a model name is known to support code diff
+ * @param modelName The name of the model to check
+ * @returns true if the model supports code diff
+ */
+export function modelSupportsCodeDiff(modelName: string): boolean {
+  // First check if this is a newer model from a provider that supports code diff
+  const modelNameLower = modelName.toLowerCase();
+
+  /*
+   * Most advanced models from major providers support code diff
+   * Check for model families rather than specific versions
+   */
+  const supportsDiffByFamily = [
+    /* OpenAI GPT-4 family */
+    modelNameLower.includes('gpt-4'),
+
+    /* Claude 3 family */
+    modelNameLower.includes('claude-3'),
+
+    /* Mistral large and medium models */
+    modelNameLower.includes('mistral-large') || modelNameLower.includes('mistral-medium'),
+
+    /* Code-specialized models */
+    modelNameLower.includes('coder') || modelNameLower.includes('-code'),
+
+    /* Gemini models */
+    modelNameLower.includes('gemini-1.5') || modelNameLower.includes('gemini-2'),
+
+    /* DeepSeek models generally good with code */
+    modelNameLower.includes('deepseek'),
+
+    /* Anthropic models (older ones) */
+    modelNameLower.includes('claude-instant') && !modelNameLower.includes('claude-instant-1'),
+  ].some(Boolean);
+
+  /*
+   * Additional capability detection based on version numbers
+   * Higher version numbers generally indicate more advanced capabilities
+   */
+  const hasVersionIndicator = /[.-](\d+(\.\d+)?)/.exec(modelNameLower);
+  const versionNumber = hasVersionIndicator ? parseFloat(hasVersionIndicator[1]) : 0;
+  const hasHighVersion = versionNumber >= 3.0;
+
+  return supportsDiffByFamily || hasHighVersion;
 }

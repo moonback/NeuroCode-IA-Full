@@ -4,8 +4,12 @@ import { BaseProvider } from './base-provider';
 import type { ModelInfo, ProviderInfo } from './types';
 import * as providers from './registry';
 import { createScopedLogger } from '~/utils/logger';
-import { modelSupportsReasoning } from './middleware';
-
+import {
+  modelSupportsReasoning,
+  modelSupportsStructuredOutput,
+  modelSupportsImageGeneration,
+  modelSupportsCodeDiff,
+} from './middleware';
 const logger = createScopedLogger('LLMManager');
 export class LLMManager {
   private static _instance: LLMManager;
@@ -95,13 +99,16 @@ export class LLMManager {
 
   // Enhance static models with features
   enhanceStaticModels() {
-    // Update all static models to include reasoning feature if supported
+    // Update all static models to include features based on detection
     for (const provider of this._providers.values()) {
       provider.staticModels = provider.staticModels.map((model) => ({
         ...model,
         features: {
           ...model.features,
           reasoning: model.features?.reasoning || modelSupportsReasoning(model.name),
+          structuredOutput: model.features?.structuredOutput || modelSupportsStructuredOutput(model.name),
+          imageGeneration: model.features?.imageGeneration || modelSupportsImageGeneration(model.name),
+          codeDiff: model.features?.codeDiff || modelSupportsCodeDiff(model.name),
         },
       }));
     }

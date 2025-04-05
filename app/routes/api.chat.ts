@@ -272,15 +272,26 @@ if (reasoning) {
             result.mergeIntoDataStream(dataStream);
 
             (async () => {
-                // Small delay to allow buffer initialization
-          await new Promise((resolve) => setTimeout(resolve, 15));
-              for await (const part of result.fullStream) {
-                if (part.type === 'error') {
-                  const error: any = part.error;
-                  logger.error(`${error}`);
+            // Reduce timeout to minimum needed
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            try {
+              // Process stream parts in batches for more efficient handling
+              const reader = result.fullStream.getReader();
 
-                  return;
+              while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                  break;
                 }
+
+                if (value.type === 'error') {
+                  logger.error(`Error in stream: ${value.error}`);
+                  break;
+                }                
+              }
+            } catch (error) {
+              logger.error(`Stream processing error: ${error}`);
               }
             })();
 
@@ -311,16 +322,27 @@ if (reasoning) {
         });
 
         (async () => {
-           // Small delay to allow buffer initialization
-           await new Promise((resolve) => setTimeout(resolve, 15));
+           // Reduce timeout to minimum needed
+          await new Promise((resolve) => setTimeout(resolve, 5));
 
-          for await (const part of result.fullStream) {
-            if (part.type === 'error') {
-              const error: any = part.error;
-              logger.error(`${error}`);
+          try {
+            // Process stream parts in batches for more efficient handling
+            const reader = result.fullStream.getReader();
 
-              return;
+            while (true) {
+              const { done, value } = await reader.read();
+
+              if (done) {
+                break;
+              }
+
+              if (value.type === 'error') {
+                logger.error(`Error in stream: ${value.error}`);
+                break;
+              }            
             }
+          } catch (error) {
+            logger.error(`Stream processing error: ${error}`);
           }
         })();
         result.mergeIntoDataStream(dataStream);
@@ -333,33 +355,42 @@ if (reasoning) {
             lastChunk = ' ';
           }
 
-          if (typeof chunk === 'string') {
-            if (chunk.startsWith('g') && !lastChunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "<div class=\\"__boltThought__\\">"\n`));
+            // Fast path for non-string chunks
+            if (typeof chunk !== 'string') {
+              controller.enqueue(encoder.encode(JSON.stringify(chunk)));
+              return;
             }
 
-            if (lastChunk.startsWith('g') && !chunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "</div>\\n"\n`));
-            }
+            // Handle thought annotations with minimal operations
+          const isThoughtStart = chunk.startsWith('g') && !lastChunk.startsWith('g');
+          const isThoughtEnd = lastChunk.startsWith('g') && !chunk.startsWith('g');
+
+          if (isThoughtStart) {
+            controller.enqueue(encoder.encode(`0: "<div class=\\"__boltThought__\\">"\n`));
+          }
+          if (isThoughtEnd) {
+            controller.enqueue(encoder.encode(`0: "</div>\\n"\n`));
           }
 
+          // Update for next chunk comparison
           lastChunk = chunk;
 
-          let transformedChunk = chunk;
+// Efficient chunk transformation with minimal string operations
+if (chunk.startsWith('g')) {
+  const colonIndex = chunk.indexOf(':');
+            // Fast path if colon is found
+            if (colonIndex >= 0) {
+              const content = chunk.slice(colonIndex + 1, chunk.endsWith('\n') ? chunk.length - 1 : undefined);
+              controller.enqueue(encoder.encode(`0:${content}\n`));
 
-          if (typeof chunk === 'string' && chunk.startsWith('g')) {
-            let content = chunk.split(':').slice(1).join(':');
+              return;
 
-            if (content.endsWith('\n')) {
-              content = content.slice(0, content.length - 1);
             }
 
-            transformedChunk = `0:${content}\n`;
           }
 
-          // Convert the string stream to a byte stream
-          const str = typeof transformedChunk === 'string' ? transformedChunk : JSON.stringify(transformedChunk);
-          controller.enqueue(encoder.encode(str));
+          // Default case - direct encoding without JSON.stringify for string data
+          controller.enqueue(encoder.encode(chunk));
         },
       }),
     );
