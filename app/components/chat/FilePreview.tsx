@@ -150,14 +150,14 @@ const formatFileSize = (bytes: number): string => {
   const hasMoreFiles = files.length > 3;
 
   return (
-    <div className="relative bg-gray-900/30 rounded-lg p-2 mb-2">
+    <div className="relative bg-gray-900/40 rounded-lg p-3 mb-3 border border-gray-800/50 shadow-lg backdrop-blur-sm">
       {/* Header with collapse/expand control */}
       <div className="flex items-center justify-between mb-2 px-2">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex items-center justify-center w-8 h-8 bg-violet-500/10 rounded-full hover:bg-violet-500/30 text-violet-400 hover:text-violet-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-            aria-label={isCollapsed ? 'Expand files' : 'Collapse files'}
+            className="flex items-center justify-center w-8 h-8 bg-violet-500/15 rounded-full hover:bg-violet-500/30 text-violet-400 hover:text-violet-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            aria-label={isCollapsed ? 'Déplier les fichiers' : 'Replier les fichiers'}
             title={isCollapsed ? 'Afficher les fichiers joints' : 'Masquer les fichiers joints'}
           >
             <div 
@@ -166,30 +166,35 @@ const formatFileSize = (bytes: number): string => {
               aria-hidden="true"
             />
           </button>
-          <span className="text-sm text-gray-300 font-medium">
-          Fichiers joints ({files.length})
+          <span className="text-sm text-gray-200 font-medium flex items-center gap-1.5">
+            <span className="i-ph:paperclip w-4 h-4 text-violet-400"></span>
+            Fichiers joints ({files.length})
           </span>
         </div>
         {hasMoreFiles && !isCollapsed && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="text-xs bg-transparent text-violet-400 hover:text-violet-300 transition-colors focus:outline-none focus:underline"
+            className="text-xs bg-transparent text-violet-400 hover:text-violet-300 transition-colors focus:outline-none focus:underline px-2 py-1 rounded-full hover:bg-violet-500/10"
             aria-label={showAll ? 'Afficher moins de fichiers' : `Afficher tous les fichiers ${files.length}`}
           >
-            {showAll ? 'Afficher moins' : `Afficher tout (${files.length})`}
+            {showAll ? 'Afficher moins' : `Voir tout (${files.length})`}
           </button>
         )}
       </div>
 
       {/* Files container with collapse/expand animation */}
-      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'h-0' : 'h-auto'}`}>
+      <div 
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
+        }`}
+      >
         <div className="flex flex-wrap gap-3 p-2">
           {visibleFiles.map((file, index) => (
             <div 
               key={file.name + file.size + index} 
               className="relative group transition-all duration-200 hover:scale-[1.02]"
             >
-              <div className="relative p-1.5 bg-white/5 rounded-xl border border-gray-700/50 shadow-md hover:border-gray-600/70 transition-colors">
+              <div className="relative p-1.5 bg-white/5 rounded-xl border border-gray-700/50 shadow-md hover:border-violet-500/30 hover:shadow-violet-500/10 transition-all">
                 {imageDataList[index] === 'loading-image' ? (
                   <div className="flex flex-col items-center justify-center p-3 w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-900/70">
                     <div className="i-svg-spinners:90-ring-with-bg text-blue-400 text-xl animate-spin"></div>
@@ -197,7 +202,7 @@ const formatFileSize = (bytes: number): string => {
                   </div>
                 ) : imageDataList[index] && imageDataList[index] !== 'non-image' ? (
                   <div className="flex flex-col items-center">
-                    <div className="relative overflow-hidden rounded-lg" style={{ width: '100px', height: '80px' }}>
+                    <div className="relative overflow-hidden rounded-lg shadow-inner" style={{ width: '100px', height: '80px' }}>
                       <img
                         src={imageDataList[index]}
                         alt={file.name}
