@@ -20,6 +20,10 @@ interface FilePreviewProps {
   onUiAnalysisComplete?: (prompt: string) => void;
 }
 
+interface FileWithKey extends File {
+  previewKey?: string;
+}
+
 interface PDFThumbnailData {
   dataUrl: string;
   pageCount: number;
@@ -34,17 +38,62 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   onUiAnalysisComplete,
 }) => {
   const [pdfThumbnails, setPdfThumbnails] = useState<Record<string, PDFThumbnailData>>({});
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [showAll, setShowAll] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [processedFiles, setProcessedFiles] = useState<Set<string>>(new Set());
+  const [localImageDataList, setLocalImageDataList] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Initialiser la liste avec des états de chargement pour les images
+    const newImageDataList = files.map(file => {
+      if (file.type.startsWith('image/')) {
+        return 'loading-image';
+      }
+      return 'non-image';
+    });
+    setLocalImageDataList(newImageDataList);
+
+    // Charger les aperçus d'images
+    files.forEach((file, index) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setLocalImageDataList(prev => {
+            const newList = [...prev];
+            newList[index] = e.target?.result as string;
+            return newList;
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }, [files]);
+
+  // Generate a unique key for each file
+  const getFileKey = (file: File): string => {
+    return `${file.name}-${file.size}-${file.lastModified}`;
+  };
+
+  // Check if a file has already been processed
+  const isFileProcessed = (file: File): boolean => {
+    return processedFiles.has(getFileKey(file));
+  };
+
+  // Mark a file as processed
+  const markFileAsProcessed = (file: File): void => {
+    setProcessedFiles(prev => new Set([...prev, getFileKey(file)]));
+  };
 
   useEffect(() => {
     // Process PDF thumbnails
     const processPdfThumbnails = async () => {
       for (const file of files) {
-        // Check if it's a PDF and doesn't have a thumbnail yet
+        const fileKey = getFileKey(file);
+        // Check if it's a PDF and hasn't been processed yet
         if (
           (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) &&
-          !pdfThumbnails[file.name + file.lastModified]
+          !isFileProcessed(file) &&
+          !pdfThumbnails[fileKey]
         ) {
           try {
             // Load the PDF and generate thumbnail of the first page
@@ -74,14 +123,16 @@ const FilePreview: React.FC<FilePreviewProps> = ({
               // Convert to dataURL
               const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
 
-              // Save thumbnail
+              // Save thumbnail with the new file key
+              const fileKey = getFileKey(file);
               setPdfThumbnails((prev) => ({
                 ...prev,
-                [file.name + file.lastModified]: {
+                [fileKey]: {
                   dataUrl,
                   pageCount,
                 },
               }));
+              markFileAsProcessed(file);
             }
           } catch (error) {
             console.error('Error generating PDF thumbnail:', error);
@@ -127,10 +178,10 @@ const isPdf = (file: File) => {
   return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 };
 
-// Function to get a PDF thumbnail
+// Function to get a PDF thumbnail using the file key system
 const getPdfThumbnail = (file: File) => {
-  const key = file.name + file.lastModified;
-  return pdfThumbnails[key];
+  const fileKey = getFileKey(file);
+  return pdfThumbnails[fileKey];
 };
 
 // Function to format file size
@@ -214,16 +265,16 @@ const formatFileSize = (bytes: number): string => {
               className="relative group transition-all duration-200 hover:scale-[1.02]"
             >
               <div className="relative p-1.5 bg-white/5 rounded-xl border border-gray-700/50 shadow-md hover:border-violet-500/30 hover:shadow-violet-500/10 transition-all">
-                {imageDataList[index] === 'loading-image' ? (
+                {localImageDataList[index] === 'loading-image' ? (
                   <div className="flex flex-col items-center justify-center p-3 w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-900/70">
                     <div className="i-svg-spinners:90-ring-with-bg text-blue-400 text-xl animate-spin"></div>
                     <div className="text-xs text-gray-400 mt-2">Chargement...</div>
                   </div>
-                ) : imageDataList[index] && imageDataList[index] !== 'non-image' ? (
+                ) : localImageDataList[index] && localImageDataList[index] !== 'non-image' ? (
                   <div className="flex flex-col items-center">
                     <div className="relative overflow-hidden rounded-lg shadow-inner" style={{ width: '100px', height: '80px' }}>
                       <img
-                        src={imageDataList[index]}
+                        src={localImageDataList[index]}
                         alt={file.name}
                         className="object-cover w-full h-full"
                       />
