@@ -747,8 +747,16 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       }
                     }}
                     onRemove={(index) => {
-                      setUploadedFiles?.(uploadedFiles.filter((_, i) => i !== index));
-                      setImageDataList?.(imageDataList.filter((_, i) => i !== index));
+                      if (index === -1) {
+                        // Clear all files
+                        setUploadedFiles?.([]);
+                        setImageDataList?.([]);
+                        toast.success('Tous les fichiers ont été supprimés');
+                      } else {
+                        // Remove single file
+                        setUploadedFiles?.(uploadedFiles.filter((_, i) => i !== index));
+                        setImageDataList?.(imageDataList.filter((_, i) => i !== index));
+                      }
                     }}
                   />
                   <ClientOnly>
