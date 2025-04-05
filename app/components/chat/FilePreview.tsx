@@ -3,6 +3,7 @@ import { getDocument } from 'pdfjs-dist';
 import { GlobalWorkerOptions } from 'pdfjs-dist';
 import UIAnalysisButton from './UIAnalysisButton';
 import type { ProviderInfo } from '~/types/model';
+import * as Dialog from '@radix-ui/react-dialog';
 
 // Import the worker as a virtual URL from Vite (if not configured elsewhere)
 const pdfjsWorkerUrl = new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url).href;
@@ -42,6 +43,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   const [showAll, setShowAll] = useState(false);
   const [processedFiles, setProcessedFiles] = useState<Set<string>>(new Set());
   const [localImageDataList, setLocalImageDataList] = useState<string[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     // Initialiser la liste avec des états de chargement pour les images
@@ -200,6 +202,43 @@ const formatFileSize = (bytes: number): string => {
   const visibleFiles = showAll ? files : files.slice(0, 3);
   const hasMoreFiles = files.length > 3;
 
+  // Delete confirmation modal
+  const DeleteConfirmationModal = () => {
+    if (!showDeleteModal) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 animate-fade-in">
+        <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 animate-scale-in">
+          <div className="flex items-center mb-4">
+            <div className="i-ph:warning-circle-fill w-6 h-6 text-red-500 mr-3"></div>
+            <h3 className="text-lg font-semibold text-white">Confirmation de suppression</h3>
+          </div>
+          <p className="text-gray-300 mb-6">
+            Êtes-vous sûr de vouloir supprimer tous les fichiers joints ? Cette action ne peut pas être annulée.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={() => {
+                onRemove(-1);
+                setShowDeleteModal(false);
+              }}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+            >
+              <span className="i-ph:trash w-4 h-4"></span>
+              Supprimer tout
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="relative bg-gray-900/40 rounded-lg p-3 mb-3 border border-gray-800/50 shadow-lg backdrop-blur-sm">
       {/* Header with collapse/expand control */}
@@ -225,21 +264,55 @@ const formatFileSize = (bytes: number): string => {
         <div className="flex items-center gap-2">
           {/* Clear all files button - only show when there are files */}
           {files.length > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (window.confirm('Êtes-vous sûr de vouloir supprimer tous les fichiers?')) {
-                  onRemove(-1);
-                }
-              }}
-              className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 px-2 py-1 rounded-full flex items-center gap-1"
-              aria-label="Supprimer tous les fichiers"
-              title="Supprimer tous les fichiers"
-            >
-              <span className="i-ph:trash w-3 h-3"></span>
-              Tout supprimer
-            </button>
+            <Dialog.Root open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+              <Dialog.Trigger asChild>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 px-2 py-1 rounded-full flex items-center gap-1"
+                  aria-label="Supprimer tous les fichiers"
+                  title="Supprimer tous les fichiers"
+                >
+                  <span className="i-ph:trash w-3 h-3"></span>
+                  Tout supprimer
+                </button>
+              </Dialog.Trigger>
+              
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 data-[state=open]:animate-fade-in" />
+                <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-700/50 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 z-50 data-[state=open]:animate-scale-in">
+                  <Dialog.Title className="text-lg font-semibold text-white flex items-center gap-3 mb-4">
+                    <div className="i-ph:warning-circle-fill w-6 h-6 text-red-500"></div>
+                    Confirmation de suppression
+                  </Dialog.Title>
+                  <Dialog.Description className="text-gray-300 mb-6">
+                    Êtes-vous sûr de vouloir supprimer tous les fichiers joints ? Cette action ne peut pas être annulée.
+                  </Dialog.Description>
+                  <div className="flex justify-end gap-3">
+                    <Dialog.Close asChild>
+                      <button
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500/50"
+                      >
+                        Annuler
+                      </button>
+                    </Dialog.Close>
+                    <button
+                      onClick={() => {
+                        onRemove(-1);
+                        setShowDeleteModal(false);
+                      }}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                    >
+                      <span className="i-ph:trash w-4 h-4"></span>
+                      Supprimer tout
+                    </button>
+                  </div>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
           )}
+          
           {hasMoreFiles && !isCollapsed && (
             <button
               onClick={() => setShowAll(!showAll)}
@@ -346,6 +419,9 @@ const formatFileSize = (bytes: number): string => {
           )}
         </div>
       </div>
+      
+      {/* Delete confirmation modal */}
+      <DeleteConfirmationModal />
     </div>
   );
 };
