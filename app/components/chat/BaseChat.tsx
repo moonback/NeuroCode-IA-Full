@@ -41,6 +41,7 @@ import { SupabaseChatAlert } from '~/components/chat/SupabaseAlert';
 import { SupabaseConnection } from './SupabaseConnection';
 import { TargetedFilesDisplay } from './TargetedFilesDisplay';
 import { useStore } from '@nanostores/react';
+import { useSettings } from '~/lib/hooks/useSettings';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 /*
@@ -138,6 +139,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [isModelLoading, setIsModelLoading] = useState<string | undefined>('all');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
+    const { autoSelectTemplate } = useSettings();
     
     useEffect(() => {
       if (data) {
@@ -276,6 +278,21 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     };
 
     const handleFileUpload = () => {
+      // Vérifier si la sélection automatique de template est activée
+      if (autoSelectTemplate) {
+        toast.warning(
+          <div>
+            <div className="font-bold">Importation de fichiers désactivée</div>
+            <div className="text-xs text-gray-200">
+              L'importation de fichiers est désactivée lorsque la sélection automatique de template est activée.
+              Désactivez cette option dans les paramètres pour pouvoir importer des fichiers.
+            </div>
+          </div>,
+          { autoClose: 5000 },
+        );
+        return;
+      }
+
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*,.txt,.md,.docx,.pdf';
@@ -289,6 +306,21 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     };
          // Unified file processing function
     const processNewFiles = (filesToProcess: File[], source: 'upload' | 'paste') => {
+      // Vérifier si la sélection automatique de template est activée
+      if (autoSelectTemplate) {
+        toast.warning(
+          <div>
+            <div className="font-bold">Importation de fichiers désactivée</div>
+            <div className="text-xs text-gray-200">
+              L'importation de fichiers est désactivée lorsque la sélection automatique de template est activée.
+              Désactivez cette option dans les paramètres pour pouvoir importer des fichiers.
+            </div>
+          </div>,
+          { autoClose: 5000 },
+        );
+        return;
+      }
+      
       // Validate file types and sizes first
       const filteredFiles = filesToProcess.filter((file) => {
         // Block script files
