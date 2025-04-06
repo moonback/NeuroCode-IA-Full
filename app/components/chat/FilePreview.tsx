@@ -202,42 +202,7 @@ const formatFileSize = (bytes: number): string => {
   const visibleFiles = showAll ? files : files.slice(0, 3);
   const hasMoreFiles = files.length > 3;
 
-  // Delete confirmation modal
-  const DeleteConfirmationModal = () => {
-    if (!showDeleteModal) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 animate-fade-in">
-        <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 animate-scale-in">
-          <div className="flex items-center mb-4">
-            <div className="i-ph:warning-circle-fill w-6 h-6 text-red-500 mr-3"></div>
-            <h3 className="text-lg font-semibold text-white">Confirmation de suppression</h3>
-          </div>
-          <p className="text-gray-300 mb-6">
-            Êtes-vous sûr de vouloir supprimer tous les fichiers joints ? Cette action ne peut pas être annulée.
-          </p>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={() => {
-                onRemove(-1);
-                setShowDeleteModal(false);
-              }}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
-            >
-              <span className="i-ph:trash w-4 h-4"></span>
-              Supprimer tout
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Removing the standalone DeleteConfirmationModal component since we're using Radix UI Dialog
 
   return (
     <div className="relative bg-gray-900/40 rounded-lg p-3 mb-3 border border-gray-800/50 shadow-lg backdrop-blur-sm">
@@ -281,18 +246,26 @@ const formatFileSize = (bytes: number): string => {
               
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 data-[state=open]:animate-fade-in" />
-                <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-700/50 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 z-50 data-[state=open]:animate-scale-in">
-                  <Dialog.Title className="text-lg font-semibold text-white flex items-center gap-3 mb-4">
-                    <div className="i-ph:warning-circle-fill w-6 h-6 text-red-500"></div>
+                <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900/90 border border-violet-500/20 rounded-xl shadow-xl p-6 max-w-md w-full mx-4 z-50 data-[state=open]:animate-scale-in backdrop-blur-sm">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="bg-violet-500/15 rounded-full p-3">
+                      <div className="i-ph:warning-circle-fill w-8 h-8 text-violet-400"></div>
+                    </div>
+                  </div>
+                  
+                  <Dialog.Title className="text-xl font-semibold text-white text-center mb-3">
                     Confirmation de suppression
                   </Dialog.Title>
-                  <Dialog.Description className="text-gray-300 mb-6">
-                    Êtes-vous sûr de vouloir supprimer tous les fichiers joints ? Cette action ne peut pas être annulée.
+                  
+                  <Dialog.Description className="text-gray-300 mb-6 text-center">
+                    Êtes-vous sûr de vouloir supprimer tous les fichiers joints ? 
+                    <span className="block mt-2 text-violet-300 text-sm font-medium">Cette action ne peut pas être annulée.</span>
                   </Dialog.Description>
-                  <div className="flex justify-end gap-3">
+                  
+                  <div className="flex justify-center gap-4">
                     <Dialog.Close asChild>
                       <button
-                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500/50"
+                        className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700/50 focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-w-[120px]"
                       >
                         Annuler
                       </button>
@@ -302,12 +275,21 @@ const formatFileSize = (bytes: number): string => {
                         onRemove(-1);
                         setShowDeleteModal(false);
                       }}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                      className="px-5 py-2.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 hover:text-violet-200 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-w-[120px] border border-violet-500/30"
                     >
                       <span className="i-ph:trash w-4 h-4"></span>
                       Supprimer tout
                     </button>
                   </div>
+                  
+                  <Dialog.Close asChild>
+                    <button
+                      className="absolute top-3 right-3 text-gray-400 hover:text-white rounded-full p-1 hover:bg-violet-500/10 transition-colors"
+                      aria-label="Fermer"
+                    >
+                      <span className="i-ph:x-bold w-4 h-4" />
+                    </button>
+                  </Dialog.Close>
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>
@@ -420,8 +402,7 @@ const formatFileSize = (bytes: number): string => {
         </div>
       </div>
       
-      {/* Delete confirmation modal */}
-      <DeleteConfirmationModal />
+      {/* Remove the DeleteConfirmationModal call here */}
     </div>
   );
 };
