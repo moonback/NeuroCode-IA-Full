@@ -7,6 +7,7 @@ import { cubicEasingFn } from '~/utils/easings';
 export default function ProgressCompilation({ data }: { data?: ProgressAnnotation[] }) {
   const [progressList, setProgressList] = useState<ProgressAnnotation[]>([]);
   const [expanded, setExpanded] = useState(false);
+  const [autoCollapseTimer, setAutoCollapseTimer] = useState<NodeJS.Timeout | null>(null);
   
   // Process progress data more efficiently
   useEffect(() => {
@@ -29,7 +30,40 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
     const newData = Array.from(progressMap.values());
     newData.sort((a, b) => a.order - b.order);
     setProgressList(newData);
-  }, [data]);
+    
+    // Auto-expand when new data arrives
+    if (newData.length > 0 && newData.some(item => item.status === 'in-progress')) {
+      setExpanded(true);
+      
+      // Clear any existing timer
+      if (autoCollapseTimer) {
+        clearTimeout(autoCollapseTimer);
+        setAutoCollapseTimer(null);
+      }
+    }
+  }, [data, autoCollapseTimer]);
+  
+  // Check if all items are complete and set auto-collapse timer
+  useEffect(() => {
+    if (progressList.length > 0 && expanded) {
+      const allComplete = progressList.every(item => item.status === 'complete');
+      
+      if (allComplete) {
+        // Set timer to auto-collapse after 3 seconds
+        const timer = setTimeout(() => {
+          setExpanded(false);
+        }, 3000);
+        
+        setAutoCollapseTimer(timer);
+        
+        // Cleanup function
+        return () => {
+          clearTimeout(timer);
+          setAutoCollapseTimer(null);
+        };
+      }
+    }
+  }, [progressList, expanded]);
 
   // Memoize derived values
   const hasProgress = useMemo(() => progressList.length > 0, [progressList]);
@@ -39,11 +73,21 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
   );
   
   // Optimize toggle function
-  const toggleExpanded = useCallback(() => setExpanded(prev => !prev), []);
+  const toggleExpanded = useCallback(() => {
+    // Clear auto-collapse timer when manually toggled
+    if (autoCollapseTimer) {
+      clearTimeout(autoCollapseTimer);
+      setAutoCollapseTimer(null);
+    }
+    setExpanded(prev => !prev);
+  }, [autoCollapseTimer]);
 
   if (!hasProgress) {
     return null;
   }
+
+  // Calculate if all items are complete for styling
+  const allComplete = progressList.every(item => item.status === 'complete');
 
   return (
     <AnimatePresence>
@@ -57,6 +101,7 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
           'border border-bolt-elements-borderColor/30',
           'shadow-sm rounded-md relative w-full max-w-chat mx-auto z-prompt',
           ' mb-0 px-1 py-1',
+          allComplete ? 'border-violet-500/30' : ''
         )}
       >
         <div
@@ -98,7 +143,11 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.1, ease: cubicEasingFn }}
-            className="p-1 ml-1 rounded-md bg-transparent hover:bg-bolt-elements-artifacts-backgroundHover/30 focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColor/50 text-xs"
+            className={classNames(
+              "p-1 ml-1 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColor/50 text-xs",
+              "hover:bg-bolt-elements-artifacts-backgroundHover/30",
+              autoCollapseTimer ? "animate-pulse" : ""
+            )}
             onClick={toggleExpanded}
           >
             <div className={expanded ? 'i-ph:caret-up' : 'i-ph:caret-down'}></div>
@@ -148,7 +197,7 @@ const ProgressItem = ({ progress, isFirst, isLast }: ProgressItemProps) => {
       </div>
       <div className={classNames(
         'flex-1',
-        'text-bolt-elements-item-contentAccent/70'
+        'text-white/80'
       )}>
         {progress.message}
       </div>
