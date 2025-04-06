@@ -16,6 +16,8 @@ import {
   updateContextOptimization,
   updateEventLogs,
   updatePromptId,
+  uiAnalysisEnabled as uiAnalysisEnabledStore,
+  updateUIAnalysis,
 } from '~/lib/stores/settings';
 import { useCallback, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
@@ -59,6 +61,8 @@ export interface UseSettingsReturn {
   setAutoSelectTemplate: (enabled: boolean) => void;
   contextOptimizationEnabled: boolean;
   enableContextOptimization: (enabled: boolean) => void;
+  uiAnalysisEnabled: boolean;
+  enableUIAnalysis: (enabled: boolean) => void;
 
   // Tab configuration
   tabConfiguration: TabWindowConfig;
@@ -81,6 +85,7 @@ export function useSettings(): UseSettingsReturn {
   const [activeProviders, setActiveProviders] = useState<ProviderInfo[]>([]);
   const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
   const tabConfiguration = useStore(tabConfigurationStore);
+  const uiAnalysisEnabled = useStore(uiAnalysisEnabledStore);
   const [settings, setSettings] = useState<Settings>(() => {
     const storedSettings = getLocalStorage('settings');
     return {
@@ -145,6 +150,11 @@ export function useSettings(): UseSettingsReturn {
     logStore.logSystem(`Context optimization ${enabled ? 'enabled' : 'disabled'}`);
   }, []);
 
+  const enableUIAnalysis = useCallback((enabled: boolean) => {
+    updateUIAnalysis(enabled);
+    logStore.logSystem(`UI Analysis feature ${enabled ? 'enabled' : 'disabled'}`);
+  }, []);
+
   const setTheme = useCallback(
     (theme: Settings['theme']) => {
       saveSettings({ theme });
@@ -199,6 +209,8 @@ export function useSettings(): UseSettingsReturn {
     setAutoSelectTemplate,
     contextOptimizationEnabled,
     enableContextOptimization,
+    uiAnalysisEnabled,
+    enableUIAnalysis,
     setTheme,
     setLanguage,
     setNotifications,

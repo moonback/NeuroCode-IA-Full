@@ -131,6 +131,7 @@ const SETTINGS_KEYS = {
   EVENT_LOGS: 'isEventLogsEnabled',
   PROMPT_ID: 'promptId',
   DEVELOPER_MODE: 'isDeveloperMode',
+  UI_ANALYSIS: 'uiAnalysisEnabled',
 } as const;
 
 // Initialize settings from localStorage or defaults
@@ -160,6 +161,7 @@ const getInitialSettings = () => {
     eventLogs: getStoredBoolean(SETTINGS_KEYS.EVENT_LOGS, true),
     promptId: isBrowser ? localStorage.getItem(SETTINGS_KEYS.PROMPT_ID) || 'default' : 'default',
     developerMode: getStoredBoolean(SETTINGS_KEYS.DEVELOPER_MODE, false),
+    uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
   };
 };
 
@@ -171,6 +173,7 @@ export const autoSelectStarterTemplate = atom<boolean>(initialSettings.autoSelec
 export const enableContextOptimizationStore = atom<boolean>(initialSettings.contextOptimization);
 export const isEventLogsEnabled = atom<boolean>(initialSettings.eventLogs);
 export const promptStore = atom<string>(initialSettings.promptId);
+export const uiAnalysisEnabled = atom<boolean>(initialSettings.uiAnalysis);
 
 // Helper functions to update settings with persistence
 export const updateLatestBranch = (enabled: boolean) => {
@@ -196,6 +199,11 @@ export const updateEventLogs = (enabled: boolean) => {
 export const updatePromptId = (id: string) => {
   promptStore.set(id);
   localStorage.setItem(SETTINGS_KEYS.PROMPT_ID, id);
+};
+
+export const updateUIAnalysis = (enabled: boolean) => {
+  uiAnalysisEnabled.set(enabled);
+  localStorage.setItem(SETTINGS_KEYS.UI_ANALYSIS, JSON.stringify(enabled));
 };
 
 // Initialize tab configuration from localStorage or defaults
