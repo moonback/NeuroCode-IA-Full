@@ -41,8 +41,14 @@ import { SupabaseChatAlert } from '~/components/chat/SupabaseAlert';
 import { SupabaseConnection } from './SupabaseConnection';
 import { TargetedFilesDisplay } from './TargetedFilesDisplay';
 import { useStore } from '@nanostores/react';
+import { useSettings } from '~/lib/hooks/useSettings';
 
 const TEXTAREA_MIN_HEIGHT = 76;
+/*
+ * Flag to use only fallback method
+ * const USE_ONLY_FALLBACK = true;
+ */
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 interface BaseChatProps {
   textareaRef?: React.RefObject<HTMLTextAreaElement> | undefined;
@@ -133,6 +139,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [isModelLoading, setIsModelLoading] = useState<string | undefined>('all');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
+    const { autoSelectTemplate } = useSettings();
     
     useEffect(() => {
       if (data) {
@@ -271,27 +278,241 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     };
 
     const handleFileUpload = () => {
+      // Vérifier si la sélection automatique de template est activée
+      if (autoSelectTemplate) {
+        toast.warning(
+          <div>
+            <div className="font-bold">Importation de fichiers désactivée</div>
+            <div className="text-xs text-gray-200">
+              L'importation de fichiers est désactivée lorsque la sélection automatique de template est activée.
+              Désactivez cette option dans les paramètres pour pouvoir importer des fichiers.
+            </div>
+          </div>,
+          { autoClose: 5000 },
+        );
+        return;
+      }
+
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'image/*';
+      input.accept = 'image/*,.txt,.md,.docx,.pdf';
+      input.multiple = true;
 
       input.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-
-        if (file) {
-          const reader = new FileReader();
-
-          reader.onload = (e) => {
-            const base64Image = e.target?.result as string;
-            setUploadedFiles?.([...uploadedFiles, file]);
-            setImageDataList?.([...imageDataList, base64Image]);
-          };
-          reader.readAsDataURL(file);
-        }
+        const selectedFiles = Array.from((e.target as HTMLInputElement).files || []);
+        processNewFiles(selectedFiles, 'upload');
       };
-
       input.click();
     };
+         // Unified file processing function
+    const processNewFiles = (filesToProcess: File[], source: 'upload' | 'paste') => {
+      // Vérifier si la sélection automatique de template est activée
+      if (autoSelectTemplate) {
+        toast.warning(
+          <div>
+            <div className="font-bold">Importation de fichiers désactivée</div>
+            <div className="text-xs text-gray-200">
+              L'importation de fichiers est désactivée lorsque la sélection automatique de template est activée.
+              Désactivez cette option dans les paramètres pour pouvoir importer des fichiers.
+            </div>
+          </div>,
+          { autoClose: 5000 },
+        );
+        return;
+      }
+      
+      // Validate file types and sizes first
+      const filteredFiles = filesToProcess.filter((file) => {
+        // Block script files
+        if (file.name.match(/\.(sh|bat|ps1)$/i)) {
+          toast.error(
+            <div>
+              <div className="font-bold">Script files not allowed</div>
+              <div className="text-xs text-gray-200">
+                For security reasons, script files (.sh, .bat, .ps1) are not supported.
+              </div>
+            </div>,
+            { autoClose: 5000 },
+          );
+          return false;
+        }
+
+          // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+          toast.warning(`File ${file.name} exceeds maximum size of 5MB and was ignored.`);
+          return false;
+        }
+      
+
+        return true;
+      });
+
+      if (filteredFiles.length === 0) {
+        return;
+      }
+
+      // Prepare new files array
+      const newUploadedFiles = [...uploadedFiles, ...filteredFiles];
+      const newImageDataList = [
+        ...imageDataList,
+        ...filteredFiles.map((file) => (file.type.startsWith('image/') ? 'loading-image' : 'non-image')),
+      ];
+
+      // Update state
+      setUploadedFiles?.(newUploadedFiles);
+      setImageDataList?.(newImageDataList);
+
+      // Process individual files
+      filteredFiles.forEach((file, index) => {
+        const actualIndex = uploadedFiles.length + index;
+        processIndividualFiles(file, actualIndex, source);
+      });
+    };
+
+    const processIndividualFiles = (file: File, index: number, _source: 'upload' | 'paste') => {
+      if (file.type.startsWith('image/')) {
+        processImageFile(file, index);
+      } else if (file.type.includes('text') || file.name.match(/\.(txt|md|pdf|docx)$/i)) {
+        previewTextFile(file, index);
+      }
+    };
+
+    // Rename and update processPastedFiles to use new unified function
+    const processPastedFiles = (filesToProcess: File[]) => {
+      processNewFiles(filesToProcess, 'paste');
+    };
+
+    // Function to process image files
+    const processImageFile = (file: File, _index: number) => {
+      // Handle image files for display
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          if (e.target && e.target.result && setImageDataList) {
+            setImageDataList([...imageDataList, e.target.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+
+        toast.info(
+          <div>
+            <div className="font-bold">Image ci-jointe :</div>
+            <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
+              {file.name} ({Math.round(file.size / 1024)} KB)
+            </div>
+          </div>,
+          { autoClose: 3000 },
+        );
+      } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        // Special handling for PDF files
+        const fileSize = Math.round(file.size / 1024);
+        const isLargePdf = fileSize > 5000; // 5MB threshold
+
+        const toastId = toast.info(
+          <div>
+            <div className="font-bold">PDF ci-joint :</div>
+            <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
+              {file.name} ({fileSize} KB){isLargePdf ? ' - Fichier volumineux, le traitement peut prendre plus de temps' : ''}
+            </div>
+            <div className="mt-2">
+              <div className="w-full bg-gray-700 rounded-full h-2.5 mb-1">
+                <div className="bg-blue-600 h-2.5 rounded-full w-1/4"></div>
+              </div>
+              <div className="text-xs text-gray-400">Extraction de texte...</div>
+            </div>
+          </div>,
+          { autoClose: false },
+        );
+
+        // Process the PDF file asynchronously
+        import('~/utils/documentUtils').then(async ({ extractTextFromDocument }) => {
+          try {
+            await extractTextFromDocument(file);
+
+            // Update toast with success message
+            toast.update(toastId, {
+              render: (
+                <div>
+                  <div className="font-bold">PDF traité avec succès:</div>
+                  <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
+                    {file.name} ({fileSize} KB)
+                  </div>
+                  <div className="mt-1 text-xs text-green-400">Texte extrait et prêt à être envoyé</div>
+                </div>
+              ),
+              autoClose: 3000,
+              type: 'success',
+            });
+          } catch (error) {
+            console.error('Error processing PDF:', error);
+
+            // Update toast with error message
+            toast.update(toastId, {
+              render: (
+                <div>
+                  <div className="font-bold">Erreur lors du traitement du PDF:</div>
+                  <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
+                    {file.name} ({fileSize} KB)
+                  </div>
+                  <div className="mt-1 text-xs text-red-400">
+                  Le fichier sera joint mais l'extraction du texte a rencontré des problèmes
+                  </div>
+                </div>
+              ),
+              autoClose: 5000,
+              type: 'error',
+            });
+          }
+        });
+      }
+    };
+
+    // Function to process text files and show preview
+    const previewTextFile = (file: File, _index: number) => {
+      // If it's a PDF or DOCX file, show a special preview
+      if (
+        file.type === 'application/pdf' ||
+        file.name.endsWith('.pdf') ||
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.name.endsWith('.docx')
+      ) {
+        toast.info(
+          <div>
+            <div className="font-bold">Fichier de document joint :</div>
+            <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded flex items-center">
+              <div
+                className={
+                  file.type === 'application/pdf' || file.name.endsWith('.pdf')
+                    ? 'i-ph:file-pdf text-red-500 mr-2'
+                    : 'i-ph:file-doc text-blue-500 mr-2'
+                }
+                style={{ fontSize: '1.25rem' }}
+              ></div>
+              <div>
+                <div>{file.name}</div>
+                <div className="text-xs text-gray-400">
+                  {Math.round(file.size / 1024)} KB - Le texte sera extrait lors de l'envoi
+                </div>
+              </div>
+            </div>
+          </div>,
+          { autoClose: 4000 },
+        );
+
+        return;
+      }
+
+      // For other file types, maintain previous behavior
+      toast.info(
+        <div>
+          <div className="font-bold">Fichier joint :</div>
+          <div className="text-xs text-gray-200 bg-gray-800 p-2 mt-1 rounded">
+            {file.name} ({Math.round(file.size / 1024)} KB)
+          </div>
+        </div>,
+        { autoClose: 3000 },
+      );    };
 
     const handlePaste = async (e: React.ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -300,24 +521,43 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         return;
       }
 
-      for (const item of items) {
-        if (item.type.startsWith('image/')) {
-          e.preventDefault();
+      // Check if there are files in the clipboard
+      const clipboardFiles: File[] = [];
 
+      for (const item of items) {
+        if (item.kind === 'file') {
           const file = item.getAsFile();
 
           if (file) {
-            const reader = new FileReader();
-
-            reader.onload = (e) => {
-              const base64Image = e.target?.result as string;
-              setUploadedFiles?.([...uploadedFiles, file]);
-              setImageDataList?.([...imageDataList, base64Image]);
-            };
-            reader.readAsDataURL(file);
+            clipboardFiles.push(file);
           }
+        }
+      }
 
-          break;
+      if (clipboardFiles && clipboardFiles.length > 0) {
+        // If there are PDF or DOCX files, check possible filters
+        if (
+          clipboardFiles.some(
+            (file) =>
+              file.type === 'application/pdf' ||
+              file.name.endsWith('.pdf') ||
+              file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+              file.name.endsWith('.docx'),
+          )
+        ) {
+          // Filter large files
+          const filteredFiles = clipboardFiles.filter((file) => file.size <= MAX_FILE_SIZE);
+
+          if (filteredFiles.length < clipboardFiles.length) {
+            toast.warning('Certains fichiers ont été ignorés car ils dépassent la taille maximale de 100 Mo.');
+
+            // Continue only with valid files
+            processPastedFiles(filteredFiles);
+          } else {
+            processPastedFiles(clipboardFiles);
+          }
+        } else {
+          processPastedFiles(clipboardFiles);
         }
       }
     };
@@ -467,9 +707,88 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   <FilePreview
                     files={uploadedFiles}
                     imageDataList={imageDataList}
+                    model={model}
+                    provider={provider}
+                    onUiAnalysisComplete={(prompt) => {
+                      if (handleInputChange) {
+                        // If the prompt is empty, clear the current input
+                        if (!prompt) {
+                          const syntheticEmptyEvent = {
+                            target: { value: '' },
+                          } as React.ChangeEvent<HTMLTextAreaElement>;
+                          handleInputChange(syntheticEmptyEvent);
+
+                          return;
+                        }
+
+                        // If it's the process start message, just update the text
+                        if (prompt === 'Gerando análise da interface UI/UX...') {
+                          const syntheticEvent = {
+                            target: { value: prompt },
+                          } as React.ChangeEvent<HTMLTextAreaElement>;
+                          handleInputChange(syntheticEvent);
+
+                          return;
+                        }
+
+                        // We remove the initial message if it is present
+                        let cleanPrompt = prompt;
+
+                        if (prompt.startsWith('Gerando análise da interface UI/UX...')) {
+                          cleanPrompt = prompt.replace('Gerando análise da interface UI/UX...', '').trim();
+                        }
+
+                        // For complete analyses, we create a synthetic event to update the input
+                        const syntheticEvent = {
+                          target: { value: cleanPrompt },
+                        } as React.ChangeEvent<HTMLTextAreaElement>;
+
+                        handleInputChange(syntheticEvent);
+
+                        // Make sure the textarea is focused and adjust its size
+                        if (textareaRef?.current) {
+                          setTimeout(() => {
+                            try {
+                              const textarea = textareaRef.current;
+
+                              if (!textarea) {
+                                return;
+                              }
+
+                              // Adjust the textarea height based on the content
+                              textarea.style.height = 'auto';
+
+                              const scrollHeight = textarea.scrollHeight;
+                              textarea.style.height = `${Math.min(scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
+                              textarea.style.overflowY = scrollHeight > TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden';
+
+                              // Set focus at the end of the text
+                              textarea.focus();
+                              textarea.selectionStart = textarea.value.length;
+                              textarea.selectionEnd = textarea.value.length;
+
+                              // Scroll to the end if needed
+                              if (textarea.scrollHeight > textarea.clientHeight) {
+                                textarea.scrollTop = textarea.scrollHeight;
+                              }
+                            } catch (e) {
+                              console.error('Error adjusting textarea after UI analysis:', e);
+                            }
+                          }, 50); // Small delay to ensure the UI has updated
+                        }
+                      }
+                    }}
                     onRemove={(index) => {
-                      setUploadedFiles?.(uploadedFiles.filter((_, i) => i !== index));
-                      setImageDataList?.(imageDataList.filter((_, i) => i !== index));
+                      if (index === -1) {
+                        // Clear all files
+                        setUploadedFiles?.([]);
+                        setImageDataList?.([]);
+                        toast.success('Tous les fichiers ont été supprimés');
+                      } else {
+                        // Remove single file
+                        setUploadedFiles?.(uploadedFiles.filter((_, i) => i !== index));
+                        setImageDataList?.(imageDataList.filter((_, i) => i !== index));
+                      }
                     }}
                   />
                   <ClientOnly>
@@ -498,33 +817,39 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       )}
                       onDragEnter={(e) => {
                         e.preventDefault();
-                        e.currentTarget.style.border = '2px solid #1488fc';
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.style.border = '2px solid #1488fc';
-                      }}
-                      onDragLeave={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.style.border = '1px solid var(--bolt-elements-borderColor)';
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.style.border = '1px solid var(--bolt-elements-borderColor)';
+                        e.stopPropagation();
 
                         const files = Array.from(e.dataTransfer.files);
-                        files.forEach((file) => {
-                          if (file.type.startsWith('image/')) {
-                            const reader = new FileReader();
+                        
+                        // Check if there are script files
+                        const hasScripts = files.some((file) => file.name.match(/\.(sh|bat|ps1)$/i));
 
-                            reader.onload = (e) => {
-                              const base64Image = e.target?.result as string;
-                              setUploadedFiles?.([...uploadedFiles, file]);
-                              setImageDataList?.([...imageDataList, base64Image]);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        });
+                        let filteredFiles = files;
+
+                        if (hasScripts) {
+                          toast.error(
+                            <div>
+                              <div className="font-bold">Script files not allowed</div>
+                              <div className="text-xs text-gray-200">
+                                For security reasons, script files (.sh, .bat, .ps1) are not supported.
+                              </div>
+                            </div>,
+                            { autoClose: 5000 },
+                          );
+
+                          // Remove script files
+                          filteredFiles = filteredFiles.filter(
+                            (file) =>
+                              !file.name.endsWith('.sh') && !file.name.endsWith('.bat') && !file.name.endsWith('.ps1'),
+                          );
+                        }
+
+                        if (filteredFiles.length === 0) {
+                          return;
+                        } // If there were only unsupported files, cancel processing
+
+                        // Process valid files
+                        processPastedFiles(filteredFiles);
                       }}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter') {
@@ -581,9 +906,32 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     <TargetedFilesDisplay textareaRef={textareaRef} className="mt-2" />
                   <div className="flex justify-between items-center text-sm p-4 pt-2">
                       <div className="flex gap-1 items-center">
-                        <IconButton title="Télécharger un fichier" className="transition-all" onClick={() => handleFileUpload()}>
-                          <div className="i-ph:paperclip text-xl"></div>
-                        </IconButton>
+                      <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <IconButton
+                              title="Upload file"
+                              className="transition-all"
+                              onClick={() => handleFileUpload()}
+                            >
+                              <div className="i-ph:paperclip text-xl"></div>
+                            </IconButton>
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content
+                              className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary p-2 rounded-md text-xs border border-bolt-elements-borderColor max-w-xs"
+                              sideOffset={5}
+                            >
+                              <p>Attach files</p>
+                              <div className="text-bolt-elements-textSecondary mt-1">
+                                <p>Supported formats:</p>
+                                <p className="mt-1">• Images: png, jpg, jpeg, gif, etc.</p>
+                                <p>• Text: txt, md, js, py, html, css, json, etc.</p>
+                                <p>• Documents: pdf, docx</p>
+                              </div>
+                              <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
                         <IconButton
                           title="Améliorer l'invite"
                           disabled={input.length === 0 || enhancingPrompt}
