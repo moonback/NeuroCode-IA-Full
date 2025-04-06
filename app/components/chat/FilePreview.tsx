@@ -235,7 +235,7 @@ const formatFileSize = (bytes: number): string => {
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
-                  className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 px-2 py-1 rounded-full flex items-center gap-1"
+                  className="text-xs bg-red-500/20 text-white hover:bg-red-500/30 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 px-2 py-1 rounded-full flex items-center gap-1"
                   aria-label="Supprimer tous les fichiers"
                   title="Supprimer tous les fichiers"
                 >
