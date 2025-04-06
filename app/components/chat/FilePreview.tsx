@@ -310,10 +310,10 @@ const formatFileSize = (bytes: number): string => {
       {/* Files container with collapse/expand animation */}
       <div 
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
+          isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[400px] opacity-100'
         }`}
       >
-        <div className="flex flex-wrap gap-3 p-2">
+        <div className="flex flex-wrap gap-3 p-2 overflow-y-auto max-h-[380px] pr-2">
           {visibleFiles.map((file, index) => (
             <div 
               key={file.name + file.size + index} 
