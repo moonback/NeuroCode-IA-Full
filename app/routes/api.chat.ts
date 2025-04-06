@@ -181,7 +181,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             label: 'context',
             status: 'complete',
             order: progressCounter++,
-            message: 'Code Files Selected',
+            message: 'Fichier pertinent sélectionné',
           } satisfies ProgressAnnotation);
 
           // logger.debug('Code Files Selected');
@@ -213,7 +213,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                 label: 'response',
                 status: 'complete',
                 order: progressCounter++,
-                message: 'Réponse Généré',
+                message: 'Réponse Généré avec succès',
               } satisfies ProgressAnnotation);
               await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -274,7 +274,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           label: 'response',
           status: 'in-progress',
           order: progressCounter++,
-          message: 'Réponse en cour de génération',
+          message: 'réponse en cours...',
         } satisfies ProgressAnnotation);
 
         const result = await streamText({
