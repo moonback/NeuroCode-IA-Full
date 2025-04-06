@@ -635,8 +635,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       }}
                     />
                   )}
-                </div>
-                              {contextOptimizationEnabled && progressAnnotations.length > 0 && <ProgressCompilation data={progressAnnotations} />}
+                </div>{contextOptimizationEnabled && progressAnnotations.length > 0 && (
+                      <div className="animate-fade-in">
+                        <ProgressCompilation data={progressAnnotations} />
+                      </div>
+                    )}
                               <div
                   className={classNames(
                     'bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
@@ -664,6 +667,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         <stop offset="50%" stopColor="#b44aff" stopOpacity="80%"></stop>
                         <stop offset="100%" stopColor="#b44aff" stopOpacity="0%"></stop>
                       </linearGradient>
+                      
                       <linearGradient id="shine-gradient">
                         <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
                         <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
@@ -676,8 +680,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   </svg>
                   <div>
                     <ClientOnly>
+                      
                       {() => (
                         <div className={isModelSettingsCollapsed ? 'hidden' : ''}>
+                          
                           <ModelSelector
                             key={provider?.name + ':' + modelList.length}
                             model={model}
