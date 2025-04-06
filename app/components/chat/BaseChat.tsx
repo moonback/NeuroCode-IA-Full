@@ -909,7 +909,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       <Tooltip.Root>
                           <Tooltip.Trigger asChild>
                             <IconButton
-                              title="Upload file"
+                              title="Importer un fichier"
                               className="transition-all"
                               onClick={() => handleFileUpload()}
                             >
@@ -917,7 +917,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                             </IconButton>
                           </Tooltip.Trigger>
                           <Tooltip.Portal>
-                            <Tooltip.Content
+                            {/* <Tooltip.Content
                               className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary p-2 rounded-md text-xs border border-bolt-elements-borderColor max-w-xs"
                               sideOffset={5}
                             >
@@ -929,7 +929,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                                 <p>• Documents: pdf, docx</p>
                               </div>
                               <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
-                            </Tooltip.Content>
+                            </Tooltip.Content> */}
                           </Tooltip.Portal>
                         </Tooltip.Root>
                         <IconButton
