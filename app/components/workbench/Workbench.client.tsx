@@ -301,11 +301,10 @@ export const Workbench = memo(
     };
 
     useEffect(() => {
-      if (hasPreview) {
+      if (!isStreaming && hasPreview) {        
         setSelectedView('preview');
       }
-    }, [hasPreview]);
-
+    }, [hasPreview, isStreaming]);
     useEffect(() => {
       workbenchStore.setDocuments(files);
     }, [files]);
