@@ -134,6 +134,45 @@ export function removeTargetedFile(filePath: string, textareaElement: HTMLTextAr
   }
 }
 
+/**
+ * Récupère la liste des fichiers ciblés depuis le textarea du chat.
+ * @returns Un tableau contenant les chemins des fichiers ciblés
+ */
+export function getTargetedFilesFromDOM(): string[] {
+  try {
+    const textarea = document.querySelector('textarea[data-targeted-files]');
+    if (!textarea) {
+      return [];
+    }
+
+    const filesAttr = textarea.getAttribute('data-targeted-files');
+    if (!filesAttr) {
+      return [];
+    }
+
+    try {
+      const files = JSON.parse(filesAttr);
+      return Array.isArray(files) ? files : [];
+    } catch (e) {
+      console.error('Error parsing data-targeted-files:', e);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error in getTargetedFilesFromDOM:', error);
+    return [];
+  }
+}
+
+/**
+ * Vérifie si un fichier est ciblé dans le textarea du chat.
+ * @param filePath - Le chemin du fichier à vérifier
+ * @returns true si le fichier est ciblé, false sinon
+ */
+export function isTargetedFile(filePath: string): boolean {
+  const targetedFiles = getTargetedFilesFromDOM();
+  return targetedFiles.includes(filePath);
+}
+
 const readPackageJson = async (files: File[]): Promise<{ scripts?: Record<string, string> } | null> => {
   const packageJsonFile = files.find((f) => f.webkitRelativePath.endsWith('package.json'));
 

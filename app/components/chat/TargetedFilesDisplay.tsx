@@ -162,34 +162,31 @@ function FileListHeader({
   targetedFiles: string[] 
 }) {
   return (
-    <div 
-      className="relative flex items-center justify-between px-3.5 py-3 cursor-pointer hover:bg-bolt-elements-item-backgroundHover/40 rounded-t-md transition-all duration-200 group"
-      onClick={() => setIsExpanded(!isExpanded)}
-    >
-      <div className="flex items-center gap-2.5">
-        <span className={classNames(
-          'transition-transform duration-300 ease-in-out transform-gpu',
-          isExpanded ? 'rotate-90' : 'rotate-0'
-        )}>
-          <span className="i-ph:caret-right text-[14px] text-bolt-elements-textSecondary/80 group-hover:text-bolt-elements-accent transition-all duration-300" />
-        </span>
-        <h3 className="text-[13px] font-medium text-bolt-elements-textSecondary flex items-center gap-2.5">
-          <span className="i-ph:target-duotone text-[15px] text-bolt-elements-accent animate-pulse" />
-          <span className="relative flex items-center">
-            Fichiers ciblés
-            <span className="absolute -top-1 -right-2.5 w-2 h-2 bg-bolt-elements-accent rounded-full animate-ping opacity-75" />
-            <span className="absolute -top-1 -right-2.5 w-2 h-2 bg-bolt-elements-accent rounded-full" />
-          </span>
-          <span className="px-2.5 py-1 bg-bolt-elements-accent/20 text-bolt-elements-accent rounded-full text-[11px] font-semibold group-hover:bg-bolt-elements-accent/30 transition-all duration-300 border border-bolt-elements-accent/30 hover:border-bolt-elements-accent/50 shadow-sm">
-            {targetedFiles.length}
-          </span>
-        </h3>
-      </div>
-      
-      {!isExpanded && targetedFiles.length > 0 && (
-        <CollapsedFilePreview file={targetedFiles[0]} count={targetedFiles.length} />
-      )}
-    </div>
+<div 
+  className="relative flex items-center justify-between p-2.5 cursor-pointer hover:bg-bolt-elements-item-backgroundHover/40 rounded-t-md transition-all duration-200 group"
+  onClick={() => setIsExpanded(!isExpanded)}
+>
+  <div className="flex items-center gap-2">
+    <span className={`transition-transform duration-300 transform-gpu ${isExpanded ? 'rotate-90' : 'rotate-0'}`}>
+      <span className="i-ph:caret-right text-xs text-bolt-elements-textSecondary/80 group-hover:text-bolt-elements-accent transition-colors" />
+    </span>
+    <h3 className="text-xs font-medium text-bolt-elements-textSecondary flex items-center gap-2">
+      <span className="i-ph:target-duotone text-sm text-bolt-elements-accent animate-pulse" />
+      <span className="relative">
+        Fichiers ciblés
+        <span className="absolute -top-1 -right-2.5 w-1.5 h-1.5 bg-bolt-elements-accent rounded-full animate-ping opacity-75" />
+        <span className="absolute -top-1 -right-2.5 w-1.5 h-1.5 bg-bolt-elements-accent rounded-full" />
+      </span>
+      <span className="px-2 py-0.5 bg-bolt-elements-accent/20 text-bolt-elements-accent rounded-full text-[10px] font-semibold group-hover:bg-bolt-elements-accent/30 transition-colors border border-bolt-elements-accent/30">
+        {targetedFiles.length}
+      </span>
+    </h3>
+  </div>
+  
+  {!isExpanded && targetedFiles.length > 0 && (
+    <CollapsedFilePreview file={targetedFiles[0]} count={targetedFiles.length} />
+  )}
+</div>
   );
 }
 

@@ -635,8 +635,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       }}
                     />
                   )}
-                </div>
-                              {contextOptimizationEnabled && progressAnnotations.length > 0 && <ProgressCompilation data={progressAnnotations} />}
+                </div>{contextOptimizationEnabled && progressAnnotations.length > 0 && (
+                      <div className="animate-fade-in">
+                        <ProgressCompilation data={progressAnnotations} />
+                      </div>
+                    )}
                               <div
                   className={classNames(
                     'bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
@@ -664,6 +667,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         <stop offset="50%" stopColor="#b44aff" stopOpacity="80%"></stop>
                         <stop offset="100%" stopColor="#b44aff" stopOpacity="0%"></stop>
                       </linearGradient>
+                      
                       <linearGradient id="shine-gradient">
                         <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
                         <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
@@ -676,8 +680,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   </svg>
                   <div>
                     <ClientOnly>
+                      
                       {() => (
                         <div className={isModelSettingsCollapsed ? 'hidden' : ''}>
+                          
                           <ModelSelector
                             key={provider?.name + ':' + modelList.length}
                             model={model}
@@ -909,7 +915,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       <Tooltip.Root>
                           <Tooltip.Trigger asChild>
                             <IconButton
-                              title="Upload file"
+                              title="Importer un fichier"
                               className="transition-all"
                               onClick={() => handleFileUpload()}
                             >
@@ -917,7 +923,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                             </IconButton>
                           </Tooltip.Trigger>
                           <Tooltip.Portal>
-                            <Tooltip.Content
+                            {/* <Tooltip.Content
                               className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary p-2 rounded-md text-xs border border-bolt-elements-borderColor max-w-xs"
                               sideOffset={5}
                             >
@@ -929,7 +935,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                                 <p>• Documents: pdf, docx</p>
                               </div>
                               <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
-                            </Tooltip.Content>
+                            </Tooltip.Content> */}
                           </Tooltip.Portal>
                         </Tooltip.Root>
                         <IconButton

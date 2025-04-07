@@ -8,7 +8,7 @@ import { diffLines, type Change } from 'diff';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { toast } from 'react-toastify';
 import { path } from '~/utils/path';
-import { addTargetedFile } from '~/utils/fileUtils';
+import { addTargetedFile, removeTargetedFile } from '~/utils/fileUtils';
 
 const logger = createScopedLogger('FileTree');
 
@@ -295,6 +295,7 @@ function FileContextMenu({
   const [isCreatingFile, setIsCreatingFile] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTargeted, setIsTargeted] = useState(false);
   const depth = useMemo(() => fullPath.split('/').length, [fullPath]);
   const fileName = useMemo(() => path.basename(fullPath), [fullPath]);
 
@@ -307,6 +308,33 @@ function FileContextMenu({
 
   const targetPath = useMemo(() => {
     return isFolder ? fullPath : path.dirname(fullPath);
+  }, [fullPath, isFolder]);
+  
+  // Vérifier si le fichier est ciblé
+  useEffect(() => {
+    if (isFolder) return;
+    
+    const checkIfTargeted = () => {
+      try {
+        const textarea = document.querySelector('textarea[data-targeted-files]');
+        if (!textarea) return;
+        
+        const filesAttr = textarea.getAttribute('data-targeted-files');
+        if (!filesAttr) return;
+        
+        const targetedFiles = JSON.parse(filesAttr);
+        setIsTargeted(Array.isArray(targetedFiles) && targetedFiles.includes(fullPath));
+      } catch (error) {
+        console.error('Error checking if file is targeted:', error);
+      }
+    };
+    
+    // Vérifier immédiatement
+    checkIfTargeted();
+    
+    // Puis vérifier périodiquement
+    const interval = setInterval(checkIfTargeted, 1000);
+    return () => clearInterval(interval);
   }, [fullPath, isFolder]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -442,28 +470,55 @@ const handleDelete = async () => {
           >
             <ContextMenu.Group className="p-1 border-b-px border-solid border-bolt-elements-borderColor">
               {!isFolder && (
-                <ContextMenuItem 
-                  onSelect={() => {
-                    const textarea = document.querySelector('textarea[data-targeted-files]');
-                    if (textarea) {
-                      const success = addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
-                      if (success) {
-                        toast.success(`Fichier ciblé : ${fileName}`);
-                        (textarea as HTMLTextAreaElement).focus();
-                      } else {
-                        toast.info(`Le fichier ${fileName} est déjà ciblé`);
-                      }
-                    } else {
-                      toast.error('Impossible de trouver la zone de texte du chat');
-                    }
-                  }}
-                  className="hover:bg-green-500/10"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="i-ph:target text-green-500" />
-                    <span className="text-green-500">Cibler le fichier</span>
-                  </div>
-                </ContextMenuItem>
+                <>
+                  {!isTargeted ? (
+                    <ContextMenuItem 
+                      onSelect={() => {
+                        const textarea = document.querySelector('textarea[data-targeted-files]');
+                        if (textarea) {
+                          const success = addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                          if (success) {
+                            toast.success(`Fichier ciblé : ${fileName}`);
+                            (textarea as HTMLTextAreaElement).focus();
+                          } else {
+                            toast.info(`Le fichier ${fileName} est déjà ciblé`);
+                          }
+                        } else {
+                          toast.error('Impossible de trouver la zone de texte du chat');
+                        }
+                      }}
+                      className="hover:bg-green-500/10"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="i-ph:target text-green-500" />
+                        <span className="text-green-500">Cibler le fichier</span>
+                      </div>
+                    </ContextMenuItem>
+                  ) : (
+                    <ContextMenuItem 
+                      onSelect={() => {
+                        const textarea = document.querySelector('textarea[data-targeted-files]');
+                        if (textarea) {
+                          const success = removeTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                          if (success) {
+                            toast.success(`Ciblage retiré : ${fileName}`);
+                            (textarea as HTMLTextAreaElement).focus();
+                          } else {
+                            toast.info(`Le fichier ${fileName} n'est pas ciblé`);
+                          }
+                        } else {
+                          toast.error('Impossible de trouver la zone de texte du chat');
+                        }
+                      }}
+                      className="hover:bg-yellow-500/10"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="i-ph:target-slash text-yellow-500" />
+                        <span className="text-yellow-500">Retirer le ciblage</span>
+                      </div>
+                    </ContextMenuItem>
+                  )}
+                </>
               )}
               <ContextMenuItem 
                 onSelect={() => setIsCreatingFile(true)}
@@ -635,6 +690,34 @@ function File({
   const { depth, name, fullPath } = file;
 
   const fileModifications = fileHistory[fullPath];
+  
+  // Vérifier si le fichier est ciblé
+  const [isTargeted, setIsTargeted] = useState(false);
+  
+  // Vérifier périodiquement si le fichier est ciblé
+  useEffect(() => {
+    const checkIfTargeted = () => {
+      try {
+        const textarea = document.querySelector('textarea[data-targeted-files]');
+        if (!textarea) return;
+        
+        const filesAttr = textarea.getAttribute('data-targeted-files');
+        if (!filesAttr) return;
+        
+        const targetedFiles = JSON.parse(filesAttr);
+        setIsTargeted(Array.isArray(targetedFiles) && targetedFiles.includes(fullPath));
+      } catch (error) {
+        console.error('Error checking if file is targeted:', error);
+      }
+    };
+    
+    // Vérifier immédiatement
+    checkIfTargeted();
+    
+    // Puis vérifier périodiquement
+    const interval = setInterval(checkIfTargeted, 1000);
+    return () => clearInterval(interval);
+  }, [fullPath]);
 
   const { additions, deletions } = useMemo(() => {
     if (!fileModifications?.originalContent) {
@@ -684,6 +767,7 @@ function File({
         depth={depth}
         iconClasses={classNames(getFileIcon(name), {
           'group-hover:text-bolt-elements-item-contentActive': !selected,
+          'text-yellow-400': isTargeted, // Icône jaune pour les fichiers ciblés
         })}
         onClick={onClick}
       >
@@ -692,7 +776,12 @@ function File({
             'group-hover:text-bolt-elements-item-contentActive': !selected,
           })}
         >
-          <div className="flex-1 truncate pr-2">{name}</div>
+          <div className="flex-1 truncate pr-2">
+            {isTargeted && (
+              <span className="inline-block mr-1 text-yellow-400 i-ph:target" />
+            )}
+            {name}
+          </div>
           <div className="flex items-center gap-1">
             {showStats && (
               <div className="flex items-center gap-1 text-xs">

@@ -94,10 +94,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           logger.debug('Génération d\'un résumé de discussion');
           dataStream.writeData({
             type: 'progress',
-            label: 'summary',
+            label: 'Résumer',
             status: 'in-progress',
             order: progressCounter++,
-            message: 'Analyse de la demande',
+            message: 'Analyse de la conversation',
           } satisfies ProgressAnnotation);
 
           // Create a summary of the chat
@@ -121,10 +121,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           });
           dataStream.writeData({
             type: 'progress',
-            label: 'summary',
+            label: 'Résumer',
             status: 'complete',
             order: progressCounter++,
-            message: 'Analyse terminée',
+            message: 'Analyse de la conversation terminée',
           } satisfies ProgressAnnotation);
 
           dataStream.writeMessageAnnotation({
@@ -137,14 +137,14 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           logger.debug('Mise à jour du tampon de contexte');
           dataStream.writeData({
             type: 'progress',
-            label: 'context',
+            label: 'Contexte',
             status: 'in-progress',
             order: progressCounter++,
-            message: 'Déterminer les fichiers pertinants',
+            message: 'Recherche des fichiers pertinents',
           } satisfies ProgressAnnotation);
 
           // Select context files
-          console.log(`Nombre de messages :${messages.length}`);
+          console.log(`Nombre de messages :${messages.length}`);
           filteredFiles = await selectContext({
             messages: [...messages],
             env: context.cloudflare?.env,
@@ -183,10 +183,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
           dataStream.writeData({
             type: 'progress',
-            label: 'context',
+            label: 'Contexte',
             status: 'complete',
             order: progressCounter++,
-            message: 'Code Files Selected',
+            message: 'Fichiers pertinents sélectionnés',
           } satisfies ProgressAnnotation);
 
           // logger.debug('Code Files Selected');
@@ -227,10 +227,10 @@ if (reasoning) {
               });
               dataStream.writeData({
                 type: 'progress',
-                label: 'response',
+                label: 'Réponse',
                 status: 'complete',
                 order: progressCounter++,
-                message: 'Réponse Généré',
+                message: 'Code généré avec succès',
               } satisfies ProgressAnnotation);
               await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -301,10 +301,10 @@ if (reasoning) {
 
         dataStream.writeData({
           type: 'progress',
-          label: 'response',
+          label: 'Réponse',
           status: 'in-progress',
           order: progressCounter++,
-          message: 'Réponse en cour de génération',
+          message: 'Code en cours ecriture',
         } satisfies ProgressAnnotation);
 
         const result = await streamText({

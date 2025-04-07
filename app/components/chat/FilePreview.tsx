@@ -211,12 +211,12 @@ const formatFileSize = (bytes: number): string => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex items-center justify-center w-8 h-8 bg-violet-500/15 rounded-full hover:bg-violet-500/30 text-violet-400 hover:text-violet-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="flex items-center justify-center w-6 h-6 bg-gray-800/50 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-gray-300 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-gray-500/30"
             aria-label={isCollapsed ? 'Déplier les fichiers' : 'Replier les fichiers'}
             title={isCollapsed ? 'Afficher les fichiers joints' : 'Masquer les fichiers joints'}
           >
             <div 
-              className={`i-ph:caret-${isCollapsed ? 'right' : 'down'} w-4 h-4 transition-transform duration-200`}
+              className={`i-ph:caret-${isCollapsed ? 'right' : 'down'} w-3.5 h-3.5 transition-transform duration-200`}
               style={{ transform: isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)' }}
               aria-hidden="true"
             />
@@ -235,7 +235,7 @@ const formatFileSize = (bytes: number): string => {
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
-                  className="text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 px-2 py-1 rounded-full flex items-center gap-1"
+                  className="text-xs bg-red-500/20 text-white hover:bg-red-500/30 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 px-2 py-1 rounded-full flex items-center gap-1"
                   aria-label="Supprimer tous les fichiers"
                   title="Supprimer tous les fichiers"
                 >
@@ -259,7 +259,7 @@ const formatFileSize = (bytes: number): string => {
                   
                   <Dialog.Description className="text-gray-300 mb-6 text-center">
                     Êtes-vous sûr de vouloir supprimer tous les fichiers joints ? 
-                    <span className="block mt-2 text-violet-300 text-sm font-medium">Cette action ne peut pas être annulée.</span>
+                    <span className="block mt-2 text-red-500 text-sm font-medium">Cette action ne peut pas être annulée.</span>
                   </Dialog.Description>
                   
                   <div className="flex justify-center gap-4">
@@ -275,7 +275,7 @@ const formatFileSize = (bytes: number): string => {
                         onRemove(-1);
                         setShowDeleteModal(false);
                       }}
-                      className="px-5 py-2.5 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 hover:text-violet-200 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-w-[120px] border border-violet-500/30"
+                      className="px-5 py-2.5 bg-red-500/20 hover:bg-red-500/50 text-red-300 hover:text-red-200 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/50 min-w-[120px] border border-red-500/30"
                     >
                       <span className="i-ph:trash w-4 h-4"></span>
                       Supprimer tout
@@ -310,10 +310,10 @@ const formatFileSize = (bytes: number): string => {
       {/* Files container with collapse/expand animation */}
       <div 
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
+          isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[400px] opacity-100'
         }`}
       >
-        <div className="flex flex-wrap gap-3 p-2">
+        <div className="flex flex-wrap gap-3 p-2 overflow-y-auto max-h-[380px] pr-2">
           {visibleFiles.map((file, index) => (
             <div 
               key={file.name + file.size + index} 
