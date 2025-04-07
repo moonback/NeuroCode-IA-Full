@@ -390,7 +390,7 @@ export const Workbench = memo(
                       </PanelHeaderButton>
                       
                        <DropdownMenu.Root>
-                        <DropdownMenu.Trigger className="bg-transparent">
+                        <DropdownMenu.Trigger asChild>
                           <button className="text-sm flex items-center gap-1 text-bolt-elements-item-contentDefault bg-transparent enabled:hover:text-bolt-elements-item-contentActive rounded-md p-1 enabled:hover:bg-bolt-elements-item-backgroundActive disabled:cursor-not-allowed">
                             <div className="i-ph:box-arrow-up" />
                             Synchronisation et exportation
