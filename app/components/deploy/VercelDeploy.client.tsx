@@ -174,14 +174,7 @@ export function useVercelDeploy() {
         source: 'vercel',
       });
 
-      toast.success(
-        <div>
-          Déployé avec succès sur Vercel !{' '}
-          <a href={data.deploy.url} target="_blank" rel="noopener noreferrer" className="underline">
-            Voir le site
-          </a>
-        </div>,
-      );
+      
 
       return true;
     } catch (err) {

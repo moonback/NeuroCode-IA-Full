@@ -224,19 +224,7 @@ export function useNetlifyDeploy() {
         source: 'netlify',
       });
 
-      toast.success(
-        <div>
-          Déployé avec succès !{' '}
-          <a
-            href={deploymentStatus.ssl_url || deploymentStatus.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Voir le site
-          </a>
-        </div>,
-      );
+      
 
       return true;
     } catch (error) {
