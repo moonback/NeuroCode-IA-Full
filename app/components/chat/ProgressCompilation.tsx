@@ -45,7 +45,8 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
   
   // Check if all items are complete and set auto-collapse timer
   useEffect(() => {
-    if (progressList.length > 0 && expanded) {
+    // Only run this effect if we have progress items, are expanded, and don't already have a timer
+    if (progressList.length > 0 && expanded && !autoCollapseTimer) {
       const allComplete = progressList.every(item => item.status === 'complete');
       
       if (allComplete) {
@@ -55,15 +56,16 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
         }, 3000);
         
         setAutoCollapseTimer(timer);
-        
-        // Cleanup function
-        return () => {
-          clearTimeout(timer);
-          setAutoCollapseTimer(null);
-        };
       }
     }
-  }, [progressList, expanded]);
+    
+    // Cleanup function
+    return () => {
+      if (autoCollapseTimer) {
+        clearTimeout(autoCollapseTimer);
+      }
+    };
+  }, [progressList, expanded, autoCollapseTimer]);
 
   // Memoize derived values
   const hasProgress = useMemo(() => progressList.length > 0, [progressList]);
