@@ -600,10 +600,12 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
      * Intentionally disabled - we want to maintain scale of 1
      * No dynamic scaling to ensure device frame matches external window exactly
      */
+    // Intentionally empty cleanup function - no cleanup needed
     return () => {
-      // Cleanup function intentionally left empty to maintain fixed scale
+
+      // No cleanup needed
     };
-  }, [isDeviceModeOn, showDeviceFrameInPreview, getDeviceScale, isLandscape, selectedWindowSize]);
+     }, [isDeviceModeOn, showDeviceFrameInPreview, getDeviceScale, isLandscape, selectedWindowSize]);
 
   // Function to get the frame color based on dark mode
   const getFrameColor = useCallback(() => {
