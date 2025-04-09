@@ -438,6 +438,43 @@ const handleDelete = async () => {
   }
 };
 
+function handleFileUpload(): void {
+  // Create a hidden file input element
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.multiple = true;
+  
+  // Handle file selection
+  input.onchange = async (e) => {
+    const files = (e.target as HTMLInputElement).files;
+    if (!files) return;
+
+    for (const file of Array.from(files)) {
+      try {
+        const filePath = path.join(targetPath, file.name);
+
+        // Convert file to binary data
+        const arrayBuffer = await file.arrayBuffer();
+        const binaryContent = new Uint8Array(arrayBuffer);
+
+        const success = await workbenchStore.createFile(filePath, binaryContent);
+
+        if (success) {
+          toast.success(`File ${file.name} uploaded successfully`);
+        } else {
+          toast.error(`Failed to upload file ${file.name}`);
+        }
+      } catch (error) {
+        toast.error(`Error uploading ${file.name}`);
+        logger.error(error);
+      }
+    }
+  };
+
+  // Trigger file selection dialog
+  input.click();
+}
+
   return (
     <>
       <ContextMenu.Root>
@@ -469,6 +506,17 @@ const handleDelete = async () => {
             className="border border-bolt-elements-borderColor rounded-md z-context-menu bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-2 data-[state=open]:animate-in animate-duration-100 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98 w-56 shadow-lg"
           >
             <ContextMenu.Group className="p-1 border-b-px border-solid border-bolt-elements-borderColor">
+              {/* Add the new upload button before other items */}
+              <ContextMenuItem 
+                onSelect={handleFileUpload}
+                className="hover:bg-orange-500/10"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="i-ph:upload-simple text-orange-500" />
+                  <span className="text-orange-500">Importer un fichier</span>
+                </div>
+              </ContextMenuItem>
+              
               {!isFolder && (
                 <>
                   {!isTargeted ? (
