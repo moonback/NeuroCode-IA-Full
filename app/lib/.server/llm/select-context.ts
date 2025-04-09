@@ -22,8 +22,10 @@ export async function selectContext(props: {
   contextOptimization?: boolean;
   summary: string;
   onFinish?: (resp: GenerateTextResult<Record<string, CoreTool<any, any>>, never>) => void;
+  abortSignal?: AbortSignal;
+
 }) {
-  const { messages, env: serverEnv, apiKeys, files, providerSettings, summary, onFinish } = props;
+  const { messages, env: serverEnv, apiKeys, files, providerSettings, summary, onFinish, abortSignal } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
   const processedMessages = messages.map((message) => {
@@ -174,6 +176,8 @@ export async function selectContext(props: {
       apiKeys,
       providerSettings,
     }),
+    abortSignal,
+
   });
 
   const response = resp.text;

@@ -105,6 +105,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             providerSettings,
             promptId,
             contextOptimization,
+            abortSignal: request.signal,
             onFinish(resp) {
               if (resp.usage) {
                 logger.debug('utilisation des jetons pour le résumer', JSON.stringify(resp.usage));
@@ -149,6 +150,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             promptId,
             contextOptimization,
             summary,
+            abortSignal: request.signal,
             onFinish(resp) {
               if (resp.usage) {
                 logger.debug('Utilisation du jeton selectContext', JSON.stringify(resp.usage));
@@ -250,18 +252,29 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               contextFiles: filteredFiles,
               summary,
               messageSliceId,
+              abortSignal: request.signal,
+
             });
 
             result.mergeIntoDataStream(dataStream);
 
             (async () => {
-              for await (const part of result.fullStream) {
-                if (part.type === 'error') {
-                  const error: any = part.error;
-                  logger.error(`${error}`);
+              try {
+                for await (const part of result.fullStream) {
+                  if (part.type === 'error') {
+                    const error: any = part.error;
+                    logger.error(`${error}`);
 
+                    return;
+                  }
+                }
+              } catch (e: any) {
+                if (e.name === 'AbortError') {
+                  logger.info('Request aborted.');
                   return;
                 }
+
+                throw e;
               }
             })();
 
