@@ -27,6 +27,7 @@ interface Props {
   unsavedFiles?: Set<string>;
   fileHistory?: Record<string, FileHistory>;
   className?: string;
+  allowMultipleUpload?: boolean;
 }
 
 interface InlineInputProps {
@@ -50,6 +51,7 @@ export const FileTree = memo(
     className,
     unsavedFiles,
     fileHistory = {},
+    allowMultipleUpload = false,
   }: Props) => {
     renderLogger.trace('FileTree');
 
@@ -155,6 +157,7 @@ export const FileTree = memo(
                   file={fileOrFolder}
                   unsavedChanges={unsavedFiles?.has(fileOrFolder.fullPath)}
                   fileHistory={fileHistory}
+                  allowMultipleUpload={allowMultipleUpload}
                   onCopyPath={() => {
                     onCopyPath(fileOrFolder);
                   }}
@@ -174,6 +177,7 @@ export const FileTree = memo(
                   folder={fileOrFolder}
                   selected={allowFolderSelection && selectedFile === fileOrFolder.fullPath}
                   collapsed={collapsedFolders.has(fileOrFolder.fullPath)}
+                  allowMultipleUpload={allowMultipleUpload}
                   onCopyPath={() => {
                     onCopyPath(fileOrFolder);
                   }}
@@ -202,6 +206,7 @@ interface FolderProps {
   folder: FolderNode;
   collapsed: boolean;
   selected?: boolean;
+  allowMultipleUpload?: boolean;
   onCopyPath: () => void;
   onCopyRelativePath: () => void;
   onClick: () => void;
@@ -211,6 +216,7 @@ interface FolderContextMenuProps {
   onCopyPath?: () => void;
   onCopyRelativePath?: () => void;
   children: ReactNode;
+  allowMultipleUpload?: boolean;
 }
 
 function ContextMenuItem({ onSelect, children, className }: { 
@@ -291,13 +297,20 @@ function FileContextMenu({
   onCopyRelativePath,
   fullPath,
   children,
+  allowMultipleUpload = false,
 }: FolderContextMenuProps & { fullPath: string }) {
   const [isCreatingFile, setIsCreatingFile] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isTargeted, setIsTargeted] = useState(false);
+  const [isMultipleUploadEnabled, setIsMultipleUploadEnabled] = useState(allowMultipleUpload);
   const depth = useMemo(() => fullPath.split('/').length, [fullPath]);
   const fileName = useMemo(() => path.basename(fullPath), [fullPath]);
+  
+  // Mettre à jour l'état local si la prop change
+  useEffect(() => {
+    setIsMultipleUploadEnabled(allowMultipleUpload);
+  }, [allowMultipleUpload]);
 
   const isFolder = useMemo(() => {
     const files = workbenchStore.files.get();
@@ -378,19 +391,18 @@ function FileContextMenu({
       const items = Array.from(e.dataTransfer.items);
       const files = items.filter((item) => item.kind === 'file');
       
-      if (files.length > 1) {
+      if (!isMultipleUploadEnabled && files.length > 1) {
         toast.error('Veuillez déposer un seul fichier à la fois');
         return;
       }
 
-      const item = files[0];
-      if (item) {
+      for (const item of files) {
         const file = item.getAsFile();
   
         if (file) {
           if (!isFileAllowed(file.name)) {
             toast.error(`Type de fichier non autorisé : ${file.name}`);
-return;
+            continue;
           }
   
           try {
@@ -429,7 +441,7 @@ return;
   function handleFileUpload(): void {
     const input = document.createElement('input');
     input.type = 'file';
-    input.multiple = false;
+    input.multiple = isMultipleUploadEnabled || false;
     input.accept = ALLOWED_FILE_EXTENSIONS.join(',');
     
     input.onchange = async (e) => {
@@ -516,14 +528,27 @@ return;
             className="border border-bolt-elements-borderColor rounded-md z-context-menu bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-2 data-[state=open]:animate-in animate-duration-100 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98 w-56 shadow-lg"
           >
             <ContextMenu.Group className="p-1 border-b-px border-solid border-bolt-elements-borderColor">
-              {/* Add the new upload button before other items */}
+              {/* Bouton d'importation de fichier avec toggle d'upload multiple */}
               <ContextMenuItem 
                 onSelect={handleFileUpload}
                 className="hover:bg-orange-500/10"
               >
-                <div className="flex items-center gap-2">
-                  <div className="i-ph:upload-simple text-orange-500" />
-                  <span className="text-orange-500">Importer un fichier</span>
+                <div className="flex items-center gap-2 justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <div className="i-ph:upload-simple text-orange-500" />
+                    <span className="text-orange-500">{isMultipleUploadEnabled ? "Importer des fichiers" : "Importer un fichier"}</span>
+                  </div>
+                  <div 
+                    className={`flex items-center justify-center p-1 rounded-md ${isMultipleUploadEnabled ? "bg-purple-500/10" : "bg-blue-500/10"}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMultipleUploadEnabled(!isMultipleUploadEnabled);
+                      toast.info(isMultipleUploadEnabled ? 'Upload multiple désactivé' : 'Upload multiple activé');
+                    }}
+                    title={isMultipleUploadEnabled ? "Désactiver l'upload multiple" : "Activer l'upload multiple"}
+                  >
+                    <div className={isMultipleUploadEnabled ? "i-ph:files text-purple-500" : "i-ph:file text-blue-500"} />
+                  </div>
                 </div>
               </ContextMenuItem>
               
@@ -651,9 +676,9 @@ return;
   );
 }
 
-function Folder({ folder, collapsed, selected = false, onCopyPath, onCopyRelativePath, onClick }: FolderProps) {
+function Folder({ folder, collapsed, selected = false, allowMultipleUpload = false, onCopyPath, onCopyRelativePath, onClick }: FolderProps) {
   return (
-    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={folder.fullPath}>
+    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={folder.fullPath} allowMultipleUpload={allowMultipleUpload}>
       <NodeButton
         className={classNames('group', {
           'bg-transparent text-bolt-elements-item-contentDefault hover:text-bolt-elements-item-contentActive hover:bg-bolt-elements-item-backgroundActive':
@@ -678,6 +703,7 @@ interface FileProps {
   selected: boolean;
   unsavedChanges?: boolean;
   fileHistory?: Record<string, FileHistory>;
+  allowMultipleUpload?: boolean;
   onCopyPath: () => void;
   onCopyRelativePath: () => void;
   onClick: () => void;
@@ -744,6 +770,7 @@ function File({
   selected,
   unsavedChanges = false,
   fileHistory = {},
+  allowMultipleUpload = false,
 }: FileProps) {
   const { depth, name, fullPath } = file;
 
@@ -815,7 +842,7 @@ function File({
   const showStats = additions > 0 || deletions > 0;
 
   return (
-    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={fullPath}>
+    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={fullPath} allowMultipleUpload={allowMultipleUpload}>
       <NodeButton
         className={classNames('group', {
           'bg-transparent hover:bg-bolt-elements-item-backgroundActive text-bolt-elements-item-contentDefault':
