@@ -136,15 +136,24 @@ export function PushToGitHubDialog({ isOpen, onClose, onPush }: PushToGitHubDial
       const octokit = new Octokit({ auth: connection.token });
 
       try {
-        await octokit.repos.get({
+        const { data: existingRepo } = await octokit.repos.get({
           owner: connection.user.login,
           repo: repoName,
         });
 
         // If we get here, the repo exists
-        const confirmOverwrite = window.confirm(
-          `Repository "${repoName}" already exists. Do you want to update it? This will add or modify files in the repository.`,
-        );
+        let confirmMessage = `Repository "${repoName}" already exists. Do you want to update it? This will add or modify files in the repository.`;
+
+        // Add visibility change warning if needed
+        if (existingRepo.private !== isPrivate) {
+          const visibilityChange = isPrivate
+            ? 'This will also change the repository from public to private.'
+            : 'This will also change the repository from private to public.';
+
+          confirmMessage += `\n\n${visibilityChange}`;
+        }
+
+        const confirmOverwrite = window.confirm(confirmMessage);
 
         if (!confirmOverwrite) {
           setIsLoading(false);
@@ -322,9 +331,9 @@ export function PushToGitHubDialog({ isOpen, onClose, onPush }: PushToGitHubDial
                   >
                     <div className="i-ph:github-logo w-6 h-6" />
                   </motion.div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Connexion GitHub Requise</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">GitHub Connection Required</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Veuillez connecter votre compte GitHub dans Paramètres {'>'} Connexions pour pousser votre code vers GitHub.
+                    Please connect your GitHub account in Settings {'>'} Connections to push your code to GitHub.
                   </p>
                   <motion.button
                     className="px-4 py-2 rounded-lg bg-purple-500 text-white text-sm hover:bg-purple-600 inline-flex items-center gap-2"
@@ -333,7 +342,7 @@ export function PushToGitHubDialog({ isOpen, onClose, onPush }: PushToGitHubDial
                     onClick={handleClose}
                   >
                     <div className="i-ph:x-circle" />
-                    Fermer
+                    Close
                   </motion.button>
                 </div>
               </Dialog.Content>
