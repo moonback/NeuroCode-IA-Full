@@ -365,15 +365,71 @@ function FileContextMenu({
   }
 
   function handleDelete(): void {
-    throw new Error('Function not implemented.');
+    if (isFolder) {
+      if (window.confirm(`Êtes-vous sûr de vouloir supprimer le dossier ${fileName} et tout son contenu ?`)) {
+        workbenchStore.deleteFolder(fullPath)
+          .then((success) => {
+            if (success) {
+              toast.success(`Dossier ${fileName} supprimé avec succès`);
+            } else {
+              toast.error(`Échec de la suppression du dossier ${fileName}`);
+            }
+          })
+          .catch((error) => {
+            console.error('Error deleting folder:', error);
+            toast.error(`Erreur lors de la suppression du dossier ${fileName}`);
+          });
+      }
+    } else {
+      if (window.confirm(`Êtes-vous sûr de vouloir supprimer le fichier ${fileName} ?`)) {
+        workbenchStore.deleteFile(fullPath)
+          .then((success) => {
+            if (success) {
+              toast.success(`Fichier ${fileName} supprimé avec succès`);
+            } else {
+              toast.error(`Échec de la suppression du fichier ${fileName}`);
+            }
+          })
+          .catch((error) => {
+            console.error('Error deleting file:', error);
+            toast.error(`Erreur lors de la suppression du fichier ${fileName}`);
+          });
+      }
+    }
   }
 
   function handleCreateFile(value: string): void {
-    throw new Error('Function not implemented.');
+    const filePath = path.join(targetPath, value);
+    workbenchStore.createFile(filePath, '')
+      .then((success) => {
+        if (success) {
+          toast.success(`Fichier ${value} créé avec succès`);
+          setIsCreatingFile(false);
+        } else {
+          toast.error(`Échec de la création du fichier ${value}`);
+        }
+      })
+      .catch((error) => {
+        console.error('Error creating file:', error);
+        toast.error(`Erreur lors de la création du fichier ${value}`);
+      });
   }
 
   function handleCreateFolder(value: string): void {
-    throw new Error('Function not implemented.');
+    const folderPath = path.join(targetPath, value);
+    workbenchStore.createFolder(folderPath)
+      .then((success) => {
+        if (success) {
+          toast.success(`Dossier ${value} créé avec succès`);
+          setIsCreatingFolder(false);
+        } else {
+          toast.error(`Échec de la création du dossier ${value}`);
+        }
+      })
+      .catch((error) => {
+        console.error('Error creating folder:', error);
+        toast.error(`Erreur lors de la création du dossier ${value}`);
+      });
   }
 
   return (
