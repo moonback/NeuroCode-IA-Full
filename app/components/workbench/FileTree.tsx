@@ -8,7 +8,6 @@ import { diffLines, type Change } from 'diff';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { toast } from 'react-toastify';
 import { path } from '~/utils/path';
-import { addTargetedFile, removeTargetedFile } from '~/utils/fileUtils';
 
 const logger = createScopedLogger('FileTree');
 
@@ -328,18 +327,7 @@ function FileContextMenu({
     if (isFolder) return;
     
     const checkIfTargeted = () => {
-      try {
-        const textarea = document.querySelector('textarea[data-targeted-files]');
-        if (!textarea) return;
-        
-        const filesAttr = textarea.getAttribute('data-targeted-files');
-        if (!filesAttr) return;
-        
-        const targetedFiles = JSON.parse(filesAttr);
-        setIsTargeted(Array.isArray(targetedFiles) && targetedFiles.includes(fullPath));
-      } catch (error) {
-        console.error('Error checking if file is targeted:', error);
-      }
+      setIsTargeted(workbenchStore.isTargetedFile(fullPath));
     };
     
     // Vérifier immédiatement
@@ -362,127 +350,18 @@ function FileContextMenu({
     setIsDragging(false);
   }, []);
 
-  const ALLOWED_FILE_EXTENSIONS = [
-    '.ts', '.tsx',
-    '.js', '.jsx',
-    '.json',
-    '.html',
-    '.css',
-    '.py',
-    '.php',
-    '.java',
-    '.c', '.cpp', '.cs',
-    '.go',
-    '.rb',
-    '.rs',
-    '.txt'
-  ];
-  
-  const isFileAllowed = (fileName: string): boolean => {
-    const extension = path.extname(fileName).toLowerCase();
-    return ALLOWED_FILE_EXTENSIONS.includes(extension);
-  };
+  // Les extensions de fichiers autorisées et la validation sont maintenant gérées par workbenchStore
   
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-  
-      const items = Array.from(e.dataTransfer.items);
-      const files = items.filter((item) => item.kind === 'file');
-      
-      if (!isMultipleUploadEnabled && files.length > 1) {
-        toast.error('Veuillez déposer un seul fichier à la fois');
-        return;
-      }
-
-      for (const item of files) {
-        const file = item.getAsFile();
-  
-        if (file) {
-          if (!isFileAllowed(file.name)) {
-            toast.error(`Type de fichier non autorisé : ${file.name}`);
-            continue;
-          }
-  
-          try {
-            const filePath = path.join(fullPath, file.name);
-  
-            const arrayBuffer = await file.arrayBuffer();
-            const binaryContent = new Uint8Array(arrayBuffer);
-  
-            const success = await workbenchStore.createFile(filePath, binaryContent);
-  
-            if (success) {
-              toast.success(`Fichier ${file.name} téléchargé avec succès`);
-              const textarea = document.querySelector('textarea[data-targeted-files]');
-              if (textarea) {
-                const targetSuccess = addTargetedFile(filePath, textarea as HTMLTextAreaElement);
-                if (targetSuccess) {
-                  toast.success(`Fichier ciblé : ${file.name}`);
-                  (textarea as HTMLTextAreaElement).focus();
-                }
-              }
-            } else {
-              toast.error(`Échec du téléchargement du fichier ${file.name}`);
-            }
-          } catch (error) {
-            toast.error(`Erreur lors du téléchargement de ${file.name}`);
-            logger.error(error);
-          }
-        }
-      }
-  
+      await workbenchStore.handleFileDrop(e as unknown as DragEvent, fullPath, isMultipleUploadEnabled);
       setIsDragging(false);
     },
-    [fullPath],
+    [fullPath, isMultipleUploadEnabled],
   );
   
   function handleFileUpload(): void {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = isMultipleUploadEnabled || false;
-    input.accept = ALLOWED_FILE_EXTENSIONS.join(',');
-    
-    input.onchange = async (e) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (!files) return;
-  
-      for (const file of Array.from(files)) {
-        if (!isFileAllowed(file.name)) {
-          toast.error(`Type de fichier non autorisé : ${file.name}`);
-          continue;
-        }
-  
-        try {
-          const filePath = path.join(targetPath, file.name);
-  
-          const arrayBuffer = await file.arrayBuffer();
-          const binaryContent = new Uint8Array(arrayBuffer);
-  
-          const success = await workbenchStore.createFile(filePath, binaryContent);
-  
-          if (success) {
-            toast.success(`Fichier ${file.name} téléchargé avec succès`);
-            const textarea = document.querySelector('textarea[data-targeted-files]');
-            if (textarea) {
-              const targetSuccess = addTargetedFile(filePath, textarea as HTMLTextAreaElement);
-              if (targetSuccess) {
-                toast.success(`Fichier ciblé : ${file.name}`);
-                (textarea as HTMLTextAreaElement).focus();
-              }
-            }
-          } else {
-            toast.error(`Échec du téléchargement du fichier ${file.name}`);
-          }
-        } catch (error) {
-          toast.error(`Erreur lors du téléchargement de ${file.name}`);
-          logger.error(error);
-        }
-      }
-    };
-  
-    input.click();
+    workbenchStore.handleFileUpload(targetPath, isMultipleUploadEnabled || false);
   }
 
   function handleDelete(): void {
@@ -559,7 +438,7 @@ function FileContextMenu({
                       onSelect={() => {
                         const textarea = document.querySelector('textarea[data-targeted-files]');
                         if (textarea) {
-                          const success = addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                          const success = workbenchStore.addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
                           if (success) {
                             toast.success(`Fichier ciblé : ${fileName}`);
                             (textarea as HTMLTextAreaElement).focus();
@@ -582,7 +461,7 @@ function FileContextMenu({
                       onSelect={() => {
                         const textarea = document.querySelector('textarea[data-targeted-files]');
                         if (textarea) {
-                          const success = removeTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                          const success = workbenchStore.removeTargetedFile(fullPath, textarea as HTMLTextAreaElement);
                           if (success) {
                             toast.success(`Ciblage retiré : ${fileName}`);
                             (textarea as HTMLTextAreaElement).focus();
