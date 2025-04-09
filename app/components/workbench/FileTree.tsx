@@ -349,131 +349,121 @@ function FileContextMenu({
     setIsDragging(false);
   }, []);
 
+  const ALLOWED_FILE_EXTENSIONS = [
+    '.ts', '.tsx',
+    '.js', '.jsx',
+    '.json',
+    '.html',
+    '.css',
+    '.py',
+    '.php',
+    '.java',
+    '.c', '.cpp', '.cs',
+    '.go',
+    '.rb',
+    '.rs',
+    '.txt'
+  ];
+  
+  const isFileAllowed = (fileName: string): boolean => {
+    const extension = path.extname(fileName).toLowerCase();
+    return ALLOWED_FILE_EXTENSIONS.includes(extension);
+  };
+  
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
-
+  
       const items = Array.from(e.dataTransfer.items);
       const files = items.filter((item) => item.kind === 'file');
-
+  
       for (const item of files) {
         const file = item.getAsFile();
-
+  
         if (file) {
+          if (!isFileAllowed(file.name)) {
+            toast.error(`Type de fichier non autorisé : ${file.name}`);
+            continue;
+          }
+  
           try {
             const filePath = path.join(fullPath, file.name);
-
+  
             // Convert file to binary data (Uint8Array)
             const arrayBuffer = await file.arrayBuffer();
             const binaryContent = new Uint8Array(arrayBuffer);
-
+  
             const success = await workbenchStore.createFile(filePath, binaryContent);
-
+  
             if (success) {
-              toast.success(`File ${file.name} uploaded successfully`);
+              toast.success(`Fichier ${file.name} téléchargé avec succès`);
             } else {
-              toast.error(`Failed to upload file ${file.name}`);
+              toast.error(`Échec du téléchargement du fichier ${file.name}`);
             }
           } catch (error) {
-            toast.error(`Error uploading ${file.name}`);
+            toast.error(`Erreur lors du téléchargement de ${file.name}`);
             logger.error(error);
           }
         }
       }
-
+  
       setIsDragging(false);
     },
     [fullPath],
   );
-
-  const handleCreateFile = async (fileName: string) => {
-    const newFilePath = path.join(targetPath, fileName);
-    const success = await workbenchStore.createFile(newFilePath, '');
-
-    if (success) {
-      toast.success('File created successfully');
-    } else {
-      toast.error('Failed to create file');
-    }
-
-    setIsCreatingFile(false);
-  };
-
-  const handleCreateFolder = async (folderName: string) => {
-    const newFolderPath = path.join(targetPath, folderName);
-    const success = await workbenchStore.createFolder(newFolderPath);
-
-    if (success) {
-      toast.success('Folder created successfully');
-    } else {
-      toast.error('Failed to create folder');
-    }
-
-    setIsCreatingFolder(false);
-  };
-
-const handleDelete = async () => {
-  try {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${isFolder ? 'le dossier' : 'le fichier'} : ${fileName} ?`)) {
-      return;
-    }
-
-    let success;
-
-    if (isFolder) {
-      success = await workbenchStore.deleteFolder(fullPath);
-    } else {
-      success = await workbenchStore.deleteFile(fullPath);
-    }
-
-    if (success) {
-      toast.success(`${isFolder ? 'Dossier' : 'Fichier'} supprimé avec succès`);
-    } else {
-      toast.error(`Échec de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
-    }
-  } catch (error) {
-    toast.error(`Erreur lors de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
-    logger.error(error);
-  }
-};
-
-function handleFileUpload(): void {
-  // Create a hidden file input element
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.multiple = true;
   
-  // Handle file selection
-  input.onchange = async (e) => {
-    const files = (e.target as HTMLInputElement).files;
-    if (!files) return;
-
-    for (const file of Array.from(files)) {
-      try {
-        const filePath = path.join(targetPath, file.name);
-
-        // Convert file to binary data
-        const arrayBuffer = await file.arrayBuffer();
-        const binaryContent = new Uint8Array(arrayBuffer);
-
-        const success = await workbenchStore.createFile(filePath, binaryContent);
-
-        if (success) {
-          toast.success(`File ${file.name} uploaded successfully`);
-        } else {
-          toast.error(`Failed to upload file ${file.name}`);
+  function handleFileUpload(): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = ALLOWED_FILE_EXTENSIONS.join(',');
+    
+    input.onchange = async (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (!files) return;
+  
+      for (const file of Array.from(files)) {
+        if (!isFileAllowed(file.name)) {
+          toast.error(`Type de fichier non autorisé : ${file.name}`);
+          continue;
         }
-      } catch (error) {
-        toast.error(`Error uploading ${file.name}`);
-        logger.error(error);
+  
+        try {
+          const filePath = path.join(targetPath, file.name);
+  
+          // Convert file to binary data
+          const arrayBuffer = await file.arrayBuffer();
+          const binaryContent = new Uint8Array(arrayBuffer);
+  
+          const success = await workbenchStore.createFile(filePath, binaryContent);
+  
+          if (success) {
+            toast.success(`Fichier ${file.name} téléchargé avec succès`);
+          } else {
+            toast.error(`Échec du téléchargement du fichier ${file.name}`);
+          }
+        } catch (error) {
+          toast.error(`Erreur lors du téléchargement de ${file.name}`);
+          logger.error(error);
+        }
       }
-    }
-  };
+    };
+  
+    input.click();
+  }
 
-  // Trigger file selection dialog
-  input.click();
-}
+  function handleDelete(): void {
+    throw new Error('Function not implemented.');
+  }
+
+  function handleCreateFile(value: string): void {
+    throw new Error('Function not implemented.');
+  }
+
+  function handleCreateFolder(value: string): void {
+    throw new Error('Function not implemented.');
+  }
 
   return (
     <>
