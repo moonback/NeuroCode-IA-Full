@@ -21,6 +21,8 @@ import { FileBreadcrumb } from './FileBreadcrumb';
 import { FileTree } from './FileTree';
 import { DEFAULT_TERMINAL_SIZE, TerminalTabs } from './terminal/TerminalTabs';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { useState } from 'react';
+import { CreateFileModal } from './CreateFileModal';
 
 interface EditorPanelProps {
   files?: FileMap;
@@ -58,6 +60,7 @@ export const EditorPanel = memo(
 
     const theme = useStore(themeStore);
     const showTerminal = useStore(workbenchStore.showTerminal);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const activeFileSegments = useMemo(() => {
       if (!editorDocument) {
@@ -80,6 +83,12 @@ export const EditorPanel = memo(
                 <PanelHeader>
                   <div className="i-ph:tree-structure-duotone shrink-0" />
                   Fichiers
+                  <div className="ml-auto">
+                    <PanelHeaderButton onClick={() => setShowCreateModal(true)}>
+                      <div className="i-ph:plus-circle-duotone" />
+                      Nouveau
+                    </PanelHeaderButton>
+                  </div>
                 </PanelHeader>
                 <FileTree
                   className="h-full"
@@ -90,6 +99,11 @@ export const EditorPanel = memo(
                   rootFolder={WORK_DIR}
                   selectedFile={selectedFile}
                   onFileSelect={onFileSelect}
+                />
+                <CreateFileModal 
+                  isOpen={showCreateModal} 
+                  onClose={() => setShowCreateModal(false)} 
+                  targetPath={WORK_DIR} 
                 />
               </div>
             </Panel>
