@@ -377,20 +377,25 @@ function FileContextMenu({
   
       const items = Array.from(e.dataTransfer.items);
       const files = items.filter((item) => item.kind === 'file');
-  
-      for (const item of files) {
+      
+      if (files.length > 1) {
+        toast.error('Veuillez déposer un seul fichier à la fois');
+        return;
+      }
+
+      const item = files[0];
+      if (item) {
         const file = item.getAsFile();
   
         if (file) {
           if (!isFileAllowed(file.name)) {
             toast.error(`Type de fichier non autorisé : ${file.name}`);
-            continue;
+return;
           }
   
           try {
             const filePath = path.join(fullPath, file.name);
   
-            // Convert file to binary data (Uint8Array)
             const arrayBuffer = await file.arrayBuffer();
             const binaryContent = new Uint8Array(arrayBuffer);
   
@@ -398,6 +403,14 @@ function FileContextMenu({
   
             if (success) {
               toast.success(`Fichier ${file.name} téléchargé avec succès`);
+              const textarea = document.querySelector('textarea[data-targeted-files]');
+              if (textarea) {
+                const targetSuccess = addTargetedFile(filePath, textarea as HTMLTextAreaElement);
+                if (targetSuccess) {
+                  toast.success(`Fichier ciblé : ${file.name}`);
+                  (textarea as HTMLTextAreaElement).focus();
+                }
+              }
             } else {
               toast.error(`Échec du téléchargement du fichier ${file.name}`);
             }
@@ -416,7 +429,7 @@ function FileContextMenu({
   function handleFileUpload(): void {
     const input = document.createElement('input');
     input.type = 'file';
-    input.multiple = true;
+    input.multiple = false;
     input.accept = ALLOWED_FILE_EXTENSIONS.join(',');
     
     input.onchange = async (e) => {
@@ -432,7 +445,6 @@ function FileContextMenu({
         try {
           const filePath = path.join(targetPath, file.name);
   
-          // Convert file to binary data
           const arrayBuffer = await file.arrayBuffer();
           const binaryContent = new Uint8Array(arrayBuffer);
   
@@ -440,6 +452,14 @@ function FileContextMenu({
   
           if (success) {
             toast.success(`Fichier ${file.name} téléchargé avec succès`);
+            const textarea = document.querySelector('textarea[data-targeted-files]');
+            if (textarea) {
+              const targetSuccess = addTargetedFile(filePath, textarea as HTMLTextAreaElement);
+              if (targetSuccess) {
+                toast.success(`Fichier ciblé : ${file.name}`);
+                (textarea as HTMLTextAreaElement).focus();
+              }
+            }
           } else {
             toast.error(`Échec du téléchargement du fichier ${file.name}`);
           }
