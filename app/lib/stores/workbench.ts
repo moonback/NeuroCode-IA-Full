@@ -19,6 +19,7 @@ import Cookies from 'js-cookie';
 import { createSampler } from '~/utils/sampler';
 import type { ActionAlert, DeployAlert, SupabaseAlert } from '~/types/actions';
 import type { Message } from 'ai';
+import { toast } from 'react-toastify';
 
 const { saveAs } = fileSaver;
 
@@ -398,6 +399,288 @@ export class WorkbenchStore {
 
   abortAllActions() {
     // TODO: what do we wanna do and how do we wanna recover from this?
+  }
+
+  /**
+   * Ajoute un fichier à la liste des fichiers ciblés dans le textarea du chat.
+   * @param filePath - Le chemin du fichier à ajouter
+   * @param textareaElement - L'élément textarea du chat
+   * @returns true si le fichier a été ajouté, false sinon (déjà présent ou erreur)
+   */
+  addTargetedFile(filePath: string, textareaElement: HTMLTextAreaElement | null): boolean {
+    try {
+      if (!textareaElement) {
+        console.error('Textarea element not found');
+        return false;
+      }
+
+      // Lire la valeur actuelle
+      let currentFiles: string[] = [];
+      const currentValue = textareaElement.getAttribute('data-targeted-files');
+
+      if (currentValue) {
+        try {
+          currentFiles = JSON.parse(currentValue);
+          if (!Array.isArray(currentFiles)) {
+            currentFiles = [];
+          }
+        } catch (e) {
+          console.error('Error parsing data-targeted-files:', e);
+          currentFiles = [];
+        }
+      }
+
+      // Vérifier si le fichier est déjà présent
+      if (currentFiles.includes(filePath)) {
+        return false;
+      }
+
+      // Ajouter le nouveau fichier
+      currentFiles.push(filePath);
+
+      // Mettre à jour l'attribut
+      textareaElement.setAttribute('data-targeted-files', JSON.stringify(currentFiles));
+      return true;
+    } catch (error) {
+      console.error('Error in addTargetedFile:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Supprime un fichier de la liste des fichiers ciblés dans le textarea du chat.
+   * @param filePath - Le chemin du fichier à supprimer
+   * @param textareaElement - L'élément textarea du chat
+   * @returns true si le fichier a été supprimé, false sinon
+   */
+  removeTargetedFile(filePath: string, textareaElement: HTMLTextAreaElement | null): boolean {
+    try {
+      if (!textareaElement) {
+        console.error('Textarea element not found');
+        return false;
+      }
+
+      // Lire la valeur actuelle
+      let currentFiles: string[] = [];
+      const currentValue = textareaElement.getAttribute('data-targeted-files');
+
+      if (currentValue) {
+        try {
+          currentFiles = JSON.parse(currentValue);
+          if (!Array.isArray(currentFiles)) {
+            currentFiles = [];
+          }
+        } catch (e) {
+          console.error('Error parsing data-targeted-files:', e);
+          return false;
+        }
+      }
+
+      // Supprimer le fichier
+      const index = currentFiles.indexOf(filePath);
+      if (index === -1) {
+        return false;
+      }
+
+      currentFiles.splice(index, 1);
+
+      // Mettre à jour l'attribut
+      textareaElement.setAttribute('data-targeted-files', JSON.stringify(currentFiles));
+      return true;
+    } catch (error) {
+      console.error('Error in removeTargetedFile:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Récupère la liste des fichiers ciblés depuis le textarea du chat.
+   * @returns Un tableau contenant les chemins des fichiers ciblés
+   */
+  getTargetedFilesFromDOM(): string[] {
+    try {
+      const textarea = document.querySelector('textarea[data-targeted-files]');
+      if (!textarea) {
+        return [];
+      }
+
+      const filesAttr = textarea.getAttribute('data-targeted-files');
+      if (!filesAttr) {
+        return [];
+      }
+
+      try {
+        const files = JSON.parse(filesAttr);
+        return Array.isArray(files) ? files : [];
+      } catch (e) {
+        console.error('Error parsing data-targeted-files:', e);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error in getTargetedFilesFromDOM:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Vérifie si un fichier est ciblé dans le textarea du chat.
+   * @param filePath - Le chemin du fichier à vérifier
+   * @returns true si le fichier est ciblé, false sinon
+   */
+  isTargetedFile(filePath: string): boolean {
+    const targetedFiles = this.getTargetedFilesFromDOM();
+    return targetedFiles.includes(filePath);
+  }
+
+  /**
+   * Gère l'upload d'un fichier via une boîte de dialogue de sélection de fichier
+   * @param targetPath - Le chemin cible où le fichier sera créé
+   * @param allowMultiple - Autoriser l'upload de plusieurs fichiers
+   */
+  handleFileUpload(targetPath: string, allowMultiple: boolean = false): void {
+    const ALLOWED_FILE_EXTENSIONS = [
+      '.ts', '.tsx',
+      '.js', '.jsx',
+      '.json',
+      '.html',
+      '.css',
+      '.py',
+      '.php',
+      '.java',
+      '.c', '.cpp', '.cs',
+      '.go',
+      '.rb',
+      '.rs',
+      '.txt'
+    ];
+    
+    const isFileAllowed = (fileName: string): boolean => {
+      const extension = path.extname(fileName).toLowerCase();
+      return ALLOWED_FILE_EXTENSIONS.includes(extension);
+    };
+    
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = allowMultiple;
+    input.accept = ALLOWED_FILE_EXTENSIONS.join(',');
+    
+    input.onchange = async (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (!files) return;
+  
+      for (const file of Array.from(files)) {
+        if (!isFileAllowed(file.name)) {
+          toast.error(`Type de fichier non autorisé : ${file.name}`);
+          continue;
+        }
+  
+        try {
+          const filePath = path.join(targetPath, file.name);
+  
+          const arrayBuffer = await file.arrayBuffer();
+          const binaryContent = new Uint8Array(arrayBuffer);
+  
+          const success = await this.createFile(filePath, binaryContent);
+  
+          if (success) {
+            toast.success(`Fichier ${file.name} téléchargé avec succès`);
+            const textarea = document.querySelector('textarea[data-targeted-files]');
+            if (textarea) {
+              const targetSuccess = this.addTargetedFile(filePath, textarea as HTMLTextAreaElement);
+              if (targetSuccess) {
+                toast.success(`Fichier ciblé : ${file.name}`);
+                (textarea as HTMLTextAreaElement).focus();
+              }
+            }
+          } else {
+            toast.error(`Échec du téléchargement du fichier ${file.name}`);
+          }
+        } catch (error) {
+          toast.error(`Erreur lors du téléchargement de ${file.name}`);
+          console.error(error);
+        }
+      }
+    };
+  
+    input.click();
+  }
+
+  /**
+   * Gère le drop de fichiers sur un élément
+   * @param e - L'événement de drop
+   * @param targetPath - Le chemin cible où le fichier sera créé
+   * @param allowMultiple - Autoriser l'upload de plusieurs fichiers
+   * @returns Promise<void>
+   */
+  async handleFileDrop(e: DragEvent, targetPath: string, allowMultiple: boolean = false): Promise<void> {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const ALLOWED_FILE_EXTENSIONS = [
+      '.ts', '.tsx',
+      '.js', '.jsx',
+      '.json',
+      '.html',
+      '.css',
+      '.py',
+      '.php',
+      '.java',
+      '.c', '.cpp', '.cs',
+      '.go',
+      '.rb',
+      '.rs',
+      '.txt'
+    ];
+    
+    const isFileAllowed = (fileName: string): boolean => {
+      const extension = path.extname(fileName).toLowerCase();
+      return ALLOWED_FILE_EXTENSIONS.includes(extension);
+    };
+
+    const items = Array.from(e.dataTransfer?.items || []);
+    const files = items.filter((item) => item.kind === 'file');
+    
+    if (!allowMultiple && files.length > 1) {
+      toast.error('Veuillez déposer un seul fichier à la fois');
+      return;
+    }
+
+    for (const item of files) {
+      const file = item.getAsFile();
+
+      if (file) {
+        if (!isFileAllowed(file.name)) {
+          toast.error(`Type de fichier non autorisé : ${file.name}`);
+          continue;
+        }
+
+        try {
+          const filePath = path.join(targetPath, file.name);
+
+          const arrayBuffer = await file.arrayBuffer();
+          const binaryContent = new Uint8Array(arrayBuffer);
+
+          const success = await this.createFile(filePath, binaryContent);
+
+          if (success) {
+            toast.success(`Fichier ${file.name} téléchargé avec succès`);
+            const textarea = document.querySelector('textarea[data-targeted-files]');
+            if (textarea) {
+              const targetSuccess = this.addTargetedFile(filePath, textarea as HTMLTextAreaElement);
+              if (targetSuccess) {
+                toast.success(`Fichier ciblé : ${file.name}`);
+                (textarea as HTMLTextAreaElement).focus();
+              }
+            }
+          } else {
+            toast.error(`Échec du téléchargement du fichier ${file.name}`);
+          }
+        } catch (error) {
+          toast.error(`Erreur lors du téléchargement de ${file.name}`);
+          console.error(error);
+        }
+      }
+    }
   }
 
   setReloadedMessages(messages: string[]) {
