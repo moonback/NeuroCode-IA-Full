@@ -41,7 +41,7 @@ const SettingsSection = ({
     transition={{ delay }}
   >
     <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
-      <div className={`${icon} w-5 h-5 text-indigo-600`} />
+      <div className={`${icon} w-5 h-5 text-violet-600`} />
       <span className="text-base font-semibold text-bolt-elements-textPrimary">{title}</span>
     </div>
     {children}
@@ -60,7 +60,7 @@ const SettingsItem = ({
 }) => (
   <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-5 transition-all hover:bg-gray-100 dark:hover:bg-[#151515]">
     <div className="flex items-center gap-3 mb-3">
-      <div className={`${icon} w-4 h-4 text-indigo-500`} />
+      <div className={`${icon} w-4 h-4 text-violet-500`} />
       <label className="text-sm font-medium text-bolt-elements-textPrimary">{label}</label>
     </div>
     {children}
@@ -156,7 +156,7 @@ export default function SettingsTab() {
                 'bg-white dark:bg-[#0A0A0A]',
                 'border border-gray-200 dark:border-gray-800',
                 'text-bolt-elements-textPrimary',
-                'focus:outline-none focus:ring-2 focus:ring-indigo-500/30',
+                'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
                 'transition-all duration-200',
               )}
             >
@@ -257,7 +257,7 @@ export default function SettingsTab() {
                   'bg-white dark:bg-[#0A0A0A]',
                   'border border-gray-200 dark:border-gray-800',
                   'text-bolt-elements-textPrimary',
-                  'focus:outline-none focus:ring-2 focus:ring-indigo-500/30',
+                  'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
                   'transition-all duration-200',
                 )}
               >
@@ -277,14 +277,14 @@ export default function SettingsTab() {
                   step="0.1"
                   value={chatSoundVolume}
                   onChange={(e) => setChatSoundVolume(parseFloat(e.target.value))}
-                  className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-violet-500"
                 />
                 <span className="text-sm font-medium text-bolt-elements-textSecondary min-w-[48px] text-center">
                   {Math.round(chatSoundVolume * 100)}%
                 </span>
                 <button
                   onClick={playTestSound}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
                 >
                   Tester
                 </button>
@@ -305,7 +305,7 @@ export default function SettingsTab() {
               'bg-white dark:bg-[#0A0A0A]',
               'border border-gray-200 dark:border-gray-800',
               'text-bolt-elements-textPrimary',
-              'focus:outline-none focus:ring-2 focus:ring-indigo-500/30',
+              'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
               'transition-all duration-200',
             )}
           >
@@ -319,7 +319,7 @@ export default function SettingsTab() {
         <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-5 transition-all hover:bg-gray-100 dark:hover:bg-[#151515]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="i-ph:palette-fill w-5 h-5 text-indigo-500" />
+              <div className="i-ph:palette-fill w-5 h-5 text-violet-500" />
               <div>
                 <p className="text-sm font-medium text-bolt-elements-textPrimary">Changer de thème</p>
                 <p className="text-xs text-bolt-elements-textSecondary mt-1">Basculer entre le mode clair et sombre</p>
