@@ -134,6 +134,7 @@ const SETTINGS_KEYS = {
   CHAT_SOUND_ENABLED: 'chatSoundEnabled',
   CHAT_SOUND_VOLUME: 'chatSoundVolume',
   UI_ANALYSIS: 'uiAnalysisEnabled',
+  ALERT_SOUND_ENABLED: 'alertSoundEnabled',
 } as const;
 
 // Initialize settings from localStorage or defaults
@@ -184,6 +185,7 @@ const getInitialSettings = () => {
     chatSoundEnabled: getStoredBoolean(SETTINGS_KEYS.CHAT_SOUND_ENABLED, true),
     chatSoundVolume: getStoredNumber(SETTINGS_KEYS.CHAT_SOUND_VOLUME, 0.5),
     uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
+    alertSoundEnabled: getStoredBoolean(SETTINGS_KEYS.ALERT_SOUND_ENABLED, true),
   };
 };
 
@@ -198,6 +200,7 @@ export const promptStore = atom<string>(initialSettings.promptId);
 export const chatSoundEnabledStore = atom<boolean>(initialSettings.chatSoundEnabled);
 export const chatSoundVolumeStore = atom<number>(initialSettings.chatSoundVolume);
 export const uiAnalysisEnabled = atom<boolean>(initialSettings.uiAnalysis);
+export const alertSoundEnabledStore = atom<boolean>(initialSettings.alertSoundEnabled);
 
 // Helper functions to update settings with persistence
 export const updateLatestBranch = (enabled: boolean) => {
@@ -365,3 +368,9 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     set({ selectedTab: tab });
   },
 }));
+
+// Update alert sound enabled setting
+export const updateAlertSoundEnabled = (enabled: boolean) => {
+  alertSoundEnabledStore.set(enabled);
+  localStorage.setItem(SETTINGS_KEYS.ALERT_SOUND_ENABLED, JSON.stringify(enabled));
+};
