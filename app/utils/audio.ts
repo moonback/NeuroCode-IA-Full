@@ -8,6 +8,7 @@ export const NOTIFICATION_SOUNDS = {
   BOLT: '/audio/neurocode.wav',
   CHIME: '/audio/chime.wav',
   ALERT: '/audio/alert.wav',
+  ERROR: '/audio/error.wav',
   // Ajoutez plus d'options sonores ici
 };
 
@@ -77,17 +78,10 @@ export function playChatCompletionSound() {
  */
 export function playTestSound(soundFile?: string, volume?: number) {
   try {
-    // Utilisez le fichier sonore fourni ou obtenez celui sélectionné
     const audioFile = soundFile || getSelectedSound();
-
-    // Utilisez le volume fourni ou obtenez-le des paramètres
     const audioVolume = volume ?? chatSoundVolumeStore.get() ?? 0.5;
-
-    // Créez un élément audio pour lire le fichier sonore
     const audio = new Audio(audioFile);
     audio.volume = audioVolume;
-
-    // Jouez le son
     audio.play().catch((error) => {
       console.error('Échec de la lecture du son de test :', error);
     });
