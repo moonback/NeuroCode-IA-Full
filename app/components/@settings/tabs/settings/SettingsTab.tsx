@@ -106,7 +106,7 @@ export default function SettingsTab() {
     debounce((value: string) => {
       setCustomInstructions(value);
       toast.info('Instructions personnalisées sauvegardées');
-    }, 5000), // Save 500ms after typing stops
+    }, 5000), // Save 5000ms after typing stops
     [setCustomInstructions]
   );
 
@@ -326,6 +326,39 @@ export default function SettingsTab() {
           <p className="text-xs text-bolt-elements-textSecondary mb-3">
             Fournissez des instructions spécifiques (par exemple, style de réponse, persona, format de code) qui seront ajoutées au début de chaque prompt système.
           </p>
+          {/* Exemples d'instructions cliquables */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+            <button
+              onClick={() => {
+                setLocalInstructions("Agis comme un développeur senior expert. Fournis des explications techniques détaillées et des solutions optimisées. Ton code doit être bien structuré avec des commentaires pertinents et suivre les meilleures pratiques de l'industrie.");
+                debouncedUpdate("Agis comme un développeur senior expert. Fournis des explications techniques détaillées et des solutions optimisées. Ton code doit être bien structuré avec des commentaires pertinents et suivre les meilleures pratiques de l'industrie.");
+                toast.info('Instructions personnalisées mises à jour');
+              }}
+              className="px-3 py-2 text-xs font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
+            >
+              Mode Expert
+            </button>
+            <button
+              onClick={() => {
+                setLocalInstructions("Agis comme un mentor pédagogique. Explique chaque concept en détail avec des exemples concrets. Décompose les problèmes complexes en étapes simples et fournis des analogies pour faciliter la compréhension.");
+                debouncedUpdate("Agis comme un mentor pédagogique. Explique chaque concept en détail avec des exemples concrets. Décompose les problèmes complexes en étapes simples et fournis des analogies pour faciliter la compréhension.");
+                toast.info('Instructions personnalisées mises à jour');
+              }}
+              className="px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+            >
+              Mode Explicatif
+            </button>
+            <button
+              onClick={() => {
+                setLocalInstructions("Sois concis et direct. Fournis des réponses courtes et précises sans explications superflues. Privilégie le code fonctionnel avec des commentaires minimaux mais suffisants pour comprendre la logique.");
+                debouncedUpdate("Sois concis et direct. Fournis des réponses courtes et précises sans explications superflues. Privilégie le code fonctionnel avec des commentaires minimaux mais suffisants pour comprendre la logique.");
+                toast.info('Instructions personnalisées mises à jour');
+              }}
+              className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              Mode Concis
+            </button>
+          </div>
           <textarea
             value={localInstructions}
             onChange={handleInstructionChange}
