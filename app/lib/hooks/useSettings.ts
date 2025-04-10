@@ -22,6 +22,8 @@ import {
   updateChatSoundVolume,
   uiAnalysisEnabled as uiAnalysisEnabledStore,
   updateUIAnalysis,
+  alertSoundEnabledStore,
+  updateAlertSoundEnabled,
 } from '~/lib/stores/settings';
 import { useCallback, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
@@ -80,6 +82,8 @@ export interface UseSettingsReturn {
   setChatSoundEnabled: (enabled: boolean) => void;
   chatSoundVolume: number;
   setChatSoundVolume: (volume: number) => void;
+  alertSoundEnabled: boolean;
+  setAlertSoundEnabled: (enabled: boolean) => void;
 }
 
 // Add interface to match ProviderSetting type
@@ -100,6 +104,7 @@ export function useSettings(): UseSettingsReturn {
   const chatSoundEnabled = useStore(chatSoundEnabledStore);
   const chatSoundVolume = useStore(chatSoundVolumeStore);
   const uiAnalysisEnabled = useStore(uiAnalysisEnabledStore);
+  const alertSoundEnabled = useStore(alertSoundEnabledStore);
   const [settings, setSettings] = useState<Settings>(() => {
     const storedSettings = getLocalStorage('settings');
     return {
@@ -200,6 +205,12 @@ export function useSettings(): UseSettingsReturn {
     updateChatSoundVolume(volume);
     logStore.logSystem(`Chat sound volume set to ${volume}`);
   }, []);
+
+  const setAlertSoundEnabled = useCallback((enabled: boolean) => {
+    updateAlertSoundEnabled(enabled);
+    logStore.logSystem(`Alert sound notifications ${enabled ? 'enabled' : 'disabled'}`);
+  }, []);
+
   const setTimezone = useCallback(
     (timezone: string) => {
       saveSettings({ timezone });
@@ -247,5 +258,7 @@ export function useSettings(): UseSettingsReturn {
     setChatSoundEnabled,
     chatSoundVolume,
     setChatSoundVolume,
+    alertSoundEnabled,
+    setAlertSoundEnabled,
   };
 }
