@@ -6,6 +6,7 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constant
 import { createFilesContext, extractCurrentContext, extractPropertiesFromMessage, simplifyBoltActions } from './utils';
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
+import { contextCache } from './context-cache';
 
 // Common patterns to ignore, similar to .gitignore
 
@@ -22,8 +23,28 @@ export async function selectContext(props: {
   contextOptimization?: boolean;
   summary: string;
   onFinish?: (resp: GenerateTextResult<Record<string, CoreTool<any, any>>, never>) => void;
+  useCache?: boolean;
 }) {
-  const { messages, env: serverEnv, apiKeys, files, providerSettings, summary, onFinish } = props;
+  const { messages, env: serverEnv, apiKeys, files, providerSettings, summary, onFinish, useCache = true } = props;
+  
+  // Vérifier si on peut utiliser le cache
+  if (useCache) {
+    // Générer une clé de cache basée sur les messages et les fichiers disponibles
+    const filePaths = getFilePaths(files || {});
+    const messageIds = messages.map(m => m.id);
+    const cacheKey = contextCache.generateCacheKey({
+      promptId: props.promptId,
+      messageIds,
+      filePaths,
+    });
+    
+    // Essayer de récupérer le contexte depuis le cache
+    const cachedContext = contextCache.get(cacheKey);
+    if (cachedContext) {
+      logger.info('Contexte récupéré depuis le cache');
+      return cachedContext.contextFiles;
+    }
+  }
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
   const processedMessages = messages.map((message) => {
@@ -226,6 +247,24 @@ export async function selectContext(props: {
 
   if (totalFiles == 0) {
     throw new Error(`Bolt failed to select files`);
+  }
+
+  // Mettre en cache le contexte si l'option est activée
+  if (useCache) {
+    const filePaths = getFilePaths(files || {});
+    const messageIds = messages.map(m => m.id);
+    const cacheKey = contextCache.generateCacheKey({
+      promptId: props.promptId,
+      messageIds,
+      filePaths,
+    });
+    
+    // Stocker le contexte dans le cache
+    contextCache.set(cacheKey, {
+      contextFiles: filteredFiles,
+      summary,
+    });
+    logger.info('Contexte mis en cache');
   }
 
   return filteredFiles;
