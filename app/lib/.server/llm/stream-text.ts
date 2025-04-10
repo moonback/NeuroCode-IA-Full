@@ -37,6 +37,7 @@ export async function streamText(props: {
   contextFiles?: FileMap;
   summary?: string;
   messageSliceId?: number;
+  customInstructions?: string; // Add parameter for custom instructions
 }) {
   const {
     messages,
@@ -49,6 +50,7 @@ export async function streamText(props: {
     contextOptimization,
     contextFiles,
     summary,
+    customInstructions, // Extract custom instructions
   } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
@@ -106,12 +108,13 @@ export async function streamText(props: {
       cwd: WORK_DIR,
       allowedHtmlElements: allowedHTMLElements,
       modificationTagName: MODIFICATIONS_TAG_NAME,
+      customInstructions, // Pass custom instructions to prompt library
       supabase: {
         isConnected: options?.supabaseConnection?.isConnected || false,
         hasSelectedProject: options?.supabaseConnection?.hasSelectedProject || false,
         credentials: options?.supabaseConnection?.credentials || undefined,
       },
-    }) ?? getSystemPrompt();
+    }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, customInstructions); // Pass to getSystemPrompt as fallback
 
   if (files && contextFiles && contextOptimization) {
     const codeContext = createFilesContext(contextFiles, true);
