@@ -85,31 +85,31 @@ const handleSoundChange = (soundPath: string) => {
 };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Langue & Notifications */}
       <motion.div
-        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4 space-y-4"
+        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-6 space-y-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="i-ph:palette-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Préférences</span>
+        <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
+          <div className="i-ph:palette-fill w-5 h-5 text-purple-500" />
+          <span className="text-base font-semibold text-bolt-elements-textPrimary">Préférences</span>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+        <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+          <div className="flex items-center gap-3 mb-3">
             <div className="i-ph:translate-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Langue</label>
+            <label className="text-sm font-medium text-bolt-elements-textPrimary">Langue</label>
           </div>
           <select
             value={settings.language}
             onChange={(e) => setSettings((prev) => ({ ...prev, language: e.target.value }))}
             className={classNames(
-              'w-full px-3 py-2 rounded-lg text-sm',
-              'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-              'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+              'w-full px-4 py-2.5 rounded-lg text-sm',
+              'bg-white dark:bg-[#0A0A0A]',
+              'border border-gray-200 dark:border-gray-800',
               'text-bolt-elements-textPrimary',
               'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
               'transition-all duration-200',
@@ -128,10 +128,10 @@ const handleSoundChange = (soundPath: string) => {
           </select>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+        <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+          <div className="flex items-center gap-3 mb-3">
             <div className="i-ph:bell-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Notifications</label>
+            <label className="text-sm font-medium text-bolt-elements-textPrimary">Notifications</label>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-bolt-elements-textSecondary">
@@ -166,137 +166,139 @@ const handleSoundChange = (soundPath: string) => {
         </div>
       </motion.div>
  {/* Sound Settings */}
- <motion.div
-        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4 space-y-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="i-ph:speaker-high-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Paramètres sonores</span>
+<motion.div
+  className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-6 space-y-6"
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.15 }}
+>
+  {/* Header */}
+  <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
+    <div className="i-ph:speaker-high-fill w-5 h-5 text-purple-500" />
+    <span className="text-base font-semibold text-bolt-elements-textPrimary">Paramètres sonores</span>
+  </div>
+
+  {/* Chat End Sound Settings */}
+  <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+    <div className="flex items-center gap-3 mb-3">
+      <div className="i-ph:bell-simple-fill w-4 h-4 text-bolt-elements-textSecondary" />
+      <label className="text-sm font-medium text-bolt-elements-textPrimary">Son de fin de discussion</label>
+    </div>
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-bolt-elements-textSecondary">
+        {chatSoundEnabled ? 'Notification sonore activée' : 'Notification sonore désactivée'}
+      </span>
+      <Switch
+        checked={chatSoundEnabled}
+        onCheckedChange={(checked) => {
+          setChatSoundEnabled(checked);
+          toast.success(`Son de discussion ${checked ? 'activé' : 'désactivé'}`);
+        }}
+      />
+    </div>
+  </div>
+
+  {/* Alert Sound Settings */}
+  <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+    <div className="flex items-center gap-3 mb-3">
+      <div className="i-ph:warning-fill w-4 h-4 text-bolt-elements-textSecondary" />
+      <label className="text-sm font-medium text-bolt-elements-textPrimary">Son d'alerte</label>
+    </div>
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-bolt-elements-textSecondary">
+        {alertSoundEnabled ? 'Alertes sonores activées' : 'Alertes sonores désactivées'}
+      </span>
+      <Switch
+        checked={alertSoundEnabled}
+        onCheckedChange={(checked) => {
+          setAlertSoundEnabled(checked);
+          toast.success(`Alertes sonores ${checked ? 'activées' : 'désactivées'}`);
+        }}
+      />
+    </div>
+  </div>
+
+  {/* Advanced Sound Settings */}
+  {chatSoundEnabled && (
+    <div className="space-y-6">
+      {/* Sound Selection */}
+      <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="i-ph:music-notes-fill w-4 h-4 text-bolt-elements-textSecondary" />
+          <label className="text-sm font-medium text-bolt-elements-textPrimary">Type de son</label>
         </div>
+        <select
+          value={selectedSound}
+          onChange={(e) => handleSoundChange(e.target.value)}
+          className={classNames(
+            'w-full px-4 py-2.5 rounded-lg text-sm',
+            'bg-white dark:bg-[#0A0A0A]',
+            'border border-gray-200 dark:border-gray-800',
+            'text-bolt-elements-textPrimary',
+            'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
+            'transition-all duration-200',
+          )}
+        >
+          <option value={NOTIFICATION_SOUNDS.BOLT}>Neurocode (Par défaut)</option>
+          <option value={NOTIFICATION_SOUNDS.CHIME}>Carillon</option>
+          <option value={NOTIFICATION_SOUNDS.ALERT}>Alerte</option>
+        </select>
+      </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:bell-simple-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Son de fin de discussion</label>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-bolt-elements-textSecondary">
-              {chatSoundEnabled ? 'Notification sonore lorsque la discussion est terminée' : 'Aucun son lorsque la conversation est terminée'}
-            </span>
-            <Switch
-              checked={chatSoundEnabled}
-              onCheckedChange={(checked) => {
-                setChatSoundEnabled(checked);
-                toast.success(`Chat sound ${checked ? 'activé' : 'désactivé'}`);
-              }}
-            />
-          </div>
+      {/* Volume Control */}
+      <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="i-ph:speaker-simple-fill w-4 h-4 text-bolt-elements-textSecondary" />
+          <label className="text-sm font-medium text-bolt-elements-textPrimary">Volume</label>
         </div>
-
-        
-
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:warning-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Son d'alerte</label>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-bolt-elements-textSecondary">
-              {alertSoundEnabled ? 'Notifications sonores d\'alerte activées' : 'Aucun son d\'alerte'}
-            </span>
-            <Switch
-              checked={alertSoundEnabled}
-              onCheckedChange={(checked) => {
-                setAlertSoundEnabled(checked);
-                toast.success(`Son d'alerte ${checked ? 'activé' : 'désactivé'}`);
-              }}
-            />
-          </div>
+        <div className="flex items-center gap-4">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={chatSoundVolume}
+            onChange={(e) => setChatSoundVolume(parseFloat(e.target.value))}
+            className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+          />
+          <span className="text-sm font-medium text-bolt-elements-textSecondary min-w-[48px] text-center">
+            {Math.round(chatSoundVolume * 100)}%
+          </span>
+          <button
+            onClick={playTestSound}
+            className="px-4 py-2 text-sm font-medium text-white bg-purple-500 rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            Tester
+          </button>
         </div>
-
-        {chatSoundEnabled && (
-          <>
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="i-ph:music-notes-fill w-4 h-4 text-bolt-elements-textSecondary" />
-                <label className="block text-sm text-bolt-elements-textSecondary">Sélection sonore</label>
-              </div>
-              <div className="flex items-center gap-4">
-                <select
-                  value={selectedSound}
-                  onChange={(e) => handleSoundChange(e.target.value)}
-                  className={classNames(
-                    'flex-1 px-3 py-2 rounded-lg text-sm',
-                    'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-                    'border border-[#E5E5E5] dark:border-[#1A1A1A]',
-                    'text-bolt-elements-textPrimary',
-                    'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
-                    'transition-all duration-200',
-                  )}
-                >
-                  <option value={NOTIFICATION_SOUNDS.BOLT}>Default (Neurocode)</option>
-                  <option value={NOTIFICATION_SOUNDS.CHIME}>Chime</option>
-                  <option value={NOTIFICATION_SOUNDS.ALERT}>Alert</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="i-ph:speaker-simple-fill w-4 h-4 text-bolt-elements-textSecondary" />
-                <label className="block text-sm text-bolt-elements-textSecondary">Sound Volume</label>
-              </div>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={chatSoundVolume}
-                  onChange={(e) => setChatSoundVolume(parseFloat(e.target.value))}
-                  className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                />
-                <span className="text-sm font-medium text-bolt-elements-textSecondary min-w-[40px] text-center">
-                  {Math.round(chatSoundVolume * 100)}%
-                </span>
-                <button
-                  onClick={playTestSound}
-                  className="px-3 py-1 text-xs font-medium text-white bg-purple-500 rounded-md hover:bg-purple-600 transition-colors"
-                >
-                  Test
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </motion.div>
+      </div>
+    </div>
+  )}
+</motion.div>
       {/* Fuseau horaire */}
       <motion.div
-        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4"
+        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-6 space-y-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="i-ph:clock-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Paramètres horaires</span>
+        <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
+          <div className="i-ph:clock-fill w-5 h-5 text-purple-500" />
+          <span className="text-base font-semibold text-bolt-elements-textPrimary">Paramètres horaires</span>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+        <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+          <div className="flex items-center gap-3 mb-3">
             <div className="i-ph:globe-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Fuseau horaire</label>
+            <label className="text-sm font-medium text-bolt-elements-textPrimary">Fuseau horaire</label>
           </div>
           <select
             value={settings.timezone}
             onChange={(e) => setSettings((prev) => ({ ...prev, timezone: e.target.value }))}
             className={classNames(
-              'w-full px-3 py-2 rounded-lg text-sm',
-              'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-              'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+              'w-full px-4 py-2.5 rounded-lg text-sm',
+              'bg-white dark:bg-[#0A0A0A]',
+              'border border-gray-200 dark:border-gray-800',
               'text-bolt-elements-textPrimary',
               'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
               'transition-all duration-200',
@@ -309,33 +311,34 @@ const handleSoundChange = (soundPath: string) => {
 
       {/* Raccourcis clavier simplifiés */}
       <motion.div
-        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4"
+        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-6 space-y-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="i-ph:keyboard-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Raccourcis clavier</span>
+        <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4">
+          <div className="i-ph:keyboard-fill w-5 h-5 text-purple-500" />
+          <span className="text-base font-semibold text-bolt-elements-textPrimary">Raccourcis clavier</span>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1A1A1A]">
-            <div className="flex flex-col">
-              <span className="text-sm text-bolt-elements-textPrimary">Changer de thème</span>
-              <span className="text-xs text-bolt-elements-textSecondary">Basculer entre le mode clair et sombre</span>
-            </div>
+        <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="i-ph:palette-fill w-4 h-4 text-bolt-elements-textSecondary" />
+            <label className="text-sm font-medium text-bolt-elements-textPrimary">Changer de thème</label>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-bolt-elements-textSecondary">Basculer entre le mode clair et sombre</span>
             <div className="flex items-center gap-1">
-              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
+              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-gray-200 dark:border-gray-800 rounded shadow-sm">
                 {getModifierSymbol('meta')}
               </kbd>
-              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
+              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-gray-200 dark:border-gray-800 rounded shadow-sm">
                 {getModifierSymbol('alt')}
               </kbd>
-              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
+              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-gray-200 dark:border-gray-800 rounded shadow-sm">
                 {getModifierSymbol('shift')}
               </kbd>
-              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
+              <kbd className="px-2 py-1 text-xs font-semibold text-bolt-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-gray-200 dark:border-gray-800 rounded shadow-sm">
                 D
               </kbd>
             </div>
