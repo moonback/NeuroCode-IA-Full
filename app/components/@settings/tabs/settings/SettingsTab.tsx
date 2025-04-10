@@ -35,7 +35,7 @@ const SettingsSection = ({
   children: React.ReactNode 
 }) => (
   <motion.div
-    className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 space-y-6"
+    className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-2 space-y-6"
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
@@ -58,7 +58,7 @@ const SettingsItem = ({
   label: string; 
   children: React.ReactNode 
 }) => (
-  <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-5 transition-all hover:bg-gray-100 dark:hover:bg-[#151515]">
+  <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-2 transition-all hover:bg-gray-100 dark:hover:bg-[#151515]">
     <div className="flex items-center gap-3 mb-3">
       <div className={`${icon} w-4 h-4 text-violet-500`} />
       <label className="text-sm font-medium text-bolt-elements-textPrimary">{label}</label>
@@ -133,7 +133,7 @@ export default function SettingsTab() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+    <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
