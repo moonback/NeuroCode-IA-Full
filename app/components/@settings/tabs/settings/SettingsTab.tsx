@@ -64,7 +64,7 @@ export default function SettingsTab() {
 // Play a test sound for audio preview
 const playTestSound = () => {
   playTestAudio();
-  toast.info('Playing test sound');
+  toast.info('Lecture du son de test');
 };
 
 // Handle sound selection change
@@ -74,7 +74,7 @@ const handleSoundChange = (soundPath: string) => {
 
   // Play the selected sound for preview
   playTestAudio(soundPath);
-  toast.success('Sound changed');
+  toast.success('Le son a changé');
 };
 
   return (
@@ -167,23 +167,23 @@ const handleSoundChange = (soundPath: string) => {
       >
         <div className="flex items-center gap-2 mb-4">
           <div className="i-ph:speaker-high-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-bolt-elements-textPrimary">Sound Settings</span>
+          <span className="text-sm font-medium text-bolt-elements-textPrimary">Paramètres sonores</span>
         </div>
 
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="i-ph:bell-simple-fill w-4 h-4 text-bolt-elements-textSecondary" />
-            <label className="block text-sm text-bolt-elements-textSecondary">Chat Completion Sound</label>
+            <label className="block text-sm text-bolt-elements-textSecondary">Son de fin de discussion</label>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-bolt-elements-textSecondary">
-              {chatSoundEnabled ? 'Sound notification when chat completes' : 'No sound when chat completes'}
+              {chatSoundEnabled ? 'Notification sonore lorsque la discussion est terminée' : 'Aucun son lorsque la conversation est terminée'}
             </span>
             <Switch
               checked={chatSoundEnabled}
               onCheckedChange={(checked) => {
                 setChatSoundEnabled(checked);
-                toast.success(`Chat sound ${checked ? 'enabled' : 'disabled'}`);
+                toast.success(`Chat sound ${checked ? 'activé' : 'désactivé'}`);
               }}
             />
           </div>
@@ -194,7 +194,7 @@ const handleSoundChange = (soundPath: string) => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="i-ph:music-notes-fill w-4 h-4 text-bolt-elements-textSecondary" />
-                <label className="block text-sm text-bolt-elements-textSecondary">Sound Selection</label>
+                <label className="block text-sm text-bolt-elements-textSecondary">Sélection sonore</label>
               </div>
               <div className="flex items-center gap-4">
                 <select
