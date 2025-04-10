@@ -170,63 +170,70 @@ export default function SettingsTab() {
         <p className="text-bolt-elements-textSecondary">Personnalisez votre expérience NeuroCode</p>
       </motion.div>
        {/* Custom Instructions Section - NEW */}
-       <SettingsSection icon="i-ph:user-focus-fill" title="Instructions Personnalisées" delay={0.25}>
-        <SettingsItem icon="i-ph:scroll-fill" label="Vos instructions pour l'IA">
-          <p className="text-xs text-bolt-elements-textSecondary mb-3">
-            Fournissez des instructions spécifiques (par exemple, style de réponse, persona, format de code) qui seront ajoutées au début de chaque prompt système.
-          </p>
-          {/* Exemples d'instructions cliquables */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-            <button
-              onClick={() => {
-                setLocalInstructions("Agis comme un développeur senior expert. Fournis des explications techniques détaillées et des solutions optimisées. Ton code doit être bien structuré avec des commentaires pertinents et suivre les meilleures pratiques de l'industrie.");
-                debouncedUpdate("Agis comme un développeur senior expert. Fournis des explications techniques détaillées et des solutions optimisées. Ton code doit être bien structuré avec des commentaires pertinents et suivre les meilleures pratiques de l'industrie.");
-                toast.info('Instructions personnalisées mises à jour');
-              }}
-              className="px-3 py-2 text-xs font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
-            >
-              Mode Expert
-            </button>
-            <button
-              onClick={() => {
-                setLocalInstructions("Agis comme un mentor pédagogique. Explique chaque concept en détail avec des exemples concrets. Décompose les problèmes complexes en étapes simples et fournis des analogies pour faciliter la compréhension.");
-                debouncedUpdate("Agis comme un mentor pédagogique. Explique chaque concept en détail avec des exemples concrets. Décompose les problèmes complexes en étapes simples et fournis des analogies pour faciliter la compréhension.");
-                toast.info('Instructions personnalisées mises à jour');
-              }}
-              className="px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-            >
-              Mode Explicatif
-            </button>
-            <button
-              onClick={() => {
-                setLocalInstructions("Sois concis et direct. Fournis des réponses courtes et précises sans explications superflues. Privilégie le code fonctionnel avec des commentaires minimaux mais suffisants pour comprendre la logique.");
-                debouncedUpdate("Sois concis et direct. Fournis des réponses courtes et précises sans explications superflues. Privilégie le code fonctionnel avec des commentaires minimaux mais suffisants pour comprendre la logique.");
-                toast.info('Instructions personnalisées mises à jour');
-              }}
-              className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              Mode Concis
-            </button>
-          </div>
-          <textarea
-            value={localInstructions}
-            onChange={handleInstructionChange}
-            className={classNames(
-              'w-full px-4 py-3 rounded-lg text-sm min-h-[150px] resize-y',
-              'bg-white dark:bg-[#0A0A0A]',
-              'border border-gray-200 dark:border-gray-800',
-              'text-bolt-elements-textPrimary',
-              'placeholder-gray-500 dark:placeholder-gray-400',
-              'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
-              'transition-all duration-200',
-            )}
-            placeholder="Exemple : Agis comme un développeur senior spécialisé en Python. Explique toujours tes choix techniques. Formate le code avec des commentaires clairs."
-          />
-          <p className="text-xs text-bolt-elements-textTertiary mt-2">
-            Note : Ces instructions augmentent le nombre de tokens utilisés. Les modifications sont sauvegardées automatiquement après 5 secondes d'inactivité.
-          </p>
-        </SettingsItem>
-      </SettingsSection>
+<SettingsSection icon="i-ph:user-focus-fill" title="Instructions Personnalisées" delay={0.25}>
+  <SettingsItem icon="i-ph:scroll-fill" label="Vos instructions pour l'IA">
+    <p className="text-xs text-bolt-elements-textSecondary mb-3">
+      Personnalisez l'IA en définissant des instructions spécifiques qui seront appliquées à chaque conversation. Configurez le style, le ton et le format des réponses selon vos besoins.
+    </p>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+      {/* Preset instruction buttons */}
+      <button
+        onClick={() => {
+          const expertInstructions = "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns.";
+          setLocalInstructions(expertInstructions);
+          debouncedUpdate(expertInstructions);
+          toast.info('Mode expert activé');
+        }}
+        className="px-3 py-2.5 text-xs font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95"
+      >
+        Mode Expert
+      </button>
+      <button
+        onClick={() => {
+          const teachingInstructions = "Adopts a detailed teaching approach. Breaks down each technical concept into easily understandable elements. Uses relevant analogies and practical examples to illustrate explanations. Guides students gradually through solutions by explaining each decision.";
+          setLocalInstructions(teachingInstructions);
+          debouncedUpdate(teachingInstructions);
+          toast.info('Mode pédagogique activé');
+        }}
+        className="px-3 py-2.5 text-xs font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95"
+      >
+        Mode Pédagogique
+      </button>
+      <button
+        onClick={() => {
+          const conciseInstructions = "Provide direct and effective answers. Focus on the essentials with optimized code and strategic comments. Prioritize clarity and conciseness while maintaining technical quality.";
+          setLocalInstructions(conciseInstructions);
+          debouncedUpdate(conciseInstructions);
+          toast.info('Mode concis activé');
+        }}
+        className="px-3 py-2.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95"
+      >
+        Mode Concis
+      </button>
+    </div>
+    <textarea
+      value={localInstructions}
+      onChange={handleInstructionChange}
+      className={classNames(
+        'w-full px-4 py-3 rounded-lg text-sm min-h-[150px] resize-y',
+        'bg-white dark:bg-[#0A0A0A]',
+        'border border-gray-200 dark:border-gray-800',
+        'text-bolt-elements-textPrimary',
+        'placeholder-gray-500 dark:placeholder-gray-400',
+        'focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500',
+        'transition-all duration-200',
+        'hover:border-violet-400'
+      )}
+      placeholder="Personnalisez vos instructions : définissez le style de communication, le niveau de détail technique, et les préférences de formatage du code..."
+    />
+    <div className="flex items-center gap-2 mt-2">
+      <div className="i-ph:info-fill w-4 h-4 text-violet-500" />
+      <p className="text-xs text-bolt-elements-textTertiary">
+        Les modifications sont sauvegardées automatiquement après 5 secondes. L'ajout d'instructions détaillées peut augmenter l'utilisation des tokens.
+      </p>
+    </div>
+  </SettingsItem>
+</SettingsSection>
       {/* Langue & Notifications */}
       {/* <SettingsSection icon="i-ph:palette-fill" title="Préférences" delay={0.1}>
         <div className="grid md:grid-cols-2 gap-4">
