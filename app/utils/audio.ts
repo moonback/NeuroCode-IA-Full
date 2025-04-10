@@ -6,8 +6,9 @@ import { chatSoundEnabledStore, chatSoundVolumeStore } from '~/lib/stores/settin
 // Available notification sounds
 export const NOTIFICATION_SOUNDS = {
   BOLT: '/audio/neurocode.wav',
-
-  // 可以添加更多声音选项
+  CHIME: '/audio/chime.wav',
+  ALERT: '/audio/alert.wav',
+  // Ajoutez plus d'options sonores ici
 };
 
 // Default sound
@@ -76,21 +77,21 @@ export function playChatCompletionSound() {
  */
 export function playTestSound(soundFile?: string, volume?: number) {
   try {
-    // Use provided sound file or get the selected one
+    // Utilisez le fichier sonore fourni ou obtenez celui sélectionné
     const audioFile = soundFile || getSelectedSound();
 
-    // Use provided volume or get from settings
+    // Utilisez le volume fourni ou obtenez-le des paramètres
     const audioVolume = volume ?? chatSoundVolumeStore.get() ?? 0.5;
 
-    // Create an audio element to play the sound file
+    // Créez un élément audio pour lire le fichier sonore
     const audio = new Audio(audioFile);
     audio.volume = audioVolume;
 
-    // Play the sound
+    // Jouez le son
     audio.play().catch((error) => {
-      console.error('Failed to play test sound:', error);
+      console.error('Échec de la lecture du son de test :', error);
     });
   } catch (error) {
-    console.error('Failed to play test sound:', error);
+    console.error('Échec de la lecture du son de test :', error);
   }
 }
