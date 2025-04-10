@@ -23,7 +23,14 @@ const getModifierSymbol = (modifier: string): string => {
 
 export default function SettingsTab() {
   const [currentTimezone, setCurrentTimezone] = useState('');
-  const { chatSoundEnabled, setChatSoundEnabled, chatSoundVolume, setChatSoundVolume } = useSettings();
+  const { 
+  chatSoundEnabled, 
+  setChatSoundEnabled, 
+  chatSoundVolume, 
+  setChatSoundVolume,
+  alertSoundEnabled,
+  setAlertSoundEnabled 
+} = useSettings();
   const [selectedSound, setSelectedSoundState] = useState(() => getSelectedSound());
   const [settings, setSettings] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('bolt_user_profile');
@@ -184,6 +191,27 @@ const handleSoundChange = (soundPath: string) => {
               onCheckedChange={(checked) => {
                 setChatSoundEnabled(checked);
                 toast.success(`Chat sound ${checked ? 'activé' : 'désactivé'}`);
+              }}
+            />
+          </div>
+        </div>
+
+        
+
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="i-ph:warning-fill w-4 h-4 text-bolt-elements-textSecondary" />
+            <label className="block text-sm text-bolt-elements-textSecondary">Son d'alerte</label>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-bolt-elements-textSecondary">
+              {alertSoundEnabled ? 'Notifications sonores d\'alerte activées' : 'Aucun son d\'alerte'}
+            </span>
+            <Switch
+              checked={alertSoundEnabled}
+              onCheckedChange={(checked) => {
+                setAlertSoundEnabled(checked);
+                toast.success(`Son d'alerte ${checked ? 'activé' : 'désactivé'}`);
               }}
             />
           </div>
