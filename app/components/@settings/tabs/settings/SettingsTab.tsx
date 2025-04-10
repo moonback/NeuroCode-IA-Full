@@ -106,7 +106,7 @@ export default function SettingsTab() {
     debounce((value: string) => {
       setCustomInstructions(value);
       toast.info('Instructions personnalisées sauvegardées');
-    }, 5000), // Save 5000ms after typing stops
+    }, 5000), // Save 500ms after typing stops
     [setCustomInstructions]
   );
 
@@ -169,9 +169,33 @@ export default function SettingsTab() {
         <h1 className="text-2xl font-bold text-bolt-elements-textPrimary mb-2">Paramètres</h1>
         <p className="text-bolt-elements-textSecondary">Personnalisez votre expérience NeuroCode</p>
       </motion.div>
-      
+       {/* Custom Instructions Section - NEW */}
+       <SettingsSection icon="i-ph:user-focus-fill" title="Instructions Personnalisées" delay={0.25}>
+        <SettingsItem icon="i-ph:scroll-fill" label="Vos instructions pour l'IA">
+          <p className="text-xs text-bolt-elements-textSecondary mb-3">
+            Fournissez des instructions spécifiques (par exemple, style de réponse, persona, format de code) qui seront ajoutées au début de chaque prompt système.
+          </p>
+          <textarea
+            value={localInstructions}
+            onChange={handleInstructionChange}
+            className={classNames(
+              'w-full px-4 py-3 rounded-lg text-sm min-h-[150px] resize-y',
+              'bg-white dark:bg-[#0A0A0A]',
+              'border border-gray-200 dark:border-gray-800',
+              'text-bolt-elements-textPrimary',
+              'placeholder-gray-500 dark:placeholder-gray-400',
+              'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
+              'transition-all duration-200',
+            )}
+            placeholder="Exemple : Agis comme un développeur senior spécialisé en Python. Explique toujours tes choix techniques. Formate le code avec des commentaires clairs."
+          />
+          <p className="text-xs text-bolt-elements-textTertiary mt-2">
+            Note : Ces instructions augmentent le nombre de tokens utilisés. Les modifications sont sauvegardées automatiquement après 5 secondes d'inactivité.
+          </p>
+        </SettingsItem>
+      </SettingsSection>
       {/* Langue & Notifications */}
-      <SettingsSection icon="i-ph:palette-fill" title="Préférences" delay={0.1}>
+      {/* <SettingsSection icon="i-ph:palette-fill" title="Préférences" delay={0.1}>
         <div className="grid md:grid-cols-2 gap-4">
           <SettingsItem icon="i-ph:translate-fill" label="Langue">
             <select
@@ -232,11 +256,59 @@ export default function SettingsTab() {
             </div>
           </SettingsItem>
         </div>
-      </SettingsSection>
+      </SettingsSection> */}
 
       {/* Sound Settings */}
       <SettingsSection icon="i-ph:speaker-high-fill" title="Paramètres sonores" delay={0.15}>
+        {/* Basic Sound Settings */}
         <div className="grid md:grid-cols-2 gap-4">
+          {/* Sound Selection */}
+          <SettingsItem icon="i-ph:music-notes-fill" label="Type de son">
+            <select
+              value={selectedSound}
+              onChange={(e) => handleSoundChange(e.target.value)}
+              className={classNames(
+                'w-full px-4 py-3 rounded-lg text-sm',
+                'bg-white dark:bg-[#0A0A0A]',
+                'border border-gray-200 dark:border-gray-800',
+                'text-bolt-elements-textPrimary',
+                'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
+                'transition-all duration-200',
+              )}
+            >
+              <option value={NOTIFICATION_SOUNDS.BOLT}>Neurocode (Par défaut)</option>
+              <option value={NOTIFICATION_SOUNDS.CHIME}>Carillon</option>
+              <option value={NOTIFICATION_SOUNDS.ALERT}>Alerte</option>
+            </select>
+          </SettingsItem>
+
+          {/* Volume Control */}
+          <SettingsItem icon="i-ph:speaker-simple-fill" label="Volume">
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={chatSoundVolume}
+                onChange={(e) => setChatSoundVolume(parseFloat(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-violet-500"
+              />
+              <span className="text-sm font-medium text-bolt-elements-textSecondary min-w-[48px] text-center">
+                {Math.round(chatSoundVolume * 100)}%
+              </span>
+              <button
+                onClick={playTestSound}
+                className="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
+              >
+                Tester
+              </button>
+            </div>
+          </SettingsItem>
+        </div>
+
+        {/* Sound Toggles */}
+        <div className="mt-4 grid md:grid-cols-2 gap-4">
           {/* Chat End Sound Settings */}
           <SettingsItem icon="i-ph:bell-simple-fill" label="Son de fin de discussion">
             <div className="flex items-center justify-between">
@@ -269,114 +341,6 @@ export default function SettingsTab() {
             </div>
           </SettingsItem>
         </div>
-
-        {/* Advanced Sound Settings */}
-        {chatSoundEnabled && (
-          <div className="mt-4 grid md:grid-cols-2 gap-4">
-            {/* Sound Selection */}
-            <SettingsItem icon="i-ph:music-notes-fill" label="Type de son">
-              <select
-                value={selectedSound}
-                onChange={(e) => handleSoundChange(e.target.value)}
-                className={classNames(
-                  'w-full px-4 py-3 rounded-lg text-sm',
-                  'bg-white dark:bg-[#0A0A0A]',
-                  'border border-gray-200 dark:border-gray-800',
-                  'text-bolt-elements-textPrimary',
-                  'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
-                  'transition-all duration-200',
-                )}
-              >
-                <option value={NOTIFICATION_SOUNDS.BOLT}>Neurocode (Par défaut)</option>
-                <option value={NOTIFICATION_SOUNDS.CHIME}>Carillon</option>
-                <option value={NOTIFICATION_SOUNDS.ALERT}>Alerte</option>
-              </select>
-            </SettingsItem>
-
-            {/* Volume Control */}
-            <SettingsItem icon="i-ph:speaker-simple-fill" label="Volume">
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={chatSoundVolume}
-                  onChange={(e) => setChatSoundVolume(parseFloat(e.target.value))}
-                  className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-violet-500"
-                />
-                <span className="text-sm font-medium text-bolt-elements-textSecondary min-w-[48px] text-center">
-                  {Math.round(chatSoundVolume * 100)}%
-                </span>
-                <button
-                  onClick={playTestSound}
-                  className="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
-                >
-                  Tester
-                </button>
-              </div>
-            </SettingsItem>
-          </div>
-        )}
-      </SettingsSection>
-
-      {/* Custom Instructions Section - NEW */}
-      <SettingsSection icon="i-ph:user-focus-fill" title="Instructions Personnalisées" delay={0.25}>
-        <SettingsItem icon="i-ph:scroll-fill" label="Vos instructions pour l'IA">
-          <p className="text-xs text-bolt-elements-textSecondary mb-3">
-            Fournissez des instructions spécifiques (par exemple, style de réponse, persona, format de code) qui seront ajoutées au début de chaque prompt système.
-          </p>
-          {/* Exemples d'instructions cliquables */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-            <button
-              onClick={() => {
-                setLocalInstructions("Agis comme un développeur senior expert. Fournis des explications techniques détaillées et des solutions optimisées. Ton code doit être bien structuré avec des commentaires pertinents et suivre les meilleures pratiques de l'industrie.");
-                debouncedUpdate("Agis comme un développeur senior expert. Fournis des explications techniques détaillées et des solutions optimisées. Ton code doit être bien structuré avec des commentaires pertinents et suivre les meilleures pratiques de l'industrie.");
-                toast.info('Instructions personnalisées mises à jour');
-              }}
-              className="px-3 py-2 text-xs font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
-            >
-              Mode Expert
-            </button>
-            <button
-              onClick={() => {
-                setLocalInstructions("Agis comme un mentor pédagogique. Explique chaque concept en détail avec des exemples concrets. Décompose les problèmes complexes en étapes simples et fournis des analogies pour faciliter la compréhension.");
-                debouncedUpdate("Agis comme un mentor pédagogique. Explique chaque concept en détail avec des exemples concrets. Décompose les problèmes complexes en étapes simples et fournis des analogies pour faciliter la compréhension.");
-                toast.info('Instructions personnalisées mises à jour');
-              }}
-              className="px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-            >
-              Mode Explicatif
-            </button>
-            <button
-              onClick={() => {
-                setLocalInstructions("Sois concis et direct. Fournis des réponses courtes et précises sans explications superflues. Privilégie le code fonctionnel avec des commentaires minimaux mais suffisants pour comprendre la logique.");
-                debouncedUpdate("Sois concis et direct. Fournis des réponses courtes et précises sans explications superflues. Privilégie le code fonctionnel avec des commentaires minimaux mais suffisants pour comprendre la logique.");
-                toast.info('Instructions personnalisées mises à jour');
-              }}
-              className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              Mode Concis
-            </button>
-          </div>
-          <textarea
-            value={localInstructions}
-            onChange={handleInstructionChange}
-            className={classNames(
-              'w-full px-4 py-3 rounded-lg text-sm min-h-[150px] resize-y',
-              'bg-white dark:bg-[#0A0A0A]',
-              'border border-gray-200 dark:border-gray-800',
-              'text-bolt-elements-textPrimary',
-              'placeholder-gray-500 dark:placeholder-gray-400',
-              'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
-              'transition-all duration-200',
-            )}
-            placeholder="Exemple : Agis comme un développeur senior spécialisé en Python. Explique toujours tes choix techniques. Formate le code avec des commentaires clairs."
-          />
-          <p className="text-xs text-bolt-elements-textTertiary mt-2">
-            Note : Ces instructions augmentent le nombre de tokens utilisés. Les modifications sont sauvegardées automatiquement après 5 secondes d'inactivité.
-          </p>
-        </SettingsItem>
       </SettingsSection>
 
       {/* Fuseau horaire */}
