@@ -35,19 +35,29 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
   - ✅ Génération automatique des modèles Ollama à partir des téléchargements  
   - ✅ Définition dynamique de la longueur maximale des tokens  
   - ✅ Amélioration du prompt pour des réponses plus pertinentes  
+  - ✅ Instructions personnalisées pour les modèles LLM
+  - ✅ Notifications sonores pour les réponses du chat
+  - ✅ Processeur de messages pour les commandes de configuration de projet
+  - ✅ Extraction et analyse de texte à partir de documents
 
 - **Expérience utilisateur & Interface**  
   - ✅ Interface optimisée pour mobile  
-  - ✅ Ajout de la possibilité d’attacher des images aux prompts 
-  - ✅ Ajout d’un bouton "Clibler le fichier" pour demander au llm de modifier le fichier en prioriété rattacher a une prompt
-  - ✅ Ajout d’une bibliothèque de prompts avec variations selon les cas d’usage  
+  - ✅ Ajout de la possibilité d'attacher des images aux prompts 
+  - ✅ Ajout d'un bouton "Cibler le fichier" pour demander au LLM de modifier le fichier en priorité
+  - ✅ Ajout d'une bibliothèque de prompts avec variations selon les cas d'usage  
   - ✅ Fenêtre pop-up pour Web Container avec ajustement de taille  
+  - ✅ Mode de sélection multiple pour l'historique
+  - ✅ Masquage des variables d'environnement pour les fichiers .env
+  - ✅ Modal d'accueil pour les nouveaux utilisateurs
+  - ✅ Amélioration de l'onglet des fournisseurs locaux
 
 - **Gestion de projet & Code**  
   - ✅ Téléchargement des projets sous forme de fichier ZIP  
   - ✅ Importation Git via une URL & bouton "Git Clone"  
   - ✅ Détection et installation automatique des dépendances (`package.json`)  
-  - ✅ Ajout d’une vue "Diff" pour comparer les modifications  
+  - ✅ Ajout d'une vue "Diff" pour comparer les modifications  
+  - ✅ Support pour la création de dépôts privés GitHub
+  - ✅ Fonctionnalité de téléversement de fichiers dans l'espace de travail
 
 - **Déploiement & Intégration** 
   - ✅ Déploiement sur Vercel 
@@ -55,6 +65,8 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
   - ✅ Containerisation complète avec Docker  
   - ✅ Publication directe des projets sur GitHub  
   - ✅ Intégration de Supabase pour la gestion des bases de données
+  - ✅ Système d'alertes pour le suivi des builds et déploiements
+  - ✅ Logique de déploiement modulaire pour Netlify et Vercel
 
 ---
 
@@ -109,4 +121,4 @@ Suivez les instructions ci-dessous pour installer la **version stable** de Neuro
 
 ---
 
-🎯 **Prêt à coder plus intelligemment avec l'IA ? Rejoignez Neurocode dès aujourd’hui !** 🚀  
+🎯 **Prêt à coder plus intelligemment avec l'IA ? Rejoignez Neurocode dès aujourd’hui !** 🚀
