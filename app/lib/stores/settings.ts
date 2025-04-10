@@ -133,6 +133,7 @@ const SETTINGS_KEYS = {
   DEVELOPER_MODE: 'isDeveloperMode',
   CHAT_SOUND_ENABLED: 'chatSoundEnabled',
   CHAT_SOUND_VOLUME: 'chatSoundVolume',
+  UI_ANALYSIS: 'uiAnalysisEnabled',
 } as const;
 
 // Initialize settings from localStorage or defaults
@@ -182,6 +183,7 @@ const getInitialSettings = () => {
     developerMode: getStoredBoolean(SETTINGS_KEYS.DEVELOPER_MODE, false),
     chatSoundEnabled: getStoredBoolean(SETTINGS_KEYS.CHAT_SOUND_ENABLED, true),
     chatSoundVolume: getStoredNumber(SETTINGS_KEYS.CHAT_SOUND_VOLUME, 0.5),
+    uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
   };
 };
 
@@ -195,6 +197,7 @@ export const isEventLogsEnabled = atom<boolean>(initialSettings.eventLogs);
 export const promptStore = atom<string>(initialSettings.promptId);
 export const chatSoundEnabledStore = atom<boolean>(initialSettings.chatSoundEnabled);
 export const chatSoundVolumeStore = atom<number>(initialSettings.chatSoundVolume);
+export const uiAnalysisEnabled = atom<boolean>(initialSettings.uiAnalysis);
 
 // Helper functions to update settings with persistence
 export const updateLatestBranch = (enabled: boolean) => {
@@ -229,6 +232,11 @@ export const updateChatSoundEnabled = (enabled: boolean) => {
 export const updateChatSoundVolume = (volume: number) => {
   chatSoundVolumeStore.set(volume);
   localStorage.setItem(SETTINGS_KEYS.CHAT_SOUND_VOLUME, JSON.stringify(volume));
+};
+
+export const updateUIAnalysis = (enabled: boolean) => {
+  uiAnalysisEnabled.set(enabled);
+  localStorage.setItem(SETTINGS_KEYS.UI_ANALYSIS, JSON.stringify(enabled));
 };
 
 // Initialize tab configuration from localStorage or defaults

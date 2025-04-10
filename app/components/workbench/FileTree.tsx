@@ -8,7 +8,6 @@ import { diffLines, type Change } from 'diff';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { toast } from 'react-toastify';
 import { path } from '~/utils/path';
-import { addTargetedFile } from '~/utils/fileUtils';
 
 const logger = createScopedLogger('FileTree');
 
@@ -27,6 +26,7 @@ interface Props {
   unsavedFiles?: Set<string>;
   fileHistory?: Record<string, FileHistory>;
   className?: string;
+  allowMultipleUpload?: boolean;
 }
 
 interface InlineInputProps {
@@ -50,6 +50,7 @@ export const FileTree = memo(
     className,
     unsavedFiles,
     fileHistory = {},
+    allowMultipleUpload = false,
   }: Props) => {
     renderLogger.trace('FileTree');
 
@@ -155,6 +156,7 @@ export const FileTree = memo(
                   file={fileOrFolder}
                   unsavedChanges={unsavedFiles?.has(fileOrFolder.fullPath)}
                   fileHistory={fileHistory}
+                  allowMultipleUpload={allowMultipleUpload}
                   onCopyPath={() => {
                     onCopyPath(fileOrFolder);
                   }}
@@ -174,6 +176,7 @@ export const FileTree = memo(
                   folder={fileOrFolder}
                   selected={allowFolderSelection && selectedFile === fileOrFolder.fullPath}
                   collapsed={collapsedFolders.has(fileOrFolder.fullPath)}
+                  allowMultipleUpload={allowMultipleUpload}
                   onCopyPath={() => {
                     onCopyPath(fileOrFolder);
                   }}
@@ -202,6 +205,7 @@ interface FolderProps {
   folder: FolderNode;
   collapsed: boolean;
   selected?: boolean;
+  allowMultipleUpload?: boolean;
   onCopyPath: () => void;
   onCopyRelativePath: () => void;
   onClick: () => void;
@@ -211,6 +215,7 @@ interface FolderContextMenuProps {
   onCopyPath?: () => void;
   onCopyRelativePath?: () => void;
   children: ReactNode;
+  allowMultipleUpload?: boolean;
 }
 
 function ContextMenuItem({ onSelect, children, className }: { 
@@ -291,12 +296,20 @@ function FileContextMenu({
   onCopyRelativePath,
   fullPath,
   children,
+  allowMultipleUpload = false,
 }: FolderContextMenuProps & { fullPath: string }) {
   const [isCreatingFile, setIsCreatingFile] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTargeted, setIsTargeted] = useState(false);
+  const [isMultipleUploadEnabled, setIsMultipleUploadEnabled] = useState(allowMultipleUpload);
   const depth = useMemo(() => fullPath.split('/').length, [fullPath]);
   const fileName = useMemo(() => path.basename(fullPath), [fullPath]);
+  
+  // Mettre à jour l'état local si la prop change
+  useEffect(() => {
+    setIsMultipleUploadEnabled(allowMultipleUpload);
+  }, [allowMultipleUpload]);
 
   const isFolder = useMemo(() => {
     const files = workbenchStore.files.get();
@@ -307,6 +320,22 @@ function FileContextMenu({
 
   const targetPath = useMemo(() => {
     return isFolder ? fullPath : path.dirname(fullPath);
+  }, [fullPath, isFolder]);
+  
+  // Vérifier si le fichier est ciblé
+  useEffect(() => {
+    if (isFolder) return;
+    
+    const checkIfTargeted = () => {
+      setIsTargeted(workbenchStore.isTargetedFile(fullPath));
+    };
+    
+    // Vérifier immédiatement
+    checkIfTargeted();
+    
+    // Puis vérifier périodiquement
+    const interval = setInterval(checkIfTargeted, 1000);
+    return () => clearInterval(interval);
   }, [fullPath, isFolder]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -321,94 +350,87 @@ function FileContextMenu({
     setIsDragging(false);
   }, []);
 
+  // Les extensions de fichiers autorisées et la validation sont maintenant gérées par workbenchStore
+  
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const items = Array.from(e.dataTransfer.items);
-      const files = items.filter((item) => item.kind === 'file');
-
-      for (const item of files) {
-        const file = item.getAsFile();
-
-        if (file) {
-          try {
-            const filePath = path.join(fullPath, file.name);
-
-            // Convert file to binary data (Uint8Array)
-            const arrayBuffer = await file.arrayBuffer();
-            const binaryContent = new Uint8Array(arrayBuffer);
-
-            const success = await workbenchStore.createFile(filePath, binaryContent);
-
-            if (success) {
-              toast.success(`File ${file.name} uploaded successfully`);
-            } else {
-              toast.error(`Failed to upload file ${file.name}`);
-            }
-          } catch (error) {
-            toast.error(`Error uploading ${file.name}`);
-            logger.error(error);
-          }
-        }
-      }
-
+      await workbenchStore.handleFileDrop(e as unknown as DragEvent, fullPath, isMultipleUploadEnabled);
       setIsDragging(false);
     },
-    [fullPath],
+    [fullPath, isMultipleUploadEnabled],
   );
-
-  const handleCreateFile = async (fileName: string) => {
-    const newFilePath = path.join(targetPath, fileName);
-    const success = await workbenchStore.createFile(newFilePath, '');
-
-    if (success) {
-      toast.success('File created successfully');
-    } else {
-      toast.error('Failed to create file');
-    }
-
-    setIsCreatingFile(false);
-  };
-
-  const handleCreateFolder = async (folderName: string) => {
-    const newFolderPath = path.join(targetPath, folderName);
-    const success = await workbenchStore.createFolder(newFolderPath);
-
-    if (success) {
-      toast.success('Folder created successfully');
-    } else {
-      toast.error('Failed to create folder');
-    }
-
-    setIsCreatingFolder(false);
-  };
-
-const handleDelete = async () => {
-  try {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${isFolder ? 'le dossier' : 'le fichier'} : ${fileName} ?`)) {
-      return;
-    }
-
-    let success;
-
-    if (isFolder) {
-      success = await workbenchStore.deleteFolder(fullPath);
-    } else {
-      success = await workbenchStore.deleteFile(fullPath);
-    }
-
-    if (success) {
-      toast.success(`${isFolder ? 'Dossier' : 'Fichier'} supprimé avec succès`);
-    } else {
-      toast.error(`Échec de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
-    }
-  } catch (error) {
-    toast.error(`Erreur lors de la suppression ${isFolder ? 'du dossier' : 'du fichier'}`);
-    logger.error(error);
+  
+  function handleFileUpload(): void {
+    workbenchStore.handleFileUpload(targetPath, isMultipleUploadEnabled || false);
   }
-};
+
+  function handleDelete(): void {
+    if (isFolder) {
+      if (window.confirm(`Êtes-vous sûr de vouloir supprimer le dossier ${fileName} et tout son contenu ?`)) {
+        workbenchStore.deleteFolder(fullPath)
+          .then((success) => {
+            if (success) {
+              toast.success(`Dossier ${fileName} supprimé avec succès`);
+            } else {
+              toast.error(`Échec de la suppression du dossier ${fileName}`);
+            }
+          })
+          .catch((error) => {
+            console.error('Error deleting folder:', error);
+            toast.error(`Erreur lors de la suppression du dossier ${fileName}`);
+          });
+      }
+    } else {
+      if (window.confirm(`Êtes-vous sûr de vouloir supprimer le fichier ${fileName} ?`)) {
+        workbenchStore.deleteFile(fullPath)
+          .then((success) => {
+            if (success) {
+              toast.success(`Fichier ${fileName} supprimé avec succès`);
+            } else {
+              toast.error(`Échec de la suppression du fichier ${fileName}`);
+            }
+          })
+          .catch((error) => {
+            console.error('Error deleting file:', error);
+            toast.error(`Erreur lors de la suppression du fichier ${fileName}`);
+          });
+      }
+    }
+  }
+
+  function handleCreateFile(value: string): void {
+    const filePath = path.join(targetPath, value);
+    workbenchStore.createFile(filePath, '')
+      .then((success) => {
+        if (success) {
+          toast.success(`Fichier ${value} créé avec succès`);
+          setIsCreatingFile(false);
+        } else {
+          toast.error(`Échec de la création du fichier ${value}`);
+        }
+      })
+      .catch((error) => {
+        console.error('Error creating file:', error);
+        toast.error(`Erreur lors de la création du fichier ${value}`);
+      });
+  }
+
+  function handleCreateFolder(value: string): void {
+    const folderPath = path.join(targetPath, value);
+    workbenchStore.createFolder(folderPath)
+      .then((success) => {
+        if (success) {
+          toast.success(`Dossier ${value} créé avec succès`);
+          setIsCreatingFolder(false);
+        } else {
+          toast.error(`Échec de la création du dossier ${value}`);
+        }
+      })
+      .catch((error) => {
+        console.error('Error creating folder:', error);
+        toast.error(`Erreur lors de la création du dossier ${value}`);
+      });
+  }
 
   return (
     <>
@@ -441,29 +463,80 @@ const handleDelete = async () => {
             className="border border-bolt-elements-borderColor rounded-md z-context-menu bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-2 data-[state=open]:animate-in animate-duration-100 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98 w-56 shadow-lg"
           >
             <ContextMenu.Group className="p-1 border-b-px border-solid border-bolt-elements-borderColor">
-              {!isFolder && (
-                <ContextMenuItem 
-                  onSelect={() => {
-                    const textarea = document.querySelector('textarea[data-targeted-files]');
-                    if (textarea) {
-                      const success = addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
-                      if (success) {
-                        toast.success(`Fichier ciblé : ${fileName}`);
-                        (textarea as HTMLTextAreaElement).focus();
-                      } else {
-                        toast.info(`Le fichier ${fileName} est déjà ciblé`);
-                      }
-                    } else {
-                      toast.error('Impossible de trouver la zone de texte du chat');
-                    }
-                  }}
-                  className="hover:bg-green-500/10"
-                >
+              {/* Bouton d'importation de fichier avec toggle d'upload multiple */}
+              <ContextMenuItem 
+                onSelect={handleFileUpload}
+                className="hover:bg-orange-500/10"
+              >
+                <div className="flex items-center gap-2 justify-between w-full">
                   <div className="flex items-center gap-2">
-                    <div className="i-ph:target text-green-500" />
-                    <span className="text-green-500">Cibler le fichier</span>
+                    <div className="i-ph:upload-simple text-orange-500" />
+                    <span className="text-orange-500">{isMultipleUploadEnabled ? "Importer des fichiers" : "Importer un fichier"}</span>
                   </div>
-                </ContextMenuItem>
+                  <div 
+                    className={`flex items-center justify-center p-1 rounded-md ${isMultipleUploadEnabled ? "bg-purple-500/10" : "bg-blue-500/10"}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMultipleUploadEnabled(!isMultipleUploadEnabled);
+                      toast.info(isMultipleUploadEnabled ? 'Upload multiple désactivé' : 'Upload multiple activé');
+                    }}
+                    title={isMultipleUploadEnabled ? "Désactiver l'upload multiple" : "Activer l'upload multiple"}
+                  >
+                    <div className={isMultipleUploadEnabled ? "i-ph:files text-purple-500" : "i-ph:file text-blue-500"} />
+                  </div>
+                </div>
+              </ContextMenuItem>
+              
+              {!isFolder && (
+                <>
+                  {!isTargeted ? (
+                    <ContextMenuItem 
+                      onSelect={() => {
+                        const textarea = document.querySelector('textarea[data-targeted-files]');
+                        if (textarea) {
+                          const success = workbenchStore.addTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                          if (success) {
+                            toast.success(`Fichier ciblé : ${fileName}`);
+                            (textarea as HTMLTextAreaElement).focus();
+                          } else {
+                            toast.info(`Le fichier ${fileName} est déjà ciblé`);
+                          }
+                        } else {
+                          toast.error('Impossible de trouver la zone de texte du chat');
+                        }
+                      }}
+                      className="hover:bg-green-500/10"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="i-ph:target text-green-500" />
+                        <span className="text-green-500">Cibler le fichier</span>
+                      </div>
+                    </ContextMenuItem>
+                  ) : (
+                    <ContextMenuItem 
+                      onSelect={() => {
+                        const textarea = document.querySelector('textarea[data-targeted-files]');
+                        if (textarea) {
+                          const success = workbenchStore.removeTargetedFile(fullPath, textarea as HTMLTextAreaElement);
+                          if (success) {
+                            toast.success(`Ciblage retiré : ${fileName}`);
+                            (textarea as HTMLTextAreaElement).focus();
+                          } else {
+                            toast.info(`Le fichier ${fileName} n'est pas ciblé`);
+                          }
+                        } else {
+                          toast.error('Impossible de trouver la zone de texte du chat');
+                        }
+                      }}
+                      className="hover:bg-yellow-500/10"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="i-ph:target-slash text-yellow-500" />
+                        <span className="text-yellow-500">Retirer le ciblage</span>
+                      </div>
+                    </ContextMenuItem>
+                  )}
+                </>
               )}
               <ContextMenuItem 
                 onSelect={() => setIsCreatingFile(true)}
@@ -538,9 +611,9 @@ const handleDelete = async () => {
   );
 }
 
-function Folder({ folder, collapsed, selected = false, onCopyPath, onCopyRelativePath, onClick }: FolderProps) {
+function Folder({ folder, collapsed, selected = false, allowMultipleUpload = false, onCopyPath, onCopyRelativePath, onClick }: FolderProps) {
   return (
-    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={folder.fullPath}>
+    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={folder.fullPath} allowMultipleUpload={allowMultipleUpload}>
       <NodeButton
         className={classNames('group', {
           'bg-transparent text-bolt-elements-item-contentDefault hover:text-bolt-elements-item-contentActive hover:bg-bolt-elements-item-backgroundActive':
@@ -565,6 +638,7 @@ interface FileProps {
   selected: boolean;
   unsavedChanges?: boolean;
   fileHistory?: Record<string, FileHistory>;
+  allowMultipleUpload?: boolean;
   onCopyPath: () => void;
   onCopyRelativePath: () => void;
   onClick: () => void;
@@ -631,10 +705,39 @@ function File({
   selected,
   unsavedChanges = false,
   fileHistory = {},
+  allowMultipleUpload = false,
 }: FileProps) {
   const { depth, name, fullPath } = file;
 
   const fileModifications = fileHistory[fullPath];
+  
+  // Vérifier si le fichier est ciblé
+  const [isTargeted, setIsTargeted] = useState(false);
+  
+  // Vérifier périodiquement si le fichier est ciblé
+  useEffect(() => {
+    const checkIfTargeted = () => {
+      try {
+        const textarea = document.querySelector('textarea[data-targeted-files]');
+        if (!textarea) return;
+        
+        const filesAttr = textarea.getAttribute('data-targeted-files');
+        if (!filesAttr) return;
+        
+        const targetedFiles = JSON.parse(filesAttr);
+        setIsTargeted(Array.isArray(targetedFiles) && targetedFiles.includes(fullPath));
+      } catch (error) {
+        console.error('Error checking if file is targeted:', error);
+      }
+    };
+    
+    // Vérifier immédiatement
+    checkIfTargeted();
+    
+    // Puis vérifier périodiquement
+    const interval = setInterval(checkIfTargeted, 1000);
+    return () => clearInterval(interval);
+  }, [fullPath]);
 
   const { additions, deletions } = useMemo(() => {
     if (!fileModifications?.originalContent) {
@@ -674,7 +777,7 @@ function File({
   const showStats = additions > 0 || deletions > 0;
 
   return (
-    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={fullPath}>
+    <FileContextMenu onCopyPath={onCopyPath} onCopyRelativePath={onCopyRelativePath} fullPath={fullPath} allowMultipleUpload={allowMultipleUpload}>
       <NodeButton
         className={classNames('group', {
           'bg-transparent hover:bg-bolt-elements-item-backgroundActive text-bolt-elements-item-contentDefault':
@@ -684,6 +787,7 @@ function File({
         depth={depth}
         iconClasses={classNames(getFileIcon(name), {
           'group-hover:text-bolt-elements-item-contentActive': !selected,
+          'text-yellow-400': isTargeted, // Icône jaune pour les fichiers ciblés
         })}
         onClick={onClick}
       >
@@ -692,7 +796,12 @@ function File({
             'group-hover:text-bolt-elements-item-contentActive': !selected,
           })}
         >
-          <div className="flex-1 truncate pr-2">{name}</div>
+          <div className="flex-1 truncate pr-2">
+            {isTargeted && (
+              <span className="inline-block mr-1 text-yellow-400 i-ph:target" />
+            )}
+            {name}
+          </div>
           <div className="flex items-center gap-1">
             {showStats && (
               <div className="flex items-center gap-1 text-xs">

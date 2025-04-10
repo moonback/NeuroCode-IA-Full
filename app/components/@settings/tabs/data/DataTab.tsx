@@ -88,13 +88,13 @@ export function DataTab() {
 
   // State for settings categories and available chats
   const [settingsCategories] = useState<SettingsCategory[]>([
-    { id: 'core', label: 'Paramètres principaux', description: 'Profil utilisateur et paramètres principaux' },
-    { id: 'providers', label: 'Fournisseurs', description: 'Clés API et configurations des fournisseurs' },
-    { id: 'features', label: 'Fonctionnalités', description: 'Fonctionnalités et paramètres des fonctionnalités' },
-    { id: 'ui', label: 'Interface utilisateur', description: 'Configuration et préférences de l\'interface utilisateur' },
-    { id: 'connections', label: 'Connexions', description: 'Connexions aux services externes' },
-    { id: 'debug', label: 'Débogage', description: 'Paramètres de débogage et journaux' },
-    { id: 'updates', label: 'Mises à jour', description: 'Paramètres de mise à jour et notifications' },
+    { id: 'core', label: 'Core Settings', description: 'User profile and main settings' },
+    { id: 'providers', label: 'Providers', description: 'API keys and provider configurations' },
+    { id: 'features', label: 'Features', description: 'Feature flags and settings' },
+    { id: 'ui', label: 'UI', description: 'UI configuration and preferences' },
+    { id: 'connections', label: 'Connections', description: 'External service connections' },
+    { id: 'debug', label: 'Debug', description: 'Debug settings and logs' },
+    { id: 'updates', label: 'Updates', description: 'Update settings and notifications' },
   ]);
 
   const [availableChats, setAvailableChats] = useState<ExtendedChat[]>([]);
@@ -116,9 +116,6 @@ export function DataTab() {
     handleResetChats,
     handleDownloadTemplate,
     handleImportAPIKeys,
-    handleExportAPIKeys,
-    handleUndo,
-    lastOperation,
   } = useDataOperations({
     customDb: db || undefined, // Pass the boltHistory database, converting null to undefined
     onReloadSettings: () => window.location.reload(),
@@ -141,29 +138,6 @@ export function DataTab() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isImportingKeys, setIsImportingKeys] = useState(false);
 
-
-// Function to delete all cookies and reset application state
-const handleDeleteAllCookiesAndReset = () => {
-  if (window.confirm('Êtes-vous sûr de vouloir supprimer tous les cookies et tout réinitialiser ?')) {
-    // Clear cookies more reliably
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i];
-      const eqPos = cookie.indexOf('=');
-      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-    }
-
-    // Clear localStorage and sessionStorage
-    localStorage.clear();
-    sessionStorage.clear();
-
-    // Force reload after short delay
-    setTimeout(() => {
-      window.location.href = '/';  // Full page reload from server
-    }, 500);
-  }
-};
   // Load available chats
   useEffect(() => {
     if (db) {
@@ -233,239 +207,7 @@ const handleDeleteAllCookiesAndReset = () => {
   }, [handleResetChats]);
 
   return (
-    
     <div className="space-y-12">
-      {/* Data Visualization */}
-<div>
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Utilisation des données
-        </h2>
-        <Card>
-          <CardContent className="p-5">
-            <DataVisualization chats={availableChats} />
-          </CardContent>
-        </Card>
-      </div>
-      {/* Chats Section */}
-      <div>
-        
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Conversations</h2>
-        {dbLoading ? (
-          <div className="flex items-center justify-center p-4">
-            <div className="i-ph-spinner-gap-bold animate-spin w-6 h-6 mr-2" />
-            <span>Chargement de la base de données des conversations...</span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center mb-2">
-                  <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <div className="i-ph-download-duotone w-5 h-5" />
-                  </motion.div>
-                  <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                  Exporter toutes les discussions
-                  </CardTitle>
-                </div>
-                <CardDescription>Exportez toutes vos discussions vers un fichier JSON.</CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
-                  <Button
-                    onClick={async () => {
-                      try {
-                        if (!db) {
-                          toast.error('Database not available');
-                          return;
-                        }
-
-                        console.log('Database information:', {
-                          name: db.name,
-                          version: db.version,
-                          objectStoreNames: Array.from(db.objectStoreNames),
-                        });
-
-                        if (availableChats.length === 0) {
-                          toast.warning('No chats available to export');
-                          return;
-                        }
-
-                        await handleExportAllChats();
-                      } catch (error) {
-                        console.error('Error exporting chats:', error);
-                        toast.error(
-                          `Failed to export chats: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                        );
-                      }
-                    }}
-                    disabled={isExporting || availableChats.length === 0}
-                    variant="outline"
-                    size="sm"
-                    className={classNames(
-                      'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
-                      isExporting || availableChats.length === 0 ? 'cursor-not-allowed' : '',
-                    )}
-                  >
-                    {isExporting ? (
-                      <>
-                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                        Exporting...
-                      </>
-                    ) : availableChats.length === 0 ? (
-                      'Aucune discussion à exporter'
-                    ) : (
-                      'Exporter tout'
-                    )}
-                  </Button>
-                </motion.div>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center mb-2">
-                  <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <div className="i-ph-filter-duotone w-5 h-5" />
-                  </motion.div>
-                  <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                  Exporter les discussions sélectionnées
-                  </CardTitle>
-                </div>
-                <CardDescription>Choisissez des discussions spécifiques à exporter.</CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
-                  <Button
-                    onClick={() => setShowChatsSelection(true)}
-                    disabled={isExporting || chatItems.length === 0}
-                    variant="outline"
-                    size="sm"
-                    className={classNames(
-                      'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
-                      isExporting || chatItems.length === 0 ? 'cursor-not-allowed' : '',
-                    )}
-                  >
-                    {isExporting ? (
-                      <>
-                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                        Exporting...
-                      </>
-                    ) : (
-                      'Sélectionnez Chats'
-                    )}
-                  </Button>
-                </motion.div>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center mb-2">
-                  <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <div className="i-ph-upload-duotone w-5 h-5" />
-                  </motion.div>
-                  <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">Import Chats</CardTitle>
-                </div>
-                <CardDescription>Importer des chats à partir d'un fichier JSON.</CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
-                  <Button
-                    onClick={() => chatFileInputRef.current?.click()}
-                    disabled={isImporting}
-                    variant="outline"
-                    size="sm"
-                    className={classNames(
-                      'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
-                      isImporting ? 'cursor-not-allowed' : '',
-                    )}
-                  >
-                    {isImporting ? (
-                      <>
-                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                        Importing...
-                      </>
-                    ) : (
-                      'Importer des discussions'
-                    )}
-                  </Button>
-                </motion.div>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center mb-2">
-                  <motion.div className="text-red-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <div className="i-ph-cookie-duotone w-5 h-5" />
-                  </motion.div>
-                  <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                    Supprimer les cookies et réinitialiser
-                  </CardTitle>
-                </div>
-                <CardDescription>Supprime tous les cookies et réinitialise l'application</CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
-                  <Button
-                    onClick={handleDeleteAllCookiesAndReset}
-                    variant="outline"
-                    size="sm"
-                    className={classNames(
-                      'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
-                    )}
-                  >
-                    {isDeleting ? (
-                      <>
-                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                        Suppression en cours...
-                      </>
-                    ) : (
-                      'Supprimer et réinitialiser'
-                    )}
-                  </Button>
-                </motion.div>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center mb-2">
-                  <motion.div className="text-red-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <div className="i-ph-trash-duotone w-5 h-5" />
-                  </motion.div>
-                  <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                    Supprimer toutes les discussions
-                  </CardTitle>
-                </div>
-                <CardDescription>Supprimez tout votre historique de discussions.</CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
-                  <Button
-                    onClick={() => setShowDeleteInlineConfirm(true)}
-                    disabled={isDeleting || chatItems.length === 0}
-                    variant="outline"
-                    size="sm"
-                    className={classNames(
-                      'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
-                      isDeleting || chatItems.length === 0 ? 'cursor-not-allowed' : '',
-                    )}
-                  >
-                    {isDeleting ? (
-                      <>
-                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                        Suppression en cours...
-                      </>
-                    ) : (
-                      'Tout supprimer'
-                    )}
-                  </Button>
-                </motion.div>
-              </CardFooter>
-            </Card>
-          </div>
-        )}
-      </div>
       {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileInputChange} className="hidden" />
       <input
@@ -535,23 +277,201 @@ const handleDeleteAllCookiesAndReset = () => {
         confirmLabel="Export Selected"
       />
 
-
-      {/* Undo Last Operation */}
-      {lastOperation && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg flex items-center gap-3 z-50">
-          <div className="text-sm">
-            <span className="font-medium">Last action:</span> {lastOperation.type}
+      {/* Chats Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">Chats</h2>
+        {dbLoading ? (
+          <div className="flex items-center justify-center p-4">
+            <div className="i-ph-spinner-gap-bold animate-spin w-6 h-6 mr-2" />
+            <span>Loading chats database...</span>
           </div>
-          <Button onClick={handleUndo} variant="outline" size="sm" className="border-white/20 text-white">
-          annuler
-          </Button>
-        </div>
-      )}
-      
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center mb-2">
+                  <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <div className="i-ph-download-duotone w-5 h-5" />
+                  </motion.div>
+                  <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                    Export All Chats
+                  </CardTitle>
+                </div>
+                <CardDescription>Export all your chats to a JSON file.</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                  <Button
+                    onClick={async () => {
+                      try {
+                        if (!db) {
+                          toast.error('Database not available');
+                          return;
+                        }
+
+                        console.log('Database information:', {
+                          name: db.name,
+                          version: db.version,
+                          objectStoreNames: Array.from(db.objectStoreNames),
+                        });
+
+                        if (availableChats.length === 0) {
+                          toast.warning('No chats available to export');
+                          return;
+                        }
+
+                        await handleExportAllChats();
+                      } catch (error) {
+                        console.error('Error exporting chats:', error);
+                        toast.error(
+                          `Failed to export chats: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                        );
+                      }
+                    }}
+                    disabled={isExporting || availableChats.length === 0}
+                    variant="outline"
+                    size="sm"
+                    className={classNames(
+                      'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
+                      isExporting || availableChats.length === 0 ? 'cursor-not-allowed' : '',
+                    )}
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                        Exporting...
+                      </>
+                    ) : availableChats.length === 0 ? (
+                      'No Chats to Export'
+                    ) : (
+                      'Export All'
+                    )}
+                  </Button>
+                </motion.div>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center mb-2">
+                  <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <div className="i-ph-filter-duotone w-5 h-5" />
+                  </motion.div>
+                  <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                    Export Selected Chats
+                  </CardTitle>
+                </div>
+                <CardDescription>Choose specific chats to export.</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                  <Button
+                    onClick={() => setShowChatsSelection(true)}
+                    disabled={isExporting || chatItems.length === 0}
+                    variant="outline"
+                    size="sm"
+                    className={classNames(
+                      'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
+                      isExporting || chatItems.length === 0 ? 'cursor-not-allowed' : '',
+                    )}
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                        Exporting...
+                      </>
+                    ) : (
+                      'Select Chats'
+                    )}
+                  </Button>
+                </motion.div>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center mb-2">
+                  <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <div className="i-ph-upload-duotone w-5 h-5" />
+                  </motion.div>
+                  <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                    Import Chats
+                  </CardTitle>
+                </div>
+                <CardDescription>Import chats from a JSON file.</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                  <Button
+                    onClick={() => chatFileInputRef.current?.click()}
+                    disabled={isImporting}
+                    variant="outline"
+                    size="sm"
+                    className={classNames(
+                      'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
+                      isImporting ? 'cursor-not-allowed' : '',
+                    )}
+                  >
+                    {isImporting ? (
+                      <>
+                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                        Importing...
+                      </>
+                    ) : (
+                      'Import Chats'
+                    )}
+                  </Button>
+                </motion.div>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center mb-2">
+                  <motion.div
+                    className="text-red-500 dark:text-red-400 mr-2"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <div className="i-ph-trash-duotone w-5 h-5" />
+                  </motion.div>
+                  <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                    Delete All Chats
+                  </CardTitle>
+                </div>
+                <CardDescription>Delete all your chat history.</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                  <Button
+                    onClick={() => setShowDeleteInlineConfirm(true)}
+                    disabled={isDeleting || chatItems.length === 0}
+                    variant="outline"
+                    size="sm"
+                    className={classNames(
+                      'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
+                      isDeleting || chatItems.length === 0 ? 'cursor-not-allowed' : '',
+                    )}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
+                        Deleting...
+                      </>
+                    ) : (
+                      'Delete All'
+                    )}
+                  </Button>
+                </motion.div>
+              </CardFooter>
+            </Card>
+          </div>
+        )}
+      </div>
 
       {/* Settings Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Paramètres</h2>
+        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card>
             <CardHeader>
@@ -559,11 +479,11 @@ const handleDeleteAllCookiesAndReset = () => {
                 <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <div className="i-ph-download-duotone w-5 h-5" />
                 </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                  Exporter tous les paramètres
+                <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                  Export All Settings
                 </CardTitle>
               </div>
-              <CardDescription>Exportez tous vos paramètres vers un fichier JSON.</CardDescription>
+              <CardDescription>Export all your settings to a JSON file.</CardDescription>
             </CardHeader>
             <CardFooter>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
@@ -573,17 +493,17 @@ const handleDeleteAllCookiesAndReset = () => {
                   variant="outline"
                   size="sm"
                   className={classNames(
-                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
                     isExporting ? 'cursor-not-allowed' : '',
                   )}
                 >
                   {isExporting ? (
                     <>
                       <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                      Exportation en cours...
+                      Exporting...
                     </>
                   ) : (
-                    'Tout exporter'
+                    'Export All'
                   )}
                 </Button>
               </motion.div>
@@ -596,11 +516,11 @@ const handleDeleteAllCookiesAndReset = () => {
                 <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <div className="i-ph-filter-duotone w-5 h-5" />
                 </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                  Exporter les paramètres sélectionnés
+                <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                  Export Selected Settings
                 </CardTitle>
               </div>
-              <CardDescription>Choisissez des paramètres spécifiques à exporter.</CardDescription>
+              <CardDescription>Choose specific settings to export.</CardDescription>
             </CardHeader>
             <CardFooter>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
@@ -610,17 +530,17 @@ const handleDeleteAllCookiesAndReset = () => {
                   variant="outline"
                   size="sm"
                   className={classNames(
-                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
                     isExporting || settingsCategories.length === 0 ? 'cursor-not-allowed' : '',
                   )}
                 >
                   {isExporting ? (
                     <>
                       <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                      Exportation en cours...
+                      Exporting...
                     </>
                   ) : (
-                    'Sélectionner les paramètres'
+                    'Select Settings'
                   )}
                 </Button>
               </motion.div>
@@ -633,19 +553,21 @@ const handleDeleteAllCookiesAndReset = () => {
                 <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <div className="i-ph-upload-duotone w-5 h-5" />
                 </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">Import Chats</CardTitle>
+                <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                  Import Settings
+                </CardTitle>
               </div>
-              <CardDescription>Importer des chats à partir d'un fichier JSON.</CardDescription>
+              <CardDescription>Import settings from a JSON file.</CardDescription>
             </CardHeader>
             <CardFooter>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
                 <Button
-                  onClick={() => chatFileInputRef.current?.click()}
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={isImporting}
                   variant="outline"
                   size="sm"
                   className={classNames(
-                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
                     isImporting ? 'cursor-not-allowed' : '',
                   )}
                 >
@@ -655,7 +577,7 @@ const handleDeleteAllCookiesAndReset = () => {
                       Importing...
                     </>
                   ) : (
-                    'Importer des discussions'
+                    'Import Settings'
                   )}
                 </Button>
               </motion.div>
@@ -665,14 +587,18 @@ const handleDeleteAllCookiesAndReset = () => {
           <Card>
             <CardHeader>
               <div className="flex items-center mb-2">
-                <motion.div className="text-red-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <motion.div
+                  className="text-red-500 dark:text-red-400 mr-2"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
                   <div className="i-ph-arrow-counter-clockwise-duotone w-5 h-5" />
                 </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
-                  Réinitialiser tous les paramètres
+                <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                  Reset All Settings
                 </CardTitle>
               </div>
-              <CardDescription>Réinitialisez tous les paramètres à leurs valeurs par défaut.</CardDescription>
+              <CardDescription>Reset all settings to their default values.</CardDescription>
             </CardHeader>
             <CardFooter>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
@@ -682,17 +608,17 @@ const handleDeleteAllCookiesAndReset = () => {
                   variant="outline"
                   size="sm"
                   className={classNames(
-                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
                     isResetting ? 'cursor-not-allowed' : '',
                   )}
                 >
                   {isResetting ? (
                     <>
                       <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                      Réinitialisation en cours...
+                      Resetting...
                     </>
                   ) : (
-                    'Tout réinitialiser'
+                    'Reset All'
                   )}
                 </Button>
               </motion.div>
@@ -703,50 +629,15 @@ const handleDeleteAllCookiesAndReset = () => {
 
       {/* API Keys Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">API Keys</h2>
+        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">API Keys</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center mb-2">
-                <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <div className="i-ph-download-duotone w-5 h-5" />
-                </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">Export API Keys</CardTitle>
-              </div>
-              <CardDescription>Export your API keys to a JSON file.</CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
-                <Button
-                  onClick={handleExportAPIKeys}
-                  disabled={isExporting}
-                  variant="outline"
-                  size="sm"
-                  className={classNames(
-                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
-                    isExporting ? 'cursor-not-allowed' : '',
-                  )}
-                >
-                  {isExporting ? (
-                    <>
-                      <div className="i-ph-spinner-gap-bold animate-spin w-4 h-4 mr-2" />
-                      Exporting...
-                    </>
-                  ) : (
-                    'Export Keys'
-                  )}
-                </Button>
-              </motion.div>
-            </CardFooter>
-          </Card>
-
           <Card>
             <CardHeader>
               <div className="flex items-center mb-2">
                 <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <div className="i-ph-file-text-duotone w-5 h-5" />
                 </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">
+                <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
                   Download Template
                 </CardTitle>
               </div>
@@ -760,7 +651,7 @@ const handleDeleteAllCookiesAndReset = () => {
                   variant="outline"
                   size="sm"
                   className={classNames(
-                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
                     isDownloadingTemplate ? 'cursor-not-allowed' : '',
                   )}
                 >
@@ -783,7 +674,9 @@ const handleDeleteAllCookiesAndReset = () => {
                 <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <div className="i-ph-upload-duotone w-5 h-5" />
                 </motion.div>
-                <CardTitle className="text-lg group-hover:text-purple-500 transition-colors">Import API Keys</CardTitle>
+                <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
+                  Import API Keys
+                </CardTitle>
               </div>
               <CardDescription>Import API keys from a JSON file.</CardDescription>
             </CardHeader>
@@ -795,7 +688,7 @@ const handleDeleteAllCookiesAndReset = () => {
                   variant="outline"
                   size="sm"
                   className={classNames(
-                    'hover:text-purple-500 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors w-full justify-center',
+                    'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
                     isImportingKeys ? 'cursor-not-allowed' : '',
                   )}
                 >
@@ -814,7 +707,15 @@ const handleDeleteAllCookiesAndReset = () => {
         </div>
       </div>
 
-      
+      {/* Data Visualization */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">Data Usage</h2>
+        <Card>
+          <CardContent className="p-5">
+            <DataVisualization chats={availableChats} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

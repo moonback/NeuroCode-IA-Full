@@ -25,7 +25,7 @@ import { Preview } from './Preview';
 import useViewport from '~/lib/hooks';
 import { PushToGitHubDialog } from '~/components/@settings/tabs/connections/components/PushToGitHubDialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-
+import { usePreviewStore } from '~/lib/stores/previews';
 interface WorkspaceProps {
   chatStarted?: boolean;
   isStreaming?: boolean;
@@ -301,11 +301,10 @@ export const Workbench = memo(
     };
 
     useEffect(() => {
-      if (hasPreview) {
+      if (!isStreaming && hasPreview) {        
         setSelectedView('preview');
       }
-    }, [hasPreview]);
-
+    }, [hasPreview, isStreaming]);
     useEffect(() => {
       workbenchStore.setDocuments(files);
     }, [files]);
@@ -323,7 +322,14 @@ export const Workbench = memo(
     }, []);
 
     const onFileSave = useCallback(() => {
-      workbenchStore.saveCurrentDocument().catch(() => {
+      workbenchStore
+      .saveCurrentDocument()
+      .then(() => {
+        // Explicitly refresh all previews after a file save
+        const previewStore = usePreviewStore();
+        previewStore.refreshAllPreviews();
+      })
+      .catch(() => {
         toast.error('Failed to update file content');
       });
     }, []);
@@ -390,11 +396,9 @@ export const Workbench = memo(
                       </PanelHeaderButton>
                       
                        <DropdownMenu.Root>
-                        <DropdownMenu.Trigger className="bg-transparent">
-                          <button className="text-sm flex items-center gap-1 text-bolt-elements-item-contentDefault bg-transparent enabled:hover:text-bolt-elements-item-contentActive rounded-md p-1 enabled:hover:bg-bolt-elements-item-backgroundActive disabled:cursor-not-allowed">
-                            <div className="i-ph:box-arrow-up" />
-                            Synchronisation et exportation
-                          </button>
+                       <DropdownMenu.Trigger className="text-sm flex items-center gap-1 text-bolt-elements-item-contentDefault bg-transparent enabled:hover:text-bolt-elements-item-contentActive rounded-md p-1 enabled:hover:bg-bolt-elements-item-backgroundActive disabled:cursor-not-allowed">
+                          <div className="i-ph:box-arrow-up" />
+                          Sync & Export
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Content
                           className={classNames(
@@ -492,12 +496,11 @@ export const Workbench = memo(
           <PushToGitHubDialog
             isOpen={isPushDialogOpen}
             onClose={() => setIsPushDialogOpen(false)}
-            onPush={async (repoName, username, token) => {
+            onPush={async (repoName, username, token, isPrivate) => {              
               try {
+                console.log('Dialog onPush called with isPrivate =', isPrivate);
                 const commitMessage = prompt('Please enter a commit message:', 'Initial commit') || 'Initial commit';
-                await workbenchStore.pushToGitHub(repoName, commitMessage, username, token);
-
-                const repoUrl = `https://github.com/${username}/${repoName}`;
+                const repoUrl = await workbenchStore.pushToGitHub(repoName, commitMessage, username, token, isPrivate);
 
                 if (updateChatMestaData && !metadata?.gitUrl) {
                   updateChatMestaData({
