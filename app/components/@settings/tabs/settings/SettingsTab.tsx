@@ -210,7 +210,8 @@ const handleSoundChange = (soundPath: string) => {
                   )}
                 >
                   <option value={NOTIFICATION_SOUNDS.BOLT}>Default (Neurocode)</option>
-                  {/* Add more sound options here as they become available */}
+                  <option value={NOTIFICATION_SOUNDS.CHIME}>Chime</option>
+                  <option value={NOTIFICATION_SOUNDS.ALERT}>Alert</option>
                 </select>
               </div>
             </div>
