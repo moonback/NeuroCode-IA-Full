@@ -106,7 +106,7 @@ export default function SettingsTab() {
     debounce((value: string) => {
       setCustomInstructions(value);
       toast.info('Instructions personnalisées sauvegardées');
-    }, 500), // Save 500ms after typing stops
+    }, 5000), // Save 500ms after typing stops
     [setCustomInstructions]
   );
 
@@ -341,7 +341,7 @@ export default function SettingsTab() {
             placeholder="Exemple : Agis comme un développeur senior spécialisé en Python. Explique toujours tes choix techniques. Formate le code avec des commentaires clairs."
           />
           <p className="text-xs text-bolt-elements-textTertiary mt-2">
-            Note : Ces instructions augmentent le nombre de tokens utilisés.
+            Note : Ces instructions augmentent le nombre de tokens utilisés. Les modifications sont sauvegardées automatiquement après 5 secondes d'inactivité.
           </p>
         </SettingsItem>
       </SettingsSection>
