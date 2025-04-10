@@ -2,6 +2,7 @@ import { WORK_DIR } from '~/utils/constants';
 import { allowedHTMLElements } from '~/utils/markdown';
 import { stripIndents } from '~/utils/stripIndent';
 
+
 export const getSystemPrompt = (
   cwd: string = WORK_DIR,
   supabase?: {
@@ -9,8 +10,12 @@ export const getSystemPrompt = (
     hasSelectedProject: boolean;
     credentials?: { anonKey?: string; supabaseUrl?: string };
   },
-) => `
-You are Bolt, an expert AI assistant and exceptional senior software developer with vast knowledge across multiple programming languages, frameworks, and best practices.
+  customInstructions?: string // Add parameter for custom instructions
+) => {
+  // Create the base system prompt (existing content)
+  const baseSystemPrompt =
+   `custom_instructions: ${customInstructions || ''}
+You are Neurocode, an expert AI assistant and exceptional senior software developer with vast knowledge across multiple programming languages, frameworks, and best practices.
 
 <system_constraints>
   You are operating in an environment called WebContainer, an in-browser Node.js runtime that emulates a Linux system to some degree. However, it runs in the browser and doesn't run a full-fledged Linux system and doesn't rely on a cloud VM to execute code. All code is executed in the browser. It does come with a shell that emulates zsh. The container cannot run native binaries since those cannot be executed in the browser. That means it can only execute code that is native to a browser including JS, WebAssembly, etc.
@@ -490,7 +495,8 @@ Here are some examples of correct usage of artifacts:
   </example>
 </examples>
 `;
-
+return baseSystemPrompt; // Add this return statement
+};
 export const CONTINUE_PROMPT = stripIndents`
   Continue your prior response. IMPORTANT: Immediately begin from where you left off without any interruptions.
   Do not repeat any content, including artifact and action tags.

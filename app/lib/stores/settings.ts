@@ -11,6 +11,7 @@ import { DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
 import Cookies from 'js-cookie';
 import { toggleTheme } from './theme';
 import { create } from 'zustand';
+import { logStore } from './logs';
 
 export interface Shortcut {
   key: string;
@@ -135,6 +136,7 @@ const SETTINGS_KEYS = {
   CHAT_SOUND_VOLUME: 'chatSoundVolume',
   UI_ANALYSIS: 'uiAnalysisEnabled',
   ALERT_SOUND_ENABLED: 'alertSoundEnabled',
+  CUSTOM_INSTRUCTIONS: 'customInstructions', // New key for custom instructions
 } as const;
 
 // Initialize settings from localStorage or defaults
@@ -156,6 +158,7 @@ const getInitialSettings = () => {
       return defaultValue;
     }
   };
+  
   const getStoredNumber = (key: string, defaultValue: number): number => {
     if (!isBrowser) {
       return defaultValue;
@@ -174,6 +177,16 @@ const getInitialSettings = () => {
       return defaultValue;
     }
   };
+  
+  // Add this function to get string values from localStorage
+  const getStoredString = (key: string, defaultValue: string): string => {
+    if (!isBrowser) {
+      return defaultValue;
+    }
+    
+    const stored = localStorage.getItem(key);
+    return stored !== null ? stored : defaultValue;
+  };
 
   return {
     latestBranch: getStoredBoolean(SETTINGS_KEYS.LATEST_BRANCH, false),
@@ -186,6 +199,7 @@ const getInitialSettings = () => {
     chatSoundVolume: getStoredNumber(SETTINGS_KEYS.CHAT_SOUND_VOLUME, 0.5),
     uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
     alertSoundEnabled: getStoredBoolean(SETTINGS_KEYS.ALERT_SOUND_ENABLED, true),
+    customInstructions: getStoredString(SETTINGS_KEYS.CUSTOM_INSTRUCTIONS, ''), // Initialize custom instructions
   };
 };
 
@@ -201,6 +215,7 @@ export const chatSoundEnabledStore = atom<boolean>(initialSettings.chatSoundEnab
 export const chatSoundVolumeStore = atom<number>(initialSettings.chatSoundVolume);
 export const uiAnalysisEnabled = atom<boolean>(initialSettings.uiAnalysis);
 export const alertSoundEnabledStore = atom<boolean>(initialSettings.alertSoundEnabled);
+export const customInstructionsStore = atom<string>(initialSettings.customInstructions); // New atom for custom instructions
 
 // Helper functions to update settings with persistence
 export const updateLatestBranch = (enabled: boolean) => {
@@ -373,4 +388,11 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
 export const updateAlertSoundEnabled = (enabled: boolean) => {
   alertSoundEnabledStore.set(enabled);
   localStorage.setItem(SETTINGS_KEYS.ALERT_SOUND_ENABLED, JSON.stringify(enabled));
+};
+
+// Update custom instructions
+export const updateCustomInstructions = (instructions: string) => {
+  customInstructionsStore.set(instructions);
+  localStorage.setItem(SETTINGS_KEYS.CUSTOM_INSTRUCTIONS, instructions);
+  logStore.logSystem('Custom instructions updated');
 };

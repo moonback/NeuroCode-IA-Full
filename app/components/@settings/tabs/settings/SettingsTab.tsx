@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { classNames } from '~/utils/classNames';
@@ -7,6 +7,7 @@ import type { UserProfile } from '~/components/@settings/core/types';
 import { isMac } from '~/utils/os';
 import { useSettings } from '~/lib/hooks/useSettings';
 import { NOTIFICATION_SOUNDS, getSelectedSound, setSelectedSound, playTestSound as playTestAudio } from '~/utils/audio';
+import { debounce } from '~/utils/debounce';
 
 // Helper to get modifier key symbols/text
 const getModifierSymbol = (modifier: string): string => {
@@ -75,7 +76,9 @@ export default function SettingsTab() {
     chatSoundVolume, 
     setChatSoundVolume,
     alertSoundEnabled,
-    setAlertSoundEnabled 
+    setAlertSoundEnabled,
+    customInstructions, // Added custom instructions
+    setCustomInstructions // Added setter for custom instructions
   } = useSettings();
   
   const [selectedSound, setSelectedSoundState] = useState(() => getSelectedSound());
@@ -89,6 +92,29 @@ export default function SettingsTab() {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         };
   });
+
+  // Added local state for custom instructions to use with debounce
+  const [localInstructions, setLocalInstructions] = useState(customInstructions);
+
+  // Update local state if global state changes (e.g., initial load)
+  useEffect(() => {
+    setLocalInstructions(customInstructions);
+  }, [customInstructions]);
+
+  // Debounced update function
+  const debouncedUpdate = useCallback(
+    debounce((value: string) => {
+      setCustomInstructions(value);
+      toast.info('Instructions personnalisées sauvegardées');
+    }, 500), // Save 500ms after typing stops
+    [setCustomInstructions]
+  );
+
+  const handleInstructionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setLocalInstructions(newValue);
+    debouncedUpdate(newValue);
+  };
 
   useEffect(() => {
     setCurrentTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -294,8 +320,34 @@ export default function SettingsTab() {
         )}
       </SettingsSection>
 
+      {/* Custom Instructions Section - NEW */}
+      <SettingsSection icon="i-ph:user-focus-fill" title="Instructions Personnalisées" delay={0.25}>
+        <SettingsItem icon="i-ph:scroll-fill" label="Vos instructions pour l'IA">
+          <p className="text-xs text-bolt-elements-textSecondary mb-3">
+            Fournissez des instructions spécifiques (par exemple, style de réponse, persona, format de code) qui seront ajoutées au début de chaque prompt système.
+          </p>
+          <textarea
+            value={localInstructions}
+            onChange={handleInstructionChange}
+            className={classNames(
+              'w-full px-4 py-3 rounded-lg text-sm min-h-[150px] resize-y',
+              'bg-white dark:bg-[#0A0A0A]',
+              'border border-gray-200 dark:border-gray-800',
+              'text-bolt-elements-textPrimary',
+              'placeholder-gray-500 dark:placeholder-gray-400',
+              'focus:outline-none focus:ring-2 focus:ring-violet-500/30',
+              'transition-all duration-200',
+            )}
+            placeholder="Exemple : Agis comme un développeur senior spécialisé en Python. Explique toujours tes choix techniques. Formate le code avec des commentaires clairs."
+          />
+          <p className="text-xs text-bolt-elements-textTertiary mt-2">
+            Note : Ces instructions augmentent le nombre de tokens utilisés.
+          </p>
+        </SettingsItem>
+      </SettingsSection>
+
       {/* Fuseau horaire */}
-      <SettingsSection icon="i-ph:clock-fill" title="Paramètres horaires" delay={0.2}>
+      <SettingsSection icon="i-ph:clock-fill" title="Paramètres horaires" delay={0.3}>
         <SettingsItem icon="i-ph:globe-fill" label="Fuseau horaire">
           <select
             value={settings.timezone}
@@ -315,7 +367,7 @@ export default function SettingsTab() {
       </SettingsSection>
 
       {/* Raccourcis clavier simplifiés */}
-      <SettingsSection icon="i-ph:keyboard-fill" title="Raccourcis clavier" delay={0.3}>
+      <SettingsSection icon="i-ph:keyboard-fill" title="Raccourcis clavier" delay={0.35}>
         <div className="bg-gray-50 dark:bg-[#111111] rounded-xl p-5 transition-all hover:bg-gray-100 dark:hover:bg-[#151515]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
