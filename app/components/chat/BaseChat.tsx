@@ -817,7 +817,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       data-targeted-files="[]"
                       ref={textareaRef}
                       className={classNames(
-                        'w-full px-6 py-5 rounded-2xl outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary/60 bg-bolt-elements-background-depth-3 text-base transition-all duration-300 focus:ring-2 focus:ring-bolt-elements-focus ring-offset-2',
+                        'w-full px-6 py-5 rounded-2xl outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary/60 bg-bolt-elements-background-depth-3 text-base transition-all duration-300 ',
                         'transition-all duration-200',
                         'hover:border-bolt-elements-focus',
                       )}
