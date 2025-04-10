@@ -131,6 +131,8 @@ const SETTINGS_KEYS = {
   EVENT_LOGS: 'isEventLogsEnabled',
   PROMPT_ID: 'promptId',
   DEVELOPER_MODE: 'isDeveloperMode',
+  CHAT_SOUND_ENABLED: 'chatSoundEnabled',
+  CHAT_SOUND_VOLUME: 'chatSoundVolume',
   UI_ANALYSIS: 'uiAnalysisEnabled',
 } as const;
 
@@ -153,6 +155,24 @@ const getInitialSettings = () => {
       return defaultValue;
     }
   };
+  const getStoredNumber = (key: string, defaultValue: number): number => {
+    if (!isBrowser) {
+      return defaultValue;
+    }
+
+    const stored = localStorage.getItem(key);
+
+    if (stored === null) {
+      return defaultValue;
+    }
+
+    try {
+      const value = JSON.parse(stored);
+      return typeof value === 'number' ? value : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  };
 
   return {
     latestBranch: getStoredBoolean(SETTINGS_KEYS.LATEST_BRANCH, false),
@@ -161,6 +181,8 @@ const getInitialSettings = () => {
     eventLogs: getStoredBoolean(SETTINGS_KEYS.EVENT_LOGS, true),
     promptId: isBrowser ? localStorage.getItem(SETTINGS_KEYS.PROMPT_ID) || 'default' : 'default',
     developerMode: getStoredBoolean(SETTINGS_KEYS.DEVELOPER_MODE, false),
+    chatSoundEnabled: getStoredBoolean(SETTINGS_KEYS.CHAT_SOUND_ENABLED, true),
+    chatSoundVolume: getStoredNumber(SETTINGS_KEYS.CHAT_SOUND_VOLUME, 0.5),
     uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
   };
 };
@@ -173,6 +195,8 @@ export const autoSelectStarterTemplate = atom<boolean>(initialSettings.autoSelec
 export const enableContextOptimizationStore = atom<boolean>(initialSettings.contextOptimization);
 export const isEventLogsEnabled = atom<boolean>(initialSettings.eventLogs);
 export const promptStore = atom<string>(initialSettings.promptId);
+export const chatSoundEnabledStore = atom<boolean>(initialSettings.chatSoundEnabled);
+export const chatSoundVolumeStore = atom<number>(initialSettings.chatSoundVolume);
 export const uiAnalysisEnabled = atom<boolean>(initialSettings.uiAnalysis);
 
 // Helper functions to update settings with persistence
@@ -199,6 +223,15 @@ export const updateEventLogs = (enabled: boolean) => {
 export const updatePromptId = (id: string) => {
   promptStore.set(id);
   localStorage.setItem(SETTINGS_KEYS.PROMPT_ID, id);
+};
+export const updateChatSoundEnabled = (enabled: boolean) => {
+  chatSoundEnabledStore.set(enabled);
+  localStorage.setItem(SETTINGS_KEYS.CHAT_SOUND_ENABLED, JSON.stringify(enabled));
+};
+
+export const updateChatSoundVolume = (volume: number) => {
+  chatSoundVolumeStore.set(volume);
+  localStorage.setItem(SETTINGS_KEYS.CHAT_SOUND_VOLUME, JSON.stringify(volume));
 };
 
 export const updateUIAnalysis = (enabled: boolean) => {
