@@ -16,8 +16,13 @@ let commitJson = {
 
 console.log(`
 ★═══════════════════════════════════════★
-       N.E.U.R.O.C.O.D.E
+        N.E.U.R.O.C.O.D.E
          ⚡️  Welcome  ⚡️
+
+  Version: ${commitJson.version
+    .replace(/"/g, '')
+    .replace(/\n/g, '')}
+  }
 ★═══════════════════════════════════════★
 `);
 
