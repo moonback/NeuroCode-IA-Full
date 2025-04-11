@@ -167,7 +167,7 @@ export class FilesStore {
     this.#cleanupDeletedFiles();
 
     webcontainer.internal.watchPaths(
-      { include: [`${WORK_DIR}/**`], exclude: ['**/node_modules', '.git'], includeContent: true },
+      { include: [`${WORK_DIR}/**`], exclude: ['**/node_modules', '.git'], includeContent: false },
       bufferWatchEvents(100, this.#processEventBuffer.bind(this)),
     );
   }
