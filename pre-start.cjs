@@ -19,10 +19,9 @@ console.log(`
         N.E.U.R.O.C.O.D.E
          ⚡️  Welcome  ⚡️
 
-  Version: ${commitJson.version
-    .replace(/"/g, '')
-    .replace(/\n/g, '')}
-  }
+★═══════════════════════════════════════★
+  Commit Hash: ${commitJson.hash}
+  Version: ${commitJson.version}
 ★═══════════════════════════════════════★
 `);
 
