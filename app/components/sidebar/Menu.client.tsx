@@ -282,10 +282,10 @@ export const Menu = () => {
                       items: list.filter(item => selectedItems.includes(item.id))
                     });
                   }}
-                  className="flex-1 flex gap-2 items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
+                  className="flex-1 flex gap-2 items-center justify-center bg-red-500 dark:bg-red-500/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
                 >
-                  <span className="inline-block i-ph:trash h-4 w-4" />
-                  <span className="text-sm font-medium">Supprimer ({selectedItems.length})</span>
+                  <span className="inline-block text-white i-ph:trash h-4 w-4" />
+                  <span className="text-sm text-white font-medium">Supprimer ({selectedItems.length})</span>
                 </button>
                 <button
                   onClick={() => {
@@ -374,7 +374,7 @@ export const Menu = () => {
                             : 'Êtes-vous sûr de vouloir supprimer ces discussions ?'}
                         </p>
                       </DialogDescription>
-                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-500/30">
+                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-white rounded-lg border border-red-200 dark:border-red-500/30">
                         ⚠️ Cette action est irréversible - toutes les données {dialogContent.type === 'delete' ? 'de la discussion' : 'des discussions'} seront définitivement perdues !
                       </div>
                     </div>
@@ -406,7 +406,7 @@ export const Menu = () => {
           <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-4 py-3">
             <SettingsButton onClick={handleSettingsClick} />
             <div className="flex items-center gap-3">
-              {/* <button
+              <button
                 onClick={() => setAutoSelectTemplate(!autoSelectTemplate)}
                 className={classNames(
                   'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
@@ -417,7 +417,7 @@ export const Menu = () => {
                 title={`Sélection automatique des modèles ${autoSelectTemplate ? 'activée' : 'désactivée'}`}
               >
                 <span className="i-ph:robot-duotone text-lg" />
-              </button> */}
+              </button>
               <button
                 onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
                 className={classNames(
