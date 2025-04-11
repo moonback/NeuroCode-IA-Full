@@ -97,27 +97,39 @@ export const Markdown = memo(({ children, html = false, limitedMarkdown = false 
  * - Preserves original content if no artifact is found
  * - Safely handles edge cases like empty input or artifacts at start/end of content
  */
-export const stripCodeFenceFromArtifact = (content: string) => {
-  if (!content || !content.includes('__boltArtifact__')) {
-    return content;
+function stripCodeFenceFromArtifact(content: any) {
+  // Ensure content is a string before using string methods
+  if (typeof content !== 'string') {
+    // If it's an object with a text property (like from createSummary), use that
+    if (content && typeof content === 'object' && 'text' in content) {
+      return typeof content.text === 'string' ? content.text : String(content.text || '');
+    }
+    // Otherwise convert to string if possible
+    return content === null || content === undefined ? '' : String(content);
   }
-
-  const lines = content.split('\n');
-  const artifactLineIndex = lines.findIndex((line) => line.includes('__boltArtifact__'));
-
-  // Return original content if artifact line not found
-  if (artifactLineIndex === -1) {
-    return content;
+  
+  // Now it's safe to use string methods
+  if (content.includes('```')) {
+    // Original code for handling code fences
+    const lines = content.split('\n');
+    const artifactLineIndex = lines.findIndex((line) => line.includes('__boltArtifact__'));
+  
+    // Return original content if artifact line not found
+    if (artifactLineIndex === -1) {
+      return content;
+    }
+  
+    // Check previous line for code fence
+    if (artifactLineIndex > 0 && lines[artifactLineIndex - 1]?.trim().match(/^```\w*$/)) {
+      lines[artifactLineIndex - 1] = '';
+    }
+  
+    if (artifactLineIndex < lines.length - 1 && lines[artifactLineIndex + 1]?.trim().match(/^```$/)) {
+      lines[artifactLineIndex + 1] = '';
+    }
+  
+    return lines.join('\n');
   }
-
-  // Check previous line for code fence
-  if (artifactLineIndex > 0 && lines[artifactLineIndex - 1]?.trim().match(/^```\w*$/)) {
-    lines[artifactLineIndex - 1] = '';
-  }
-
-  if (artifactLineIndex < lines.length - 1 && lines[artifactLineIndex + 1]?.trim().match(/^```$/)) {
-    lines[artifactLineIndex + 1] = '';
-  }
-
-  return lines.join('\n');
-};
+  
+  return content;
+}
