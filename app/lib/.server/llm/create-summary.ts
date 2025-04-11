@@ -14,9 +14,10 @@ export async function createSummary(props: {
   providerSettings?: Record<string, IProviderSetting>;
   promptId?: string;
   contextOptimization?: boolean;
+  customInstructions?: string; // Add support for custom instructions
   onFinish?: (resp: GenerateTextResult<Record<string, CoreTool<any, any>>, never>) => void;
 }) {
-  const { messages, env: serverEnv, apiKeys, providerSettings, onFinish } = props;
+  const { messages, env: serverEnv, apiKeys, providerSettings, onFinish, customInstructions } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
   const processedMessages = messages.map((message) => {
@@ -103,6 +104,7 @@ ${summary.summary}`;
   const resp = await generateText({
     system: `
         You are a software engineer. You are working on a project. you need to summarize the work till now and provide a summary of the chat till now.
+        ${customInstructions ? `\n\nAdditional instructions: ${customInstructions}` : ''}
 
         Please only use the following format to generate the summary:
 ---
@@ -187,11 +189,67 @@ Please provide a summary of the chat till now including the hitorical summary of
     }),
   });
 
+  // Simple function to evaluate summary quality
+  const evaluateSummaryQuality = (summary: string): { score: number; feedback: string[] } => {
+    // Ensure summary is a string
+    const summaryText = typeof summary === 'string' ? summary : String(summary || '');
+    
+    const metrics = {
+      length: summaryText.length,
+      hasProjectOverview: summaryText.includes('Project Overview'),
+      hasConversationContext: summaryText.includes('Conversation Context'),
+      hasImplementationStatus: summaryText.includes('Implementation Status'),
+      wordCount: summaryText.split(/\s+/).length
+    };
+    
+    let score = 0;
+    let feedback: string[] = [];
+    
+    // Basic scoring logic
+    if (metrics.wordCount > 100) score += 1;
+    if (metrics.wordCount > 200) score += 1;
+    if (metrics.hasProjectOverview) score += 2;
+    if (metrics.hasConversationContext) score += 2;
+    if (metrics.hasImplementationStatus) score += 2;
+    
+    // Generate feedback
+    if (!metrics.hasProjectOverview) feedback.push('Missing project overview');
+    if (!metrics.hasConversationContext) feedback.push('Missing conversation context');
+    if (!metrics.hasImplementationStatus) feedback.push('Missing implementation status');
+    if (metrics.wordCount < 100) feedback.push('Summary is too short');
+    
+    return { 
+      score: Math.min(10, score), // Score out of 10
+      feedback: feedback.length ? feedback : ['Good summary'] // Return array instead of joined string
+    };
+  };
+  
   const response = resp.text;
+  // Ensure response is a string before evaluating
+  const qualityMetrics = evaluateSummaryQuality(response || '');
+  
+  // Use JSON.stringify to properly log the object
+  logger.debug('Summary quality metrics:', JSON.stringify(qualityMetrics));
+  
+  // Add detailed token usage tracking
+  const usage = {
+    completionTokens: resp.usage?.completionTokens || 0,
+    promptTokens: resp.usage?.promptTokens || 0,
+    totalTokens: resp.usage?.totalTokens || 0,
+    model: modelDetails.name,
+    provider: provider.name
+  };
+  
+  // Use JSON.stringify to properly log the object
+  logger.debug('Summary generation token usage:', JSON.stringify(usage));
 
   if (onFinish) {
     onFinish(resp);
   }
 
-  return response;
+  // Ensure we're returning a string for the text property
+  return {
+    text: typeof response === 'string' ? response : String(response || ''),
+    usage
+  };
 }
