@@ -175,8 +175,58 @@ export default function SettingsTab() {
     <p className="text-xs text-bolt-elements-textSecondary mb-3">
       Personnalisez l'IA en définissant des instructions spécifiques qui seront appliquées à chaque conversation. Configurez le style, le ton et le format des réponses selon vos besoins.
     </p>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-      {/* Preset instruction buttons */}
+    
+    {/* Active instruction indicator */}
+    <div className="bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800/30 rounded-lg p-3 mb-4">
+      <div className="flex items-start gap-3">
+        <div className="i-ph:lightbulb-fill w-5 h-5 text-violet-500 mt-0.5" />
+        <div>
+          <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-1">Mode actif</h4>
+          <p className="text-xs text-bolt-elements-textSecondary">
+            {localInstructions === "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns." ? (
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-violet-500"></span>
+                Mode Expert
+              </span>
+            ) : localInstructions === "Adopts a detailed teaching approach. Breaks down each technical concept into easily understandable elements. Uses relevant analogies and practical examples to illustrate explanations. Guides students gradually through solutions by explaining each decision." ? (
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Mode Pédagogique
+              </span>
+            ) : localInstructions === "Provide direct and effective answers. Focus on the essentials with optimized code and strategic comments. Prioritize clarity and conciseness while maintaining technical quality." ? (
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                Mode Concis
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                Mode Personnalisé
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Tabs for instruction categories */}
+    {/* <div className="mb-4">
+      <div className="flex space-x-1 border-b border-gray-200 dark:border-gray-800 mb-4">
+        <button
+          className={classNames(
+            'px-4 py-2 text-sm font-medium rounded-t-lg transition-all',
+            'border-b-2',
+            'focus:outline-none',
+            'border-violet-500 text-violet-600 dark:text-violet-400'
+          )}
+        >
+          Styles de communication
+        </button>
+      </div>
+    </div> */}
+
+    {/* Communication style presets */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
       <button
         onClick={() => {
           const expertInstructions = "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns.";
@@ -184,8 +234,15 @@ export default function SettingsTab() {
           debouncedUpdate(expertInstructions);
           toast.info('Mode expert activé');
         }}
-        className="px-3 py-2.5 text-xs font-semibold text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95"
+        className={classNames(
+          'px-3 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95',
+          'flex items-center justify-center gap-2',
+          localInstructions === "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns." ?
+            'text-white bg-violet-600 hover:bg-violet-700 ring-2 ring-violet-300 dark:ring-violet-800' :
+            'text-violet-700 dark:text-gray-300 bg-violet-100 dark:bg-violet-900/20 hover:bg-violet-200 dark:hover:bg-violet-900/30'
+        )}
       >
+        <div className="i-ph:code-fill w-3.5 h-3.5" />
         Mode Expert
       </button>
       <button
@@ -195,8 +252,15 @@ export default function SettingsTab() {
           debouncedUpdate(teachingInstructions);
           toast.info('Mode pédagogique activé');
         }}
-        className="px-3 py-2.5 text-xs font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95"
+        className={classNames(
+          'px-3 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95',
+          'flex items-center justify-center gap-2',
+          localInstructions === "Adopts a detailed teaching approach. Breaks down each technical concept into easily understandable elements. Uses relevant analogies and practical examples to illustrate explanations. Guides students gradually through solutions by explaining each decision." ?
+            'text-white bg-green-600 hover:bg-green-700 ring-2 ring-green-300 dark:ring-green-800' :
+            'text-green-700 dark:text-gray-300 bg-green-100 dark:bg-green-900/20 hover:bg-green-200 dark:hover:bg-green-900/30'
+        )}
       >
+        <div className="i-ph:student-fill w-3.5 h-3.5" />
         Mode Pédagogique
       </button>
       <button
@@ -206,31 +270,115 @@ export default function SettingsTab() {
           debouncedUpdate(conciseInstructions);
           toast.info('Mode concis activé');
         }}
-        className="px-3 py-2.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95"
+        className={classNames(
+          'px-3 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95',
+          'flex items-center justify-center gap-2',
+          localInstructions === "Provide direct and effective answers. Focus on the essentials with optimized code and strategic comments. Prioritize clarity and conciseness while maintaining technical quality." ?
+            'text-white bg-blue-600 hover:bg-blue-700 ring-2 ring-blue-300 dark:ring-blue-800' :
+            'text-blue-700 dark:text-gray-300 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30'
+        )}
       >
+        <div className="i-ph:lightning-fill w-3.5 h-3.5" />
         Mode Concis
       </button>
     </div>
-    <textarea
-      value={localInstructions}
-      onChange={handleInstructionChange}
-      className={classNames(
-        'w-full px-4 py-3 rounded-lg text-sm min-h-[150px] resize-y',
-        'bg-white dark:bg-[#0A0A0A]',
-        'border border-gray-200 dark:border-gray-800',
-        'text-bolt-elements-textPrimary',
-        'placeholder-gray-500 dark:placeholder-gray-400',
-        'focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500',
-        'transition-all duration-200',
-        'hover:border-violet-400'
-      )}
-      placeholder="Personnalisez vos instructions : définissez le style de communication, le niveau de détail technique, et les préférences de formatage du code..."
-    />
-    <div className="flex items-center gap-2 mt-2">
-      <div className="i-ph:info-fill w-4 h-4 text-violet-500" />
-      <p className="text-xs text-bolt-elements-textTertiary">
-        Les modifications sont sauvegardées automatiquement après 5 secondes. L'ajout d'instructions détaillées peut augmenter l'utilisation des tokens.
-      </p>
+
+    {/* Domain-specific presets */}
+    {/* <div className="mb-4">
+      <h4 className="text-xs font-medium text-bolt-elements-textSecondary mb-2 flex items-center gap-1.5">
+        <div className="i-ph:code-block-fill w-3.5 h-3.5" />
+        Spécialisations techniques
+      </h4>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <button
+          onClick={() => {
+            const webDevInstructions = "Focus on modern web development best practices. Prioritize responsive design, accessibility, and performance optimization. Provide code examples using modern frameworks and explain browser compatibility considerations.";
+            setLocalInstructions(webDevInstructions);
+            debouncedUpdate(webDevInstructions);
+            toast.info('Mode développement web activé');
+          }}
+          className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+        >
+          Web Development
+        </button>
+        <button
+          onClick={() => {
+            const dataInstructions = "Emphasize data science and machine learning concepts. Provide detailed explanations of algorithms, statistical methods, and model evaluation. Include code examples with popular data science libraries and visualization techniques.";
+            setLocalInstructions(dataInstructions);
+            debouncedUpdate(dataInstructions);
+            toast.info('Mode data science activé');
+          }}
+          className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+        >
+          Data Science
+        </button>
+        <button
+          onClick={() => {
+            const mobileInstructions = "Focus on mobile app development best practices. Provide platform-specific guidance for iOS and Android. Emphasize UI/UX considerations, performance optimization, and native capabilities.";
+            setLocalInstructions(mobileInstructions);
+            debouncedUpdate(mobileInstructions);
+            toast.info('Mode développement mobile activé');
+          }}
+          className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+        >
+          Mobile Development
+        </button>
+        <button
+          onClick={() => {
+            const devopsInstructions = "Prioritize DevOps and infrastructure concepts. Explain CI/CD pipelines, containerization, cloud services, and infrastructure as code. Focus on automation, scalability, and security best practices.";
+            setLocalInstructions(devopsInstructions);
+            debouncedUpdate(devopsInstructions);
+            toast.info('Mode DevOps activé');
+          }}
+          className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+        >
+          DevOps
+        </button>
+      </div>
+    </div> */}
+
+    {/* Custom instructions textarea */}
+    <div className="relative">
+      <textarea
+        value={localInstructions}
+        onChange={handleInstructionChange}
+        className={classNames(
+          'w-full px-4 py-3 rounded-lg text-sm min-h-[150px] resize-y',
+          'bg-white dark:bg-[#0A0A0A]',
+          'border border-gray-200 dark:border-gray-800',
+          'text-bolt-elements-textPrimary',
+          'placeholder-gray-500 dark:placeholder-gray-400',
+          'focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500',
+          'transition-all duration-200',
+          'hover:border-violet-400'
+        )}
+        placeholder="Personnalisez vos instructions : définissez le style de communication, le niveau de détail technique, et les préférences de formatage du code..."
+      />
+      <div className="absolute bottom-3 right-3">
+        <div className="text-xs text-bolt-elements-textTertiary bg-white dark:bg-[#0A0A0A] px-2 py-1 rounded-md border border-gray-200 dark:border-gray-800">
+          {localInstructions.length} caractères
+        </div>
+      </div>
+    </div>
+
+    {/* Info and save indicator */}
+    <div className="flex items-center justify-between mt-3">
+      <div className="flex items-center gap-2">
+        <div className="i-ph:info-fill w-4 h-4 text-violet-500" />
+        <p className="text-xs text-bolt-elements-textTertiary">
+          Les modifications sont sauvegardées automatiquement après 5 secondes. L'ajout d'instructions détaillées peut augmenter l'utilisation des tokens.
+        </p>
+      </div>
+      <button
+        onClick={() => {
+          setLocalInstructions("");
+          debouncedUpdate("");
+          toast.info('Instructions réinitialisées');
+        }}
+        className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-all duration-200"
+      >
+        Réinitialiser
+      </button>
     </div>
   </SettingsItem>
 </SettingsSection>
