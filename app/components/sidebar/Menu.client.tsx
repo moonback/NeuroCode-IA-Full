@@ -374,7 +374,7 @@ export const Menu = () => {
                             : 'Êtes-vous sûr de vouloir supprimer ces discussions ?'}
                         </p>
                       </DialogDescription>
-                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-500/30">
+                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/30 text-red-700 dark:text-white rounded-lg border border-red-200 dark:border-red-500/30">
                         ⚠️ Cette action est irréversible - toutes les données {dialogContent.type === 'delete' ? 'de la discussion' : 'des discussions'} seront définitivement perdues !
                       </div>
                     </div>
