@@ -282,10 +282,10 @@ export const Menu = () => {
                       items: list.filter(item => selectedItems.includes(item.id))
                     });
                   }}
-                  className="flex-1 flex gap-2 items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
+                  className="flex-1 flex gap-2 items-center justify-center bg-red-500 dark:bg-red-500/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
                 >
                   <span className="inline-block i-ph:trash h-4 w-4" />
-                  <span className="text-sm font-medium">Supprimer ({selectedItems.length})</span>
+                  <span className="text-sm text-white font-medium">Supprimer ({selectedItems.length})</span>
                 </button>
                 <button
                   onClick={() => {
