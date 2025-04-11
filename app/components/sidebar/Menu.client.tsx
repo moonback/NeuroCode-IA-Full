@@ -406,7 +406,7 @@ export const Menu = () => {
           <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-4 py-3">
             <SettingsButton onClick={handleSettingsClick} />
             <div className="flex items-center gap-3">
-              <button
+{/*               <button
                 onClick={() => setAutoSelectTemplate(!autoSelectTemplate)}
                 className={classNames(
                   'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
@@ -417,7 +417,7 @@ export const Menu = () => {
                 title={`Sélection automatique des modèles ${autoSelectTemplate ? 'activée' : 'désactivée'}`}
               >
                 <span className="i-ph:robot-duotone text-lg" />
-              </button>
+              </button> */}
               <button
                 onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
                 className={classNames(
