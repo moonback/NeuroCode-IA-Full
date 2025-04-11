@@ -421,19 +421,19 @@ export const Menu = () => {
               <button
                 onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
                 className={classNames(
-                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+                  'group relative flex items-center justify-center w-5 h-5 rounded-lg transition-colors',
                   contextOptimizationEnabled
                     ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                 )}
                 title={`Optimisation du contexte ${contextOptimizationEnabled ? 'activée' : 'désactivée'}`}
               >
-                <span className="i-ph:sparkle-duotone text-lg" />
+              <span className="i-ph-brain-duotone text-xl" />              
               </button>
               <select
                 value={promptId}
                 onChange={(e) => setPromptId(e.target.value)}
-                className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                className=" bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
               >
                 {PromptLibrary.getList().map((prompt) => (
                   <option key={prompt.id} value={prompt.id}>
