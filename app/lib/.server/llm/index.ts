@@ -6,3 +6,4 @@ export * from './stream-text';
 export * from './switchable-stream';
 export * from './utils';
 export * from './context-cache';
+export * from './enhanced-context-cache';
