@@ -238,8 +238,10 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
     const chatSummary = chatSummaryAnnotation?.summary;
     
     // Extraction des métriques de qualité
+    const qualityMetricsAnnotation = filteredAnnotations.find((annotation) => annotation.type === 'qualityMetrics');
     const qualityMetrics = chatSummaryAnnotation?.qualityMetrics || 
-                          filteredAnnotations.find((annotation) => annotation.type === 'qualityMetrics')?.value;
+                          qualityMetricsAnnotation?.value || 
+                          qualityMetricsAnnotation;
     
     // Extraction du contexte de code
     const codeContextAnnotation = filteredAnnotations.find((annotation) => annotation.type === 'codeContext');
