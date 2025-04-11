@@ -1,9 +1,10 @@
-import { memo, useState } from 'react';
+import { memo, useState, type Key } from 'react';
 import { Markdown } from './Markdown';
 import type { JSONValue } from 'ai';
 import Popover from '~/components/ui/Popover';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { WORK_DIR } from '~/utils/constants';
+import Tooltip from '~/components/ui/Tooltip';
 
 interface AssistantMessageProps {
   content: string;
@@ -36,22 +37,31 @@ function normalizedFilePath(path: string) {
 
 export const AssistantMessage = memo(({ content, annotations }: AssistantMessageProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'summary' | 'code'>('summary');
+  
+  // Improved filtering with type safety
   const filteredAnnotations = (annotations?.filter(
     (annotation: JSONValue) => annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
   ) || []) as { type: string; value: any } & { [key: string]: any }[];
 
-  let chatSummary: string | undefined = undefined;
+  // Extract chat summary
+  const chatSummaryAnnotation = filteredAnnotations.find((annotation) => annotation.type === 'chatSummary');
+  const chatSummary = chatSummaryAnnotation?.summary;
+  
+  // Extract quality metrics if available - fix the extraction path
+  const qualityMetrics = chatSummaryAnnotation?.qualityMetrics || 
+                         filteredAnnotations.find((annotation) => annotation.type === 'qualityMetrics')?.value;
+  
+  // Add debug logging to see what's in the annotations
+  console.log('Filtered annotations:', filteredAnnotations);
+  console.log('Chat summary annotation:', chatSummaryAnnotation);
+  console.log('Quality metrics:', qualityMetrics);
 
-  if (filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')) {
-    chatSummary = filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')?.summary;
-  }
+  // Extract code context
+  const codeContextAnnotation = filteredAnnotations.find((annotation) => annotation.type === 'codeContext');
+  const codeContext = codeContextAnnotation?.files;
 
-  let codeContext: string[] | undefined = undefined;
-
-  if (filteredAnnotations.find((annotation) => annotation.type === 'codeContext')) {
-    codeContext = filteredAnnotations.find((annotation) => annotation.type === 'codeContext')?.files;
-  }
-
+  // Extract token usage
   const usage: {
     completionTokens: number;
     promptTokens: number;
@@ -70,19 +80,19 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
               >
                 <div className="i-ph:info-fill text-blue-400/80 group-hover:text-blue-400" />
                 <span className="text-xs text-gray-400 group-hover:text-gray-300">
-                Contexte et résumé
+                  Contexte et résumé
                 </span>
               </div>
 
               {isPopoverOpen && (
                 <div 
-                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center"
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center gap-2 "
                   onClick={() => setIsPopoverOpen(false)}
                   style={{ isolation: 'isolate' }}
                 >
                   <div 
-                    className="w-[600px] ml-4 mt-[-150px] bg-gray-900/95 rounded-xl shadow-2xl border border-gray-700/50 
-                             animate-in slide-in-from-left duration-200 relative z-[10000]"
+                    className="w-[500px] max-w-[90vw] bg-gray-900/95 rounded-xl shadow-2xl border border-gray-700/50 
+                             animate-in fade-in-50 duration-200 relative z-[10000]"
                     onClick={e => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between p-3 border-b border-gray-700/50">
@@ -93,35 +103,82 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                       <button 
                         onClick={() => setIsPopoverOpen(false)}
                         className="p-1 hover:bg-gray-800 rounded-full transition-colors"
+                        aria-label="Fermer"
                       >
                         <div className="i-ph:x-bold w-4 h-4 text-gray-400" />
                       </button>
                     </div>
 
+                    {/* Tabs navigation */}
+                    {chatSummary && codeContext && (
+                      <div className="flex border-b border-gray-700/50">
+                        <button
+                          className={`px-4 py-2 text-sm font-medium transition-colors ${
+                            activeTab === 'summary' 
+                              ? 'text-blue-400 border-b-2 border-blue-400' 
+                              : 'text-gray-400 hover:text-gray-300'
+                          }`}
+                          onClick={() => setActiveTab('summary')}
+                        >
+                          Résumé
+                        </button>
+                        <button
+                          className={`px-4 py-2 text-sm font-medium transition-colors ${
+                            activeTab === 'code' 
+                              ? 'text-blue-400 border-b-2 border-blue-400' 
+                              : 'text-gray-400 hover:text-gray-300'
+                          }`}
+                          onClick={() => setActiveTab('code')}
+                        >
+                          Fichiers ({codeContext.length})
+                        </button>
+                      </div>
+                    )}
+
                     <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
-                      {chatSummary && (
+                      {/* Summary tab content */}
+                      {chatSummary && (activeTab === 'summary' || !codeContext) && (
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-300">
                             <div className="i-ph:text-aa-fill text-blue-400" />
                             <h3 className="font-medium">Résumé</h3>
+                            
+                            {qualityMetrics && (
+                              <Tooltip tooltip={`Qualité: ${qualityMetrics.score}/10 - ${
+                                Array.isArray(qualityMetrics.feedback) 
+                                  ? qualityMetrics.feedback.join(', ') 
+                                  : qualityMetrics.feedback
+                              }`}>
+                                <div className={`ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
+                                  qualityMetrics.score >= 7 
+                                    ? 'bg-green-500/20 text-green-400' 
+                                    : qualityMetrics.score >= 4 
+                                      ? 'bg-yellow-500/20 text-yellow-400' 
+                                      : 'bg-red-500/20 text-red-400'
+                                }`}>
+                                  {qualityMetrics.score}/10
+                                </div>
+                              </Tooltip>
+                            )}
                           </div>
-                          <div className="prose prose-sm prose-invert max-h-[300px] overflow-y-auto custom-scrollbar bg-gray-800/30 rounded-lg p-3">
+                          <div className="prose prose-sm prose-invert max-h-[400px] overflow-y-auto custom-scrollbar bg-gray-800/30 rounded-lg p-3">
                             <Markdown>{chatSummary}</Markdown>
                           </div>
                         </div>
                       )}
                       
-                      {codeContext && (
+                      {/* Code context tab content */}
+                      {codeContext && (activeTab === 'code' || !chatSummary) && (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-sm text-gray-300">
                               <div className="i-ph:code-fill text-blue-400" />
                               <h3 className="font-medium">Fichiers référencés</h3>
                             </div>
-                            <span className="text-xs text-gray-500">{codeContext.length} files</span>
+                            <span className="text-xs text-gray-500">{codeContext.length} fichiers</span>
                           </div>
-                          <div className="flex flex-wrap gap-2 bg-gray-800/30 rounded-lg p-3">
-                            {codeContext.map((x, index) => {
+                          <div className="flex flex-wrap gap-2 bg-gray-800/30 rounded-lg p-3 max-h-[400px] overflow-y-auto">
+                            {codeContext.map((x: string, index: Key | null | undefined) => {
                               const normalized = normalizedFilePath(x);
                               return (
                                 <code
@@ -133,6 +190,7 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                                     e.preventDefault();
                                     e.stopPropagation();
                                     openArtifactInWorkbench(normalized);
+                                    setIsPopoverOpen(false);
                                   }}
                                 >
                                   <div className="i-ph:file-code group-hover:scale-110 transition-transform" />
@@ -150,9 +208,13 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
             </>
           )}
           {usage && (
-            <div>
-              Tokens: {usage.totalTokens} (prompt: {usage.promptTokens}, completion: {usage.completionTokens})
-            </div>
+            <Tooltip tooltip="Nombre total de tokens utilisés pour cette réponse">
+              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-800/30 text-xs">
+                <div className="i-ph:calculator text-gray-400" />
+                <span>{usage.totalTokens} tokens</span>
+                <span className="text-gray-500 text-[10px]">({usage.promptTokens}+{usage.completionTokens})</span>
+              </div>
+            </Tooltip>
           )}
         </div>
       </>
