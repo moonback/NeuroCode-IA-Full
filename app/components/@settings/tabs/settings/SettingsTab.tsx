@@ -213,7 +213,7 @@ export default function SettingsTab() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
       <button
         onClick={() => {
-          const expertInstructions = "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns.";
+          const expertInstructions = "Act as a senior software architect with deep technical expertise. Provide comprehensive solutions with: 1) In-depth technical explanations of concepts and design decisions 2) Production-ready code following industry best practices 3) Performance optimization techniques 4) Security considerations 5) Scalability patterns 6) Detailed documentation and comments explaining complex logic. Focus on robust architecture, maintainability, and advanced design patterns. Include error handling and edge cases.";
           setLocalInstructions(expertInstructions);
           debouncedUpdate(expertInstructions);
           toast.info('Mode expert activé');
@@ -221,7 +221,7 @@ export default function SettingsTab() {
         className={classNames(
           'px-3 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95',
           'flex items-center justify-center gap-2',
-          localInstructions === "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns." ?
+          localInstructions === "Act as a senior software architect with deep technical expertise. Provide comprehensive solutions with: 1) In-depth technical explanations of concepts and design decisions 2) Production-ready code following industry best practices 3) Performance optimization techniques 4) Security considerations 5) Scalability patterns 6) Detailed documentation and comments explaining complex logic. Focus on robust architecture, maintainability, and advanced design patterns. Include error handling and edge cases." ?
             'text-white bg-violet-600 hover:bg-violet-700 ring-2 ring-violet-300 dark:ring-violet-800' :
             'text-violet-700 dark:text-gray-300 bg-violet-100 dark:bg-violet-900/20 hover:bg-violet-200 dark:hover:bg-violet-900/30'
         )}
@@ -231,7 +231,7 @@ export default function SettingsTab() {
       </button>
       <button
         onClick={() => {
-          const teachingInstructions = "Adopts a detailed teaching approach. Breaks down each technical concept into easily understandable elements. Uses relevant analogies and practical examples to illustrate explanations. Guides students gradually through solutions by explaining each decision.";
+          const teachingInstructions = "Act as a programming mentor focused on learning and understanding. For each solution: 1) Break down complex concepts into simple, digestible parts 2) Provide step-by-step explanations with clear reasoning 3) Use relevant analogies and real-world examples 4) Include code comments explaining the purpose of each significant block 5) Highlight best practices and common pitfalls 6) Suggest resources for further learning. Guide through the thought process and explain why certain approaches are chosen over others.";
           setLocalInstructions(teachingInstructions);
           debouncedUpdate(teachingInstructions);
           toast.info('Mode pédagogique activé');
