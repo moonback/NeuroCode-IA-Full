@@ -334,7 +334,7 @@ const formatFileSize = (bytes: number): string => {
                         className="object-cover w-full h-full"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5">
-                        <div className="text-[9px] text-white/90 truncate w-full">
+                        <div className="text-[13px] text-white/90 truncate w-full">
                           {file.name}
                         </div>
                       </div>
@@ -357,11 +357,11 @@ const formatFileSize = (bytes: number): string => {
                         alt={`${file.name} (page 1)`}
                         className="object-contain w-full h-full bg-white/5"
                       />
-                      <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[8px] px-1.5 py-0.5 rounded">
+                      <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[15px] px-1.5 py-0.5 rounded">
                         {getPdfThumbnail(file)?.pageCount || '?'} pages
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5">
-                        <div className="text-[9px] text-white/90 truncate w-full">
+                        <div className="text-[13px] text-white/90 truncate w-full">
                           {file.name}
                         </div>
                       </div>
@@ -370,11 +370,11 @@ const formatFileSize = (bytes: number): string => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center p-3 w-[100px] h-[100px] rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-900/70">
-                    <div className={`${getFileIcon(file.type)} w-8 h-8 text-blue-400`} />
+                    <div className={`${getFileIcon(file.type)} w-8 h-8 text-violet-400`} />
                     <div className="text-xs text-gray-300 mt-2 text-center truncate w-full px-1">
                       {file.name}
                     </div>
-                    <div className="text-[10px] text-gray-500 mt-0.5">
+                    <div className="text-[12px] text-gray-500 mt-0.5">
                       {formatFileSize(file.size)}
                     </div>
                   </div>
