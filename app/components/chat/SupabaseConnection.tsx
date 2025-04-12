@@ -77,44 +77,46 @@ export function SupabaseConnection() {
 
   return (
     <div className="relative">
-      <div className="flex border border-bolt-elements-borderColor rounded-md overflow-hidden mr-2 text-sm">
+      <div className="flex border border-bolt-elements-borderColor rounded-md overflow-hidden mr-2 text-sm hover:shadow-md transition-all duration-200">
         <Button
           active
           disabled={connecting}
           onClick={() => setIsDialogOpen(!isDialogOpen)}
-          className="hover:bg-bolt-elements-item-backgroundActive !text-white flex items-center gap-2"
+          className="hover:bg-bolt-elements-item-backgroundActive !text-white flex items-center gap-2 px-3 py-2"
         >
           <img
-            className="w-4 h-4"
+            className="w-5 h-5 transition-transform hover:scale-110"
             height="20"
             width="20"
             crossOrigin="anonymous"
             src="https://cdn.simpleicons.org/supabase"
           />
-          {isConnected && supabaseConn.project && (
-            <span className="ml-1 text-xs max-w-[100px] truncate">{supabaseConn.project.name}</span>
+          {isConnected && supabaseConn.project ? (
+            <span className="ml-1 text-sm font-medium max-w-[120px] truncate">{supabaseConn.project.name}</span>
+          ) : (
+            <span className="ml-1 text-sm">Connect to Supabase</span>
           )}
         </Button>
       </div>
 
       <DialogRoot open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {isDialogOpen && (
-          <Dialog className="max-w-[520px] p-6">
+          <Dialog className="max-w-[580px] p-8 bg-white dark:bg-[#1E1E1E] shadow-xl rounded-xl">
             {!isConnected ? (
-              <div className="space-y-4">
-                <DialogTitle>
+              <div className="space-y-6">
+                <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
                   <img
-                    className="w-5 h-5"
-                    height="24"
-                    width="24"
+                    className="w-8 h-8"
+                    height="32"
+                    width="32"
                     crossOrigin="anonymous"
                     src="https://cdn.simpleicons.org/supabase"
                   />
                   Se connecter à Supabase
                 </DialogTitle>
 
-                <div>
-                  <label className="block text-sm text-bolt-elements-textSecondary mb-2">Access Token</label>
+                <div className="bg-[#F9FAFB] dark:bg-[#2D2D2D] p-6 rounded-lg">
+                  <label className="block text-sm font-medium text-bolt-elements-textSecondary mb-2">Access Token</label>
                   <input
                     type="password"
                     value={supabaseConn.token}
@@ -122,22 +124,23 @@ export function SupabaseConnection() {
                     disabled={connecting}
                     placeholder="Entrez votre jeton d'accès Supabase"
                     className={classNames(
-                      'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-[#F8F8F8] dark:bg-[#1A1A1A]',
-                      'border border-[#E5E5E5] dark:border-[#333333]',
+                      'w-full px-4 py-3 rounded-lg text-sm',
+                      'bg-white dark:bg-[#1A1A1A]',
+                      'border-2 border-[#E5E7EB] dark:border-[#333333]',
                       'text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary',
-                      'focus:outline-none focus:ring-1 focus:ring-[#3ECF8E]',
-                      'disabled:opacity-50',
+                      'focus:outline-none focus:ring-2 focus:ring-[#3ECF8E] focus:border-transparent',
+                      'disabled:opacity-50 transition-all duration-200',
                     )}
                   />
-                  <div className="mt-2 text-sm text-bolt-elements-textSecondary">
+                  <div className="mt-3 text-sm text-bolt-elements-textSecondary">
                     <a
                       href="https://app.supabase.com/account/tokens"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#3ECF8E] hover:underline inline-flex items-center gap-1"
+                      className="text-[#3ECF8E] hover:text-[#2EBF7E] inline-flex items-center gap-2 transition-colors"
                     >
-                      Obtenez votre jeton
+                      <div className="i-ph:key-bold w-4 h-4" />
+                      Obtenez votre jeton d'accès
                       <div className="i-ph:arrow-square-out w-4 h-4" />
                     </a>
                   </div>
@@ -172,13 +175,13 @@ export function SupabaseConnection() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                  <DialogTitle>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-4">
+                  <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
                     <img
-                      className="w-5 h-5"
-                      height="24"
-                      width="24"
+                      className="w-8 h-8"
+                      height="32"
+                      width="32"
                       crossOrigin="anonymous"
                       src="https://cdn.simpleicons.org/supabase"
                     />
@@ -186,10 +189,16 @@ export function SupabaseConnection() {
                   </DialogTitle>
                 </div>
 
-                <div className="flex items-center gap-4 p-3 bg-[#F8F8F8] dark:bg-[#1A1A1A] rounded-lg">
+                <div className="flex items-center gap-4 p-4 bg-[#F9FAFB] dark:bg-[#2D2D2D] rounded-lg border border-[#E5E7EB] dark:border-[#333333]">
+                  <div className="p-3 bg-[#3ECF8E] bg-opacity-10 rounded-full">
+                    <div className="i-ph:user-circle-bold w-6 h-6 text-[#3ECF8E]" />
+                  </div>
                   <div>
-                    <h4 className="text-sm font-medium text-bolt-elements-textPrimary">{supabaseConn.user?.email}</h4>
-                    <p className="text-xs text-bolt-elements-textSecondary">Role: {supabaseConn.user?.role}</p>
+                    <h4 className="text-base font-medium text-bolt-elements-textPrimary">{supabaseConn.user?.email}</h4>
+                    <p className="text-sm text-bolt-elements-textSecondary flex items-center gap-2">
+                      <div className="i-ph:shield-check w-4 h-4 text-[#3ECF8E]" />
+                      Role: {supabaseConn.user?.role}
+                    </p>
                   </div>
                 </div>
 
