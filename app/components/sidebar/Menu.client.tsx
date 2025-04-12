@@ -241,7 +241,7 @@ export const Menu = () => {
                 <span className="text-sm font-medium">Nouvelle discussion</span>
               </a>
               <div className="flex gap-3">
-                {isSelectionMode && (
+                {isSelectionMode && list.length >= 2 && (
                   <>
                     <button
                       onClick={() => setSelectedItems(list.map(item => item.id))}
@@ -259,18 +259,20 @@ export const Menu = () => {
                     </button>
                   </>
                 )}
-                <button
-                  onClick={toggleSelectionMode}
-                  className={classNames(
-                    'flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md',
-                    isSelectionMode
-                      ? 'bg-purple-50 dark:bg-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/40'
-                      : 'bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  )}
-                  title="Mode sélection multiple"
-                >
-                  <span className="i-ph:check-square-duotone text-lg transform hover:scale-110 transition-transform" />
-                </button>
+                {list.length >= 2 && (
+                  <button
+                    onClick={toggleSelectionMode}
+                    className={classNames(
+                      'flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md',
+                      isSelectionMode
+                        ? 'bg-purple-50 dark:bg-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/40'
+                        : 'bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    )}
+                    title="Mode sélection multiple"
+                  >
+                    <span className="i-ph:check-square-duotone text-lg transform hover:scale-110 transition-transform" />
+                  </button>
+                )}
               </div>
             </div>
             {isSelectionMode && selectedItems.length > 0 && (
