@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@nanostores/react';
 import { Switch } from '@radix-ui/react-switch';
@@ -24,20 +24,20 @@ import { DialogTitle } from '~/components/ui/Dialog';
 import { AvatarDropdown } from './AvatarDropdown';
 import BackgroundRays from '~/components/ui/BackgroundRays';
 
-// Import all tab components
-import ProfileTab from '~/components/@settings/tabs/profile/ProfileTab';
-import SettingsTab from '~/components/@settings/tabs/settings/SettingsTab';
-import NotificationsTab from '~/components/@settings/tabs/notifications/NotificationsTab';
-import FeaturesTab from '~/components/@settings/tabs/features/FeaturesTab';
-import { DataTab } from '~/components/@settings/tabs/data/DataTab';
-import DebugTab from '~/components/@settings/tabs/debug/DebugTab';
-import { EventLogsTab } from '~/components/@settings/tabs/event-logs/EventLogsTab';
-import UpdateTab from '~/components/@settings/tabs/update/UpdateTab';
-import ConnectionsTab from '~/components/@settings/tabs/connections/ConnectionsTab';
-import CloudProvidersTab from '~/components/@settings/tabs/providers/cloud/CloudProvidersTab';
-import ServiceStatusTab from '~/components/@settings/tabs/providers/status/ServiceStatusTab';
-import LocalProvidersTab from '~/components/@settings/tabs/providers/local/LocalProvidersTab';
-import TaskManagerTab from '~/components/@settings/tabs/task-manager/TaskManagerTab';
+// Lazy load tab components
+const ProfileTab = lazy(() => import('~/components/@settings/tabs/profile/ProfileTab'));
+const SettingsTab = lazy(() => import('~/components/@settings/tabs/settings/SettingsTab'));
+const NotificationsTab = lazy(() => import('~/components/@settings/tabs/notifications/NotificationsTab'));
+const FeaturesTab = lazy(() => import('~/components/@settings/tabs/features/FeaturesTab'));
+const DataTab = lazy(() => import('~/components/@settings/tabs/data/DataTab'));
+const DebugTab = lazy(() => import('~/components/@settings/tabs/debug/DebugTab'));
+const EventLogsTab = lazy(() => import('~/components/@settings/tabs/event-logs/EventLogsTab'));
+const UpdateTab = lazy(() => import('~/components/@settings/tabs/update/UpdateTab'));
+const ConnectionsTab = lazy(() => import('~/components/@settings/tabs/connections/ConnectionsTab'));
+const CloudProvidersTab = lazy(() => import('~/components/@settings/tabs/providers/cloud/CloudProvidersTab'));
+const ServiceStatusTab = lazy(() => import('~/components/@settings/tabs/providers/status/ServiceStatusTab'));
+const LocalProvidersTab = lazy(() => import('~/components/@settings/tabs/providers/local/LocalProvidersTab'));
+const TaskManagerTab = lazy(() => import('~/components/@settings/tabs/task-manager/TaskManagerTab'));
 
 interface ControlPanelProps {
   open: boolean;
@@ -408,8 +408,8 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
         break;
     }
 
-    // Clear loading state after a delay
-    setTimeout(() => setLoadingTab(null), 500);
+    // Clear loading state after component is loaded
+    Promise.resolve().then(() => setLoadingTab(null));
   };
 
   return (
@@ -517,7 +517,11 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
                     {showTabManagement ? (
                       <TabManagement />
                     ) : activeTab ? (
-                      getTabComponent(activeTab)
+                      <Suspense fallback={<div className="flex items-center justify-center h-full">
+                        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                      </div>}>
+                        {getTabComponent(activeTab)}
+                      </Suspense>
                     ) : (
                       <motion.div
                         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative"
