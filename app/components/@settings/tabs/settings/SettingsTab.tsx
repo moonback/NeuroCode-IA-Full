@@ -177,34 +177,18 @@ export default function SettingsTab() {
     </p>
     
     {/* Active instruction indicator */}
-    <div className="bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800/30 rounded-lg p-3 mb-4">
-      <div className="flex items-start gap-3">
-        <div className="i-ph:lightbulb-fill w-5 h-5 text-violet-500 mt-0.5" />
-        <div>
-          <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-1">Mode actif</h4>
-          <p className="text-xs text-bolt-elements-textSecondary">
-            {localInstructions === "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns." ? (
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-violet-500"></span>
-                Mode Expert
-              </span>
-            ) : localInstructions === "Adopts a detailed teaching approach. Breaks down each technical concept into easily understandable elements. Uses relevant analogies and practical examples to illustrate explanations. Guides students gradually through solutions by explaining each decision." ? (
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                Mode Pédagogique
-              </span>
-            ) : localInstructions === "Provide direct and effective answers. Focus on the essentials with optimized code and strategic comments. Prioritize clarity and conciseness while maintaining technical quality." ? (
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                Mode Concis
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                Mode Personnalisé
-              </span>
-            )}
-          </p>
+    <div className="bg-gradient-to-r from-violet-50 to-violet-100 dark:from-violet-900/10 dark:to-violet-800/10 border border-violet-200 dark:border-violet-800/30 rounded-xl p-4 mb-4 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-start gap-4">
+        <div className="i-ph:lightbulb-fill w-6 h-6 text-violet-600 dark:text-violet-400 animate-pulse" />
+        <div className="flex-1">
+          <h4 className="text-sm font-semibold text-bolt-elements-textPrimary mb-2 flex items-center gap-2">
+            Mode actif
+            <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700"></div>
+            <span className="text-xs font-normal text-bolt-elements-textSecondary">Status actuel</span>
+          </h4>
+          <div className="p-2 bg-white dark:bg-black/20 rounded-lg backdrop-blur-sm">
+            {getModeIndicator(localInstructions)}
+          </div>
         </div>
       </div>
     </div>
@@ -582,3 +566,44 @@ export default function SettingsTab() {
     </div>
   );
 }
+
+// Define constants for instruction modes
+const INSTRUCTION_MODES = {
+  EXPERT: "As a senior technical expert, provide in-depth explanations and optimized solutions. Your code must adhere to best practices with clear documentation and a robust architecture. Focus on performance, maintainability, and advanced design patterns.",
+  TEACHING: "Adopts a detailed teaching approach. Breaks down each technical concept into easily understandable elements. Uses relevant analogies and practical examples to illustrate explanations. Guides students gradually through solutions by explaining each decision.",
+  CONCISE: "Provide direct and effective answers. Focus on the essentials with optimized code and strategic comments. Prioritize clarity and conciseness while maintaining technical quality.",
+};
+
+// Function to get mode indicator
+const getModeIndicator = (instructions: string) => {
+  switch (instructions) {
+    case INSTRUCTION_MODES.EXPERT:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20"></span>
+          <span className="font-medium text-violet-700 dark:text-violet-400">Mode Expert</span>
+        </span>
+      );
+    case INSTRUCTION_MODES.TEACHING:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 ring-4 ring-green-500/20"></span>
+          <span className="font-medium text-green-700 dark:text-green-400">Mode Pédagogique</span>
+        </span>
+      );
+    case INSTRUCTION_MODES.CONCISE:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-500/20"></span>
+          <span className="font-medium text-blue-700 dark:text-blue-400">Mode Concis</span>
+        </span>
+      );
+    default:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20"></span>
+          <span className="font-medium text-amber-700 dark:text-amber-400">Mode Personnalisé</span>
+        </span>
+      );
+  }
+};
