@@ -408,25 +408,13 @@ export const Menu = () => {
           <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-4 py-3">
             <SettingsButton onClick={handleSettingsClick} />
             <div className="flex items-center gap-3">
-{/*               <button
-                onClick={() => setAutoSelectTemplate(!autoSelectTemplate)}
-                className={classNames(
-                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
-                  autoSelectTemplate
-                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                )}
-                title={`Sélection automatique des modèles ${autoSelectTemplate ? 'activée' : 'désactivée'}`}
-              >
-                <span className="i-ph:robot-duotone text-lg" />
-              </button> */}
               <button
                 onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
                 className={classNames(
-                  'group relative flex items-center justify-center w-5 h-5 rounded-lg transition-colors',
+                  'group relative flex items-center justify-center w-6 h-6 rounded-lg transition-colors',
                   contextOptimizationEnabled
                     ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    : 'bg-gray-100 dark:bg-transparent text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary'
                 )}
                 title={`Optimisation du contexte ${contextOptimizationEnabled ? 'activée' : 'désactivée'}`}
               >
@@ -435,7 +423,7 @@ export const Menu = () => {
               <select
                 value={promptId}
                 onChange={(e) => setPromptId(e.target.value)}
-                className=" bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                className=" bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
               >
                 {PromptLibrary.getList().map((prompt) => (
                   <option key={prompt.id} value={prompt.id}>
