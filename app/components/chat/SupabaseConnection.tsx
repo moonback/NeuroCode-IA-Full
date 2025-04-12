@@ -77,24 +77,24 @@ export function SupabaseConnection() {
 
   return (
     <div className="relative">
-      <div className="flex border border-bolt-elements-borderColor rounded-md overflow-hidden mr-2 text-sm hover:shadow-md transition-all duration-200">
+      <div className="inline-flex border border-bolt-elements-borderColor rounded-md mr-2 hover:shadow-sm transition-all">
         <Button
           active
           disabled={connecting}
           onClick={() => setIsDialogOpen(!isDialogOpen)}
-          className="hover:bg-bolt-elements-item-backgroundActive !text-white flex items-center gap-2 px-3 py-2"
+          className="hover:bg-bolt-elements-item-backgroundActive !text-white flex items-center gap-1 px-2 py-1.5"
         >
           <img
-            className="w-5 h-5 transition-transform hover:scale-110"
-            height="20"
-            width="20"
+            className="w-5 h-5"
+            height="16"
+            width="16"
             crossOrigin="anonymous"
             src="https://cdn.simpleicons.org/supabase"
           />
           {isConnected && supabaseConn.project ? (
-            <span className="ml-1 text-sm font-medium max-w-[120px] truncate">{supabaseConn.project.name}</span>
+            <span className="text-xs font-medium max-w-[100px] truncate">{supabaseConn.project.name}</span>
           ) : (
-            <span className="ml-1 text-sm">Connect to Supabase</span>
+            <span className="text-xs"></span>
           )}
         </Button>
       </div>
