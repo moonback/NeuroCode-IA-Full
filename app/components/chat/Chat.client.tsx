@@ -28,7 +28,10 @@ import { streamingState } from '~/lib/stores/streaming';
 import { filesToArtifacts } from '~/utils/fileUtils';
 import { supabaseConnection } from '~/lib/stores/supabase';
 import { MessageProcessor } from './MessageProcessor';
+import { playChatCompletionSound } from '~/utils/audio';
+
 import { extractTextFromDocument } from '~/utils/documentUtils';
+
 
 const toastAnimation = cssTransition({
   enter: 'animated fadeInRight',
@@ -136,7 +139,13 @@ export const ChatImpl = memo(
       (project) => project.id === supabaseConn.selectedProjectId,
     );
     const supabaseAlert = useStore(workbenchStore.supabaseAlert);
-    const { activeProviders, promptId, autoSelectTemplate, contextOptimizationEnabled } = useSettings();
+    const { 
+      activeProviders, 
+      promptId, 
+      autoSelectTemplate, 
+      contextOptimizationEnabled,
+      customInstructions // Add this to extract custom instructions
+    } = useSettings();
 
     const [model, setModel] = useState(() => {
       const savedModel = Cookies.get('selectedModel');
@@ -173,6 +182,7 @@ export const ChatImpl = memo(
         files,
         promptId,
         contextOptimization: contextOptimizationEnabled,
+        customInstructions, // Add custom instructions to the request body
         supabase: {
           isConnected: supabaseConn.isConnected,
           hasSelectedProject: !!selectedProject,
@@ -208,6 +218,8 @@ export const ChatImpl = memo(
             usage,
             messageLength: message.content.length,
           });
+           // Play sound notification when chat completes
+           playChatCompletionSound();
         }
 
         logger.debug('Finished streaming');

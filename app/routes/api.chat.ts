@@ -42,7 +42,14 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
-  const { messages, files, promptId, contextOptimization, supabase } = await request.json<{
+  const { 
+    messages, 
+    files, 
+    promptId, 
+    contextOptimization, 
+    supabase,
+    customInstructions, // Add this to extract from request
+  } = await request.json<{
     messages: Messages;
     files: any;
     promptId?: string;
@@ -55,6 +62,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         supabaseUrl?: string;
       };
     };
+    customInstructions?: string; // Add type for custom instructions
   }>();
 
   const cookieHeader = request.headers.get('Cookie');
@@ -267,6 +275,7 @@ if (reasoning) {
               contextFiles: filteredFiles,
               summary,
               messageSliceId,
+              customInstructions, // Pass custom instructions here
             });
 
             result.mergeIntoDataStream(dataStream);
@@ -319,6 +328,7 @@ if (reasoning) {
           contextFiles: filteredFiles,
           summary,
           messageSliceId,
+          customInstructions, // Add custom instructions here too
         });
 
         (async () => {

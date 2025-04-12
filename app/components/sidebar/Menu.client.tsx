@@ -236,12 +236,12 @@ export const Menu = () => {
             <div className="flex justify-between items-center">
               <a
                 href="/"
-                className="flex gap-2 items-center bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg px-4 py-2 transition-colors"
+                className="flex gap-2 items-center bg-purple-50 dark:bg-purple-500/30 text-purple-700 dark:text-white hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg px-4 py-2 transition-colors"
               >
                 <span className="text-sm font-medium">Nouvelle discussion</span>
               </a>
               <div className="flex gap-3">
-                {isSelectionMode && (
+                {isSelectionMode && list.length >= 2 && (
                   <>
                     <button
                       onClick={() => setSelectedItems(list.map(item => item.id))}
@@ -259,18 +259,20 @@ export const Menu = () => {
                     </button>
                   </>
                 )}
-                <button
-                  onClick={toggleSelectionMode}
-                  className={classNames(
-                    'flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md',
-                    isSelectionMode
-                      ? 'bg-purple-50 dark:bg-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/40'
-                      : 'bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  )}
-                  title="Mode sélection multiple"
-                >
-                  <span className="i-ph:check-square-duotone text-lg transform hover:scale-110 transition-transform" />
-                </button>
+                {list.length >= 2 && (
+                  <button
+                    onClick={toggleSelectionMode}
+                    className={classNames(
+                      'flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md',
+                      isSelectionMode
+                        ? 'bg-purple-50 dark:bg-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/40'
+                        : 'bg-gray-50 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    )}
+                    title="Mode sélection multiple"
+                  >
+                    <span className="i-ph:check-square-duotone text-lg transform hover:scale-110 transition-transform" />
+                  </button>
+                )}
               </div>
             </div>
             {isSelectionMode && selectedItems.length > 0 && (
@@ -282,10 +284,10 @@ export const Menu = () => {
                       items: list.filter(item => selectedItems.includes(item.id))
                     });
                   }}
-                  className="flex-1 flex gap-2 items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
+                  className="flex-1 flex gap-2 items-center justify-center bg-red-500 dark:bg-red-500/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg px-4 py-2 transition-colors"
                 >
-                  <span className="inline-block i-ph:trash h-4 w-4" />
-                  <span className="text-sm font-medium">Supprimer ({selectedItems.length})</span>
+                  <span className="inline-block text-white i-ph:trash h-4 w-4" />
+                  <span className="text-sm text-white font-medium">Supprimer ({selectedItems.length})</span>
                 </button>
                 <button
                   onClick={() => {
@@ -374,7 +376,7 @@ export const Menu = () => {
                             : 'Êtes-vous sûr de vouloir supprimer ces discussions ?'}
                         </p>
                       </DialogDescription>
-                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-500/30">
+                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-white rounded-lg border border-red-200 dark:border-red-500/30">
                         ⚠️ Cette action est irréversible - toutes les données {dialogContent.type === 'delete' ? 'de la discussion' : 'des discussions'} seront définitivement perdues !
                       </div>
                     </div>
@@ -406,34 +408,22 @@ export const Menu = () => {
           <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-4 py-3">
             <SettingsButton onClick={handleSettingsClick} />
             <div className="flex items-center gap-3">
-              {/* <button
-                onClick={() => setAutoSelectTemplate(!autoSelectTemplate)}
-                className={classNames(
-                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
-                  autoSelectTemplate
-                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                )}
-                title={`Sélection automatique des modèles ${autoSelectTemplate ? 'activée' : 'désactivée'}`}
-              >
-                <span className="i-ph:robot-duotone text-lg" />
-              </button> */}
               <button
                 onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
                 className={classNames(
-                  'flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+                  'group relative flex items-center justify-center w-6 h-6 rounded-lg transition-colors',
                   contextOptimizationEnabled
                     ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    : 'bg-gray-100 dark:bg-transparent text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary'
                 )}
                 title={`Optimisation du contexte ${contextOptimizationEnabled ? 'activée' : 'désactivée'}`}
               >
-                <span className="i-ph:sparkle-duotone text-lg" />
+              <span className="i-ph-brain-duotone text-xl" />              
               </button>
               <select
                 value={promptId}
                 onChange={(e) => setPromptId(e.target.value)}
-                className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                className=" bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
               >
                 {PromptLibrary.getList().map((prompt) => (
                   <option key={prompt.id} value={prompt.id}>

@@ -327,9 +327,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         if (file.name.match(/\.(sh|bat|ps1)$/i)) {
           toast.error(
             <div>
-              <div className="font-bold">Script files not allowed</div>
+              <div className="font-bold">Les fichiers de script ne sont pas autorisés</div>
               <div className="text-xs text-gray-200">
-                For security reasons, script files (.sh, .bat, .ps1) are not supported.
+              Pour des raisons de sécurité, les fichiers de script (.sh, .bat, .ps1) ne sont pas pris en charge.
               </div>
             </div>,
             { autoClose: 5000 },
@@ -339,7 +339,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
 
           // Validate file size
         if (file.size > MAX_FILE_SIZE) {
-          toast.warning(`File ${file.name} exceeds maximum size of 5MB and was ignored.`);
+          toast.warning(`Ficher ${file.name} dépasse la taille maximale de 5 Mo et a été ignoré.`);
           return false;
         }
       
@@ -715,75 +715,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     imageDataList={imageDataList}
                     model={model}
                     provider={provider}
-                    onUiAnalysisComplete={(prompt) => {
-                      if (handleInputChange) {
-                        // If the prompt is empty, clear the current input
-                        if (!prompt) {
-                          const syntheticEmptyEvent = {
-                            target: { value: '' },
-                          } as React.ChangeEvent<HTMLTextAreaElement>;
-                          handleInputChange(syntheticEmptyEvent);
-
-                          return;
-                        }
-
-                        // If it's the process start message, just update the text
-                        if (prompt === 'Gerando análise da interface UI/UX...') {
-                          const syntheticEvent = {
-                            target: { value: prompt },
-                          } as React.ChangeEvent<HTMLTextAreaElement>;
-                          handleInputChange(syntheticEvent);
-
-                          return;
-                        }
-
-                        // We remove the initial message if it is present
-                        let cleanPrompt = prompt;
-
-                        if (prompt.startsWith('Gerando análise da interface UI/UX...')) {
-                          cleanPrompt = prompt.replace('Gerando análise da interface UI/UX...', '').trim();
-                        }
-
-                        // For complete analyses, we create a synthetic event to update the input
-                        const syntheticEvent = {
-                          target: { value: cleanPrompt },
-                        } as React.ChangeEvent<HTMLTextAreaElement>;
-
-                        handleInputChange(syntheticEvent);
-
-                        // Make sure the textarea is focused and adjust its size
-                        if (textareaRef?.current) {
-                          setTimeout(() => {
-                            try {
-                              const textarea = textareaRef.current;
-
-                              if (!textarea) {
-                                return;
-                              }
-
-                              // Adjust the textarea height based on the content
-                              textarea.style.height = 'auto';
-
-                              const scrollHeight = textarea.scrollHeight;
-                              textarea.style.height = `${Math.min(scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
-                              textarea.style.overflowY = scrollHeight > TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden';
-
-                              // Set focus at the end of the text
-                              textarea.focus();
-                              textarea.selectionStart = textarea.value.length;
-                              textarea.selectionEnd = textarea.value.length;
-
-                              // Scroll to the end if needed
-                              if (textarea.scrollHeight > textarea.clientHeight) {
-                                textarea.scrollTop = textarea.scrollHeight;
-                              }
-                            } catch (e) {
-                              console.error('Error adjusting textarea after UI analysis:', e);
-                            }
-                          }, 50); // Small delay to ensure the UI has updated
-                        }
-                      }
-                    }}
+                    
                     onRemove={(index) => {
                       if (index === -1) {
                         // Clear all files
@@ -817,7 +749,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       data-targeted-files="[]"
                       ref={textareaRef}
                       className={classNames(
-                        'w-full px-6 py-5 rounded-2xl outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary/60 bg-bolt-elements-background-depth-3 text-base transition-all duration-300 focus:ring-2 focus:ring-bolt-elements-focus ring-offset-2',
+                        'w-full px-6 py-5 rounded-2xl outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary/60 bg-bolt-elements-background-depth-3 text-base transition-all duration-300 ',
                         'transition-all duration-200',
                         'hover:border-bolt-elements-focus',
                       )}
@@ -922,21 +854,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                               <div className="i-ph:paperclip text-xl"></div>
                             </IconButton>
                           </Tooltip.Trigger>
-                          <Tooltip.Portal>
-                            {/* <Tooltip.Content
-                              className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary p-2 rounded-md text-xs border border-bolt-elements-borderColor max-w-xs"
-                              sideOffset={5}
-                            >
-                              <p>Attach files</p>
-                              <div className="text-bolt-elements-textSecondary mt-1">
-                                <p>Supported formats:</p>
-                                <p className="mt-1">• Images: png, jpg, jpeg, gif, etc.</p>
-                                <p>• Text: txt, md, js, py, html, css, json, etc.</p>
-                                <p>• Documents: pdf, docx</p>
-                              </div>
-                              <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
-                            </Tooltip.Content> */}
-                          </Tooltip.Portal>
+                          
                         </Tooltip.Root>
                         <IconButton
                           title="Améliorer l'invite"

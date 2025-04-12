@@ -210,6 +210,7 @@ export async function streamText(props: {
   contextFiles?: FileMap;
   summary?: string;
   messageSliceId?: number;
+  customInstructions?: string; // Add parameter for custom instructions
 }) {
   const {
     messages,
@@ -222,6 +223,7 @@ export async function streamText(props: {
     contextOptimization,
     contextFiles,
     summary,
+    customInstructions, // Extract custom instructions
   } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
@@ -279,6 +281,7 @@ export async function streamText(props: {
       cwd: WORK_DIR,
       allowedHtmlElements: allowedHTMLElements,
       modificationTagName: MODIFICATIONS_TAG_NAME,
+      customInstructions, // Pass custom instructions to prompt library
       supabase: {
         isConnected: options?.supabaseConnection?.isConnected || false,
         hasSelectedProject: options?.supabaseConnection?.hasSelectedProject || false,
@@ -290,6 +293,7 @@ if (!promptId && modelDetails?.features?.reasoning) {
   systemPrompt =
     PromptLibrary.getPropmtFromLibrary('reasoning', {
       cwd: WORK_DIR,
+      customInstructions,
       allowedHtmlElements: allowedHTMLElements,
       modificationTagName: MODIFICATIONS_TAG_NAME,
       supabase: {
@@ -299,6 +303,7 @@ if (!promptId && modelDetails?.features?.reasoning) {
       },
     }) ?? systemPrompt; // Fall back to the existing system prompt if reasoning prompt fails
 }
+
 
   if (files && contextFiles && contextOptimization) {
     // Optimization: Only create context if there are files

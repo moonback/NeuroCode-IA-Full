@@ -10,9 +10,9 @@ export const SettingsButton = memo(({ onClick }: SettingsButtonProps) => {
       onClick={onClick}
       icon="i-ph:gear"
       size="xl"
-      title="Settings"
+      title="Paramètres"
       data-testid="settings-button"
-      className="text-[#666] hover:text-bolt-elements-textPrimary hover:bg-bolt-elements-item-backgroundActive/10 transition-colors"
+      className="text-bolt-elements-textPrimary dark:test-white hover:text-bolt-elements-textPrimary hover:bg-bolt-elements-item-backgroundActive/10 transition-colors"
     />
   );
 });

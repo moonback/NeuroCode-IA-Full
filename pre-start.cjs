@@ -16,8 +16,12 @@ let commitJson = {
 
 console.log(`
 ★═══════════════════════════════════════★
-       N.E.U.R.O.C.O.D.E
+        N.E.U.R.O.C.O.D.E
          ⚡️  Welcome  ⚡️
+
+★═══════════════════════════════════════★
+  Commit Hash: ${commitJson.hash}
+  Version: ${commitJson.version}
 ★═══════════════════════════════════════★
 `);
 

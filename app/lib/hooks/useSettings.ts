@@ -16,8 +16,16 @@ import {
   updateContextOptimization,
   updateEventLogs,
   updatePromptId,
+  chatSoundEnabledStore,
+  chatSoundVolumeStore,
+  updateChatSoundEnabled,
+  updateChatSoundVolume,
   uiAnalysisEnabled as uiAnalysisEnabledStore,
   updateUIAnalysis,
+  alertSoundEnabledStore,
+  updateAlertSoundEnabled,
+  customInstructionsStore, // Add this import
+  updateCustomInstructions, // Add this import
 } from '~/lib/stores/settings';
 import { useCallback, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
@@ -33,6 +41,8 @@ export interface Settings {
   eventLogs: boolean;
   timezone: string;
   tabConfiguration: TabWindowConfig;
+  chatSoundEnabled: boolean;
+  chatSoundVolume: number;
 }
 
 export interface UseSettingsReturn {
@@ -68,6 +78,17 @@ export interface UseSettingsReturn {
   tabConfiguration: TabWindowConfig;
   updateTabConfiguration: (config: TabVisibilityConfig) => void;
   resetTabConfiguration: () => void;
+  
+  // Chat sound settings
+  chatSoundEnabled: boolean;
+  setChatSoundEnabled: (enabled: boolean) => void;
+  chatSoundVolume: number;
+  setChatSoundVolume: (volume: number) => void;
+  alertSoundEnabled: boolean;
+  setAlertSoundEnabled: (enabled: boolean) => void;
+  // Add new properties for custom instructions
+  customInstructions: string;
+  setCustomInstructions: (instructions: string) => void;
 }
 
 // Add interface to match ProviderSetting type
@@ -85,7 +106,11 @@ export function useSettings(): UseSettingsReturn {
   const [activeProviders, setActiveProviders] = useState<ProviderInfo[]>([]);
   const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
   const tabConfiguration = useStore(tabConfigurationStore);
+  const chatSoundEnabled = useStore(chatSoundEnabledStore);
+  const chatSoundVolume = useStore(chatSoundVolumeStore);
   const uiAnalysisEnabled = useStore(uiAnalysisEnabledStore);
+  const alertSoundEnabled = useStore(alertSoundEnabledStore);
+  const customInstructions = useStore(customInstructionsStore); // Add this hook
   const [settings, setSettings] = useState<Settings>(() => {
     const storedSettings = getLocalStorage('settings');
     return {
@@ -95,6 +120,8 @@ export function useSettings(): UseSettingsReturn {
       eventLogs: storedSettings?.eventLogs ?? true,
       timezone: storedSettings?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
       tabConfiguration,
+      chatSoundEnabled,
+      chatSoundVolume,
     };
   });
 
@@ -175,6 +202,26 @@ export function useSettings(): UseSettingsReturn {
     },
     [saveSettings],
   );
+  const setChatSoundEnabled = useCallback((enabled: boolean) => {
+    updateChatSoundEnabled(enabled);
+    logStore.logSystem(`Chat sound notifications ${enabled ? 'enabled' : 'disabled'}`);
+  }, []);
+
+  const setChatSoundVolume = useCallback((volume: number) => {
+    updateChatSoundVolume(volume);
+    logStore.logSystem(`Chat sound volume set to ${volume}`);
+  }, []);
+
+  const setAlertSoundEnabled = useCallback((enabled: boolean) => {
+    updateAlertSoundEnabled(enabled);
+    logStore.logSystem(`Alert sound notifications ${enabled ? 'enabled' : 'disabled'}`);
+  }, []);
+
+  // Add new callback for custom instructions
+  const setCustomInstructions = useCallback((instructions: string) => {
+    updateCustomInstructions(instructions);
+    logStore.logSystem('Custom instructions updated');
+  }, []);
 
   const setTimezone = useCallback(
     (timezone: string) => {
@@ -219,5 +266,13 @@ export function useSettings(): UseSettingsReturn {
     tabConfiguration,
     updateTabConfiguration: updateTabConfig,
     resetTabConfiguration: resetTabConfig,
+    chatSoundEnabled,
+    setChatSoundEnabled,
+    chatSoundVolume,
+    setChatSoundVolume,
+    alertSoundEnabled,
+    setAlertSoundEnabled,
+    customInstructions,
+    setCustomInstructions,
   };
 }

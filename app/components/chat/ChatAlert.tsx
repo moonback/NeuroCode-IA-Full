@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { ActionAlert } from '~/types/actions';
 import { classNames } from '~/utils/classNames';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { NOTIFICATION_SOUNDS, playTestSound } from '~/utils/audio';
+import { useSettings } from '~/lib/hooks/useSettings';
 
 interface Props {
   alert: ActionAlert;
@@ -10,6 +12,14 @@ interface Props {
 }
 
 export default function ChatAlert({ alert, clearAlert, postMessage }: Props) {
+  const { alertSoundEnabled } = useSettings();
+  
+  useEffect(() => {
+    if (alert && alertSoundEnabled) {
+      playTestSound(NOTIFICATION_SOUNDS.ERROR);
+    }
+  }, [alert, alertSoundEnabled]);
+  
   const { description, content, source, type = 'error' } = alert;
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
