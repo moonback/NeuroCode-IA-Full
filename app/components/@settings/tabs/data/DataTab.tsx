@@ -719,3 +719,4 @@ export function DataTab() {
     </div>
   );
 }
+export default DataTab;
