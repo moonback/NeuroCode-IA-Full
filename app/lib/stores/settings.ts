@@ -134,7 +134,7 @@ const SETTINGS_KEYS = {
   DEVELOPER_MODE: 'isDeveloperMode',
   CHAT_SOUND_ENABLED: 'chatSoundEnabled',
   CHAT_SOUND_VOLUME: 'chatSoundVolume',
-  UI_ANALYSIS: 'uiAnalysisEnabled',
+  // UI_ANALYSIS: 'uiAnalysisEnabled',
   ALERT_SOUND_ENABLED: 'alertSoundEnabled',
   CUSTOM_INSTRUCTIONS: 'customInstructions', // New key for custom instructions
 } as const;
@@ -197,7 +197,7 @@ const getInitialSettings = () => {
     developerMode: getStoredBoolean(SETTINGS_KEYS.DEVELOPER_MODE, false),
     chatSoundEnabled: getStoredBoolean(SETTINGS_KEYS.CHAT_SOUND_ENABLED, true),
     chatSoundVolume: getStoredNumber(SETTINGS_KEYS.CHAT_SOUND_VOLUME, 0.5),
-    uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
+    // uiAnalysis: getStoredBoolean(SETTINGS_KEYS.UI_ANALYSIS, false),
     alertSoundEnabled: getStoredBoolean(SETTINGS_KEYS.ALERT_SOUND_ENABLED, true),
     customInstructions: getStoredString(SETTINGS_KEYS.CUSTOM_INSTRUCTIONS, ''), // Initialize custom instructions
   };
@@ -213,7 +213,7 @@ export const isEventLogsEnabled = atom<boolean>(initialSettings.eventLogs);
 export const promptStore = atom<string>(initialSettings.promptId);
 export const chatSoundEnabledStore = atom<boolean>(initialSettings.chatSoundEnabled);
 export const chatSoundVolumeStore = atom<number>(initialSettings.chatSoundVolume);
-export const uiAnalysisEnabled = atom<boolean>(initialSettings.uiAnalysis);
+// export const uiAnalysisEnabled = atom<boolean>(initialSettings.uiAnalysis);
 export const alertSoundEnabledStore = atom<boolean>(initialSettings.alertSoundEnabled);
 export const customInstructionsStore = atom<string>(initialSettings.customInstructions); // New atom for custom instructions
 
@@ -252,10 +252,10 @@ export const updateChatSoundVolume = (volume: number) => {
   localStorage.setItem(SETTINGS_KEYS.CHAT_SOUND_VOLUME, JSON.stringify(volume));
 };
 
-export const updateUIAnalysis = (enabled: boolean) => {
-  uiAnalysisEnabled.set(enabled);
-  localStorage.setItem(SETTINGS_KEYS.UI_ANALYSIS, JSON.stringify(enabled));
-};
+// export const updateUIAnalysis = (enabled: boolean) => {
+//   uiAnalysisEnabled.set(enabled);
+//   localStorage.setItem(SETTINGS_KEYS.UI_ANALYSIS, JSON.stringify(enabled));
+// };
 
 // Initialize tab configuration from localStorage or defaults
 const getInitialTabConfiguration = (): TabWindowConfig => {
