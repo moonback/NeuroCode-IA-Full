@@ -1011,3 +1011,5 @@ export function EventLogsTab() {
     </div>
   );
 }
+
+export default EventLogsTab;
