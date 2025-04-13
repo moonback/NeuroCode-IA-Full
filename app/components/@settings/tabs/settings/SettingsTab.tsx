@@ -68,6 +68,47 @@ const SettingsItem = ({
   </div>
 );
 
+// Define constants for instruction modes
+const INSTRUCTION_MODES = {
+  EXPERT: "Act as a senior software architect with deep technical expertise. Provide comprehensive solutions with: 1) In-depth technical explanations of concepts and design decisions 2) Production-ready code following industry best practices 3) Performance optimization techniques 4) Security considerations 5) Scalability patterns 6) Detailed documentation and comments explaining complex logic. Focus on robust architecture, maintainability, and advanced design patterns. Include error handling and edge cases.",
+  REASONING: "You are an AI assistant that must always show structured reasoning. Follow these steps:\n\n[Step 1] Analyze the problem\n- Break down the technical requirements\n- Identify constraints and assumptions\n\n[Step 2] List key elements\n- Core technical components\n- Critical dependencies\n- Design considerations\n\n[Step 3] Apply solution method\n- Present architectural approach\n- Provide implementation details\n- Include code examples\n\n[Step 4] Verify each step\n- Review design decisions\n- Validate against requirements\n- Check edge cases\n\n[Response] Final solution\n- Complete implementation\n- Documentation and comments\n- Best practices and optimizations",
+  CONCISE: "Provide direct and effective answers. Focus on the essentials with optimized code and strategic comments. Prioritize clarity and conciseness while maintaining technical quality.",
+};
+
+// Function to get mode indicator
+const getModeIndicator = (instructions: string) => {
+  switch (instructions) {
+    case INSTRUCTION_MODES.EXPERT:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20"></span>
+          <span className="font-medium text-violet-700 dark:text-violet-400">Mode Expert</span>
+        </span>
+      );
+    case INSTRUCTION_MODES.REASONING:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 ring-4 ring-green-500/20"></span>
+          <span className="font-medium text-green-700 dark:text-green-400">Mode Raisonnement</span>
+        </span>
+      );
+    case INSTRUCTION_MODES.CONCISE:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-500/20"></span>
+          <span className="font-medium text-blue-700 dark:text-blue-400">Mode Concis</span>
+        </span>
+      );
+    default:
+      return (
+        <span className="flex items-center gap-2 text-sm">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20"></span>
+          <span className="font-medium text-amber-700 dark:text-amber-400">Mode Personnalisé</span>
+        </span>
+      );
+  }
+};
+
 export default function SettingsTab() {
   const [currentTimezone, setCurrentTimezone] = useState('');
   const { 
@@ -498,43 +539,4 @@ export default function SettingsTab() {
   );
 }
 
-// Define constants for instruction modes
-const INSTRUCTION_MODES = {
-  EXPERT: "Act as a senior software architect with deep technical expertise. Provide comprehensive solutions with: 1) In-depth technical explanations of concepts and design decisions 2) Production-ready code following industry best practices 3) Performance optimization techniques 4) Security considerations 5) Scalability patterns 6) Detailed documentation and comments explaining complex logic. Focus on robust architecture, maintainability, and advanced design patterns. Include error handling and edge cases.",
-  REASONING: "You are an AI assistant that must always show structured reasoning. Follow these steps:\n\n[Step 1] Analyze the problem\n- Break down the technical requirements\n- Identify constraints and assumptions\n\n[Step 2] List key elements\n- Core technical components\n- Critical dependencies\n- Design considerations\n\n[Step 3] Apply solution method\n- Present architectural approach\n- Provide implementation details\n- Include code examples\n\n[Step 4] Verify each step\n- Review design decisions\n- Validate against requirements\n- Check edge cases\n\n[Response] Final solution\n- Complete implementation\n- Documentation and comments\n- Best practices and optimizations",
-  CONCISE: "Provide direct and effective answers. Focus on the essentials with optimized code and strategic comments. Prioritize clarity and conciseness while maintaining technical quality.",
-};
 
-// Function to get mode indicator
-const getModeIndicator = (instructions: string) => {
-  switch (instructions) {
-    case INSTRUCTION_MODES.EXPERT:
-      return (
-        <span className="flex items-center gap-2 text-sm">
-          <span className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20"></span>
-          <span className="font-medium text-violet-700 dark:text-violet-400">Mode Expert</span>
-        </span>
-      );
-    case INSTRUCTION_MODES.REASONING:
-      return (
-        <span className="flex items-center gap-2 text-sm">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-500 ring-4 ring-green-500/20"></span>
-          <span className="font-medium text-green-700 dark:text-green-400">Mode Raisonnement</span>
-        </span>
-      );
-    case INSTRUCTION_MODES.CONCISE:
-      return (
-        <span className="flex items-center gap-2 text-sm">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-500/20"></span>
-          <span className="font-medium text-blue-700 dark:text-blue-400">Mode Concis</span>
-        </span>
-      );
-    default:
-      return (
-        <span className="flex items-center gap-2 text-sm">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20"></span>
-          <span className="font-medium text-amber-700 dark:text-amber-400">Mode Personnalisé</span>
-        </span>
-      );
-  }
-};
