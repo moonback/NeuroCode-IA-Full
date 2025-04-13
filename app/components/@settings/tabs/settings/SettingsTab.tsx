@@ -193,41 +193,46 @@ export default function SettingsTab() {
       </div>
     </div>
 
-    {/* Tabs for instruction categories */}
-    {/* <div className="mb-4">
-      <div className="flex space-x-1 border-b border-gray-200 dark:border-gray-800 mb-4">
-        <button
-          className={classNames(
-            'px-4 py-2 text-sm font-medium rounded-t-lg transition-all',
-            'border-b-2',
-            'focus:outline-none',
-            'border-violet-500 text-violet-600 dark:text-violet-400'
-          )}
-        >
-          Styles de communication
-        </button>
-      </div>
-    </div> */}
+   
 
     {/* Communication style presets */}
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
       <button
         onClick={() => {
-          const expertInstructions = "Act as a senior software architect with deep technical expertise. Provide comprehensive solutions with: 1) In-depth technical explanations of concepts and design decisions 2) Production-ready code following industry best practices 3) Performance optimization techniques 4) Security considerations 5) Scalability patterns 6) Detailed documentation and comments explaining complex logic. Focus on robust architecture, maintainability, and advanced design patterns. Include error handling and edge cases.";
+          const expertInstructions = "You are an AI assistant that must always show structured reasoning. Follow these steps:\n\n" +
+            "[Step 1] Analyze the problem\n" +
+            "- Break down the technical requirements\n" + 
+            "- Identify constraints and assumptions\n\n" +
+            "[Step 2] List key elements\n" +
+            "- Core technical components\n" +
+            "- Critical dependencies\n" +
+            "- Design considerations\n\n" +
+            "[Step 3] Apply solution method\n" + 
+            "- Present architectural approach\n" +
+            "- Provide implementation details\n" +
+            "- Include code examples\n\n" +
+            "[Step 4] Verify each step\n" +
+            "- Review design decisions\n" +
+            "- Validate against requirements\n" +
+            "- Check edge cases\n\n" +
+            "[Response] Final solution\n" +
+            "- Complete implementation\n" +
+            "- Documentation and comments\n" +
+            "- Best practices and optimizations";
           setLocalInstructions(expertInstructions);
           debouncedUpdate(expertInstructions);
-          toast.info('Mode expert activé');
+          toast.info('Mode raisonnement activé');
         }}
         className={classNames(
           'px-3 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95',
           'flex items-center justify-center gap-2',
-          localInstructions === "Act as a senior software architect with deep technical expertise. Provide comprehensive solutions with: 1) In-depth technical explanations of concepts and design decisions 2) Production-ready code following industry best practices 3) Performance optimization techniques 4) Security considerations 5) Scalability patterns 6) Detailed documentation and comments explaining complex logic. Focus on robust architecture, maintainability, and advanced design patterns. Include error handling and edge cases." ?
+          localInstructions === "You are an AI assistant that must always show structured reasoning. Follow these steps:\n\n[Step 1] Analyze the problem\n- Break down the technical requirements\n- Identify constraints and assumptions\n\n[Step 2] List key elements\n- Core technical components\n- Critical dependencies\n- Design considerations\n\n[Step 3] Apply solution method\n- Present architectural approach\n- Provide implementation details\n- Include code examples\n\n[Step 4] Verify each step\n- Review design decisions\n- Validate against requirements\n- Check edge cases\n\n[Response] Final solution\n- Complete implementation\n- Documentation and comments\n- Best practices and optimizations" ?
             'text-white bg-violet-600 hover:bg-violet-700 ring-2 ring-violet-300 dark:ring-violet-800' :
             'text-violet-700 dark:text-gray-300 bg-violet-100 dark:bg-violet-900/20 hover:bg-violet-200 dark:hover:bg-violet-900/30'
         )}
       >
         <div className="i-ph:code-fill w-3.5 h-3.5" />
-        Mode Expert
+        Mode Raisonnement
       </button>
       <button
         onClick={() => {
@@ -581,7 +586,7 @@ const getModeIndicator = (instructions: string) => {
       return (
         <span className="flex items-center gap-2 text-sm">
           <span className="w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-violet-500/20"></span>
-          <span className="font-medium text-violet-700 dark:text-violet-400">Mode Expert</span>
+          <span className="font-medium text-violet-700 dark:text-violet-400">Mode Rraisonnement</span>
         </span>
       );
     case INSTRUCTION_MODES.TEACHING:
