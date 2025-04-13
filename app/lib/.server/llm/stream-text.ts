@@ -74,17 +74,20 @@ function optimizeContextBuffer(context: string, maxLength: number = 50000): stri
     return context;
   }
 
-  // If context is too large, keep the most relevant parts
-  const quarterLength = Math.floor(maxLength / 4);
+  // Optimisation agressive pour les grands contextes
+  const sixthLength = Math.floor(maxLength / 6);
   
-  // Keep start, important middle sections, and end
-  const start = context.substring(0, quarterLength);
-  const end = context.substring(context.length - quarterLength);
+  // Garder le début, les sections importantes du milieu et la fin
+  const start = context.substring(0, sixthLength * 2);
+  const end = context.substring(context.length - sixthLength * 2);
   
-  // Extract code blocks and important sections from the middle
-  const middleSection = context.substring(quarterLength, context.length - quarterLength);
+  // Extraire et prioriser les blocs de code et sections importantes
+  const middleSection = context.substring(sixthLength * 2, context.length - sixthLength * 2);
   const codeBlockMatches = middleSection.match(/```[\s\S]*?```/g) || [];
-  const importantSections = codeBlockMatches.slice(0, 3).join('\n'); // Keep up to 3 code blocks
+  const importantSections = codeBlockMatches
+    .slice(0, 4) // Augmenter à 4 blocs de code
+    .map(block => block.trim())
+    .join('\n\n'); // Meilleur espacement
 
   return (
     start +
@@ -106,13 +109,12 @@ function truncateMessagesToFitTokenLimit<T extends { role: string; content: any 
   maxContextTokens: number,
   reservedCompletionTokens: number = 8000,
 ): T[] {
-  // Calculate available tokens for messages
-  const availableTokens = maxContextTokens - systemPromptTokens - reservedCompletionTokens;
+  // Calculate available tokens for messages with dynamic buffer
+  const minSystemTokens = 1000; // Minimum tokens to preserve for system messages
+  const availableTokens = maxContextTokens - Math.max(systemPromptTokens, minSystemTokens) - reservedCompletionTokens;
 
   if (availableTokens <= 0) {
-    logger.warn(`Not enough tokens available for messages. System prompt is too large (${systemPromptTokens} tokens)`);
-
-    // Keep only the latest message in extreme cases
+    logger.warn(`Tokens insuffisants pour les messages. Le prompt système est trop grand (${systemPromptTokens} tokens)`);
     return messages.length > 0 ? [messages[messages.length - 1]] : [];
   }
 
