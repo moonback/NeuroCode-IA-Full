@@ -109,105 +109,103 @@ function truncateMessagesToFitTokenLimit<T extends { role: string; content: any 
   maxContextTokens: number,
   reservedCompletionTokens: number = 8000,
 ): T[] {
-  // Calculate available tokens for messages with dynamic buffer
-  const minSystemTokens = 1000; // Minimum tokens to preserve for system messages
-  const availableTokens = maxContextTokens - Math.max(systemPromptTokens, minSystemTokens) - reservedCompletionTokens;
+  // Paramètres optimisés pour les petits modèles
+  const minSystemTokens = Math.min(500, maxContextTokens * 0.1); // Réduit pour les petits modèles
+  const minUserTokens = 50; // Réduit pour optimiser
+  const minAssistantTokens = 75; // Réduit pour optimiser
+  const maxSystemTokens = Math.min(systemPromptTokens, maxContextTokens * 0.3); // Limite à 30% du contexte
+  const availableTokens = maxContextTokens - maxSystemTokens - reservedCompletionTokens;
 
   if (availableTokens <= 0) {
-    logger.warn(`Tokens insuffisants pour les messages. Le prompt système est trop grand (${systemPromptTokens} tokens)`);
+    logger.warn(`Optimisation nécessaire. Prompt système (${systemPromptTokens} tokens) ajusté à ${maxSystemTokens} tokens`);
+    // Garder au moins le dernier message avec un contexte minimal
     return messages.length > 0 ? [messages[messages.length - 1]] : [];
   }
 
-  // Start with full message set
   let currentMessages = [...messages];
   let currentTokenCount = estimateMessagesTokens(currentMessages as unknown as Message[]);
 
-  // If we're within limits, return all messages
   if (currentTokenCount <= availableTokens) {
     return currentMessages;
   }
 
-  logger.warn(
-    `Messages (${currentTokenCount} tokens) exceed available token budget (${availableTokens}). Truncating...`,
-  );
+  logger.warn(`Optimisation nécessaire: ${currentTokenCount} tokens > ${availableTokens} disponibles`);
 
-  /* First try to remove messages from the middle (keep system and recent) */
-  const systemMessages = currentMessages.filter((msg) => msg.role === 'system');
-  const userAssistantMessages = currentMessages.filter((msg) => msg.role !== 'system');
+  // Séparation et priorisation des messages
+  const systemMessages = currentMessages.filter(msg => msg.role === 'system');
+  const userAssistantPairs = [];
+  const otherMessages = [];
 
-  // Preserve the last few exchanges (user-assistant pairs)
-  while (currentTokenCount > availableTokens && userAssistantMessages.length > 2) {
-    // Remove the oldest non-system message
-    userAssistantMessages.shift();
+  // Création de paires user-assistant pour préserver le contexte conversationnel
+  for (let i = 0; i < currentMessages.length; i++) {
+    if (currentMessages[i].role === 'user' && i + 1 < currentMessages.length && currentMessages[i + 1].role === 'assistant') {
+      userAssistantPairs.push([currentMessages[i], currentMessages[i + 1]]);
+      i++; // Skip the assistant message as it's already paired
+    } else if (currentMessages[i].role !== 'system') {
+      otherMessages.push(currentMessages[i]);
+    }
+  }
 
-    // Recalculate with remaining messages
-    currentMessages = [...systemMessages, ...userAssistantMessages];
+  // Fonction optimisée pour tronquer le contenu avec préservation du contexte
+  const truncateContent = (content: string, maxTokens: number, minTokens: number): string => {
+    const currentTokens = estimateTokens(content);
+    if (currentTokens <= maxTokens) return content;
+
+    // Extraction des sections importantes
+    const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
+    const importantSections = content.match(/\b(function|class|const|let|var|import|export)\b[^;{]*[{;]/g) || [];
+    
+    // Calcul des tokens pour les sections importantes
+    const importantContent = [...codeBlocks, ...importantSections].join('\n');
+    const importantTokens = estimateTokens(importantContent);
+    
+    // Si le contenu important est déjà trop grand, le compresser davantage
+    if (importantTokens > maxTokens) {
+      const ratio = maxTokens / importantTokens;
+      const numToKeep = Math.floor((codeBlocks.length + importantSections.length) * ratio);
+      const selectedContent = [...codeBlocks, ...importantSections]
+        .slice(0, numToKeep)
+        .join('\n');
+      return `${selectedContent}\n[...contenu compressé...]`;
+    }
+    
+    // Sinon, garder le contenu important et ajouter du contexte si possible
+    const remainingTokens = maxTokens - importantTokens;
+    const contextLength = Math.floor(remainingTokens * 8); // Approximation caractères/tokens
+    
+    return `${content.substring(0, contextLength)}\n${importantContent}\n[...reste du contenu omis...]`;
+  };
+
+  // Optimisation progressive
+  while (currentTokenCount > availableTokens) {
+    if (otherMessages.length > 0) {
+      otherMessages.pop();
+    } else if (userAssistantPairs.length > 1) {
+      // Garder au moins une paire de messages
+      userAssistantPairs.shift();
+    } else {
+      // Tronquer les messages restants si nécessaire
+      const remainingPair = userAssistantPairs[0];
+      if (remainingPair) {
+        const [userMsg, assistantMsg] = remainingPair;
+        const userContent = typeof userMsg.content === 'string' ? userMsg.content : JSON.stringify(userMsg.content);
+        const assistantContent = typeof assistantMsg.content === 'string' ? assistantMsg.content : JSON.stringify(assistantMsg.content);
+
+        userMsg.content = truncateContent(userContent, availableTokens * 0.4, minUserTokens);
+        assistantMsg.content = truncateContent(assistantContent, availableTokens * 0.6, minAssistantTokens);
+      }
+    }
+
+    // Reconstruire et réévaluer
+    currentMessages = [
+      ...systemMessages,
+      ...otherMessages,
+      ...userAssistantPairs.flat()
+    ];
     currentTokenCount = estimateMessagesTokens(currentMessages as unknown as Message[]);
   }
 
-  // If still too large, truncate the content of system messages
-  if (currentTokenCount > availableTokens && systemMessages.length > 0) {
-    for (let i = 0; i < systemMessages.length && currentTokenCount > availableTokens; i++) {
-      const currentSystemMsg = systemMessages[i];
-      const systemContent =
-        typeof currentSystemMsg.content === 'string'
-          ? currentSystemMsg.content
-          : JSON.stringify(currentSystemMsg.content);
-
-      // Truncate the system message to fit
-      const currentSystemTokens = estimateTokens(systemContent);
-      const tokensToCut = Math.min(
-        currentSystemTokens - 200, // Leave at least 200 tokens
-        currentTokenCount - availableTokens + 100, // Cut enough with some buffer
-      );
-
-      if (tokensToCut > 0) {
-        const percentToKeep = Math.max(0.1, (currentSystemTokens - tokensToCut) / currentSystemTokens);
-        const truncatedLength = Math.floor(systemContent.length * percentToKeep);
-
-        // Update system message with truncated content
-        systemMessages[i] = {
-          ...currentSystemMsg,
-          content: systemContent.substring(0, truncatedLength) + '\n[Content truncated to fit token limit]',
-        };
-
-        // Recalculate tokens
-        currentMessages = [...systemMessages, ...userAssistantMessages];
-        currentTokenCount = estimateMessagesTokens(currentMessages as unknown as Message[]);
-      }
-    }
-  }
-
-  // If still too large, truncate the most recent user message as last resort
-  if (currentTokenCount > availableTokens && userAssistantMessages.length > 0) {
-    const lastUserMsgIndex = userAssistantMessages.findIndex((msg) => msg.role === 'user');
-
-    if (lastUserMsgIndex >= 0) {
-      const userMsg = userAssistantMessages[lastUserMsgIndex];
-      const userContent = typeof userMsg.content === 'string' ? userMsg.content : JSON.stringify(userMsg.content);
-
-      const currentUserTokens = estimateTokens(userContent);
-      const tokensToCut = Math.min(
-        currentUserTokens - 100, // Leave at least 100 tokens
-        currentTokenCount - availableTokens + 50, // Cut enough with buffer
-      );
-
-      if (tokensToCut > 0) {
-        const percentToKeep = Math.max(0.4, (currentUserTokens - tokensToCut) / currentUserTokens);
-        const truncatedLength = Math.floor(userContent.length * percentToKeep);
-
-        userAssistantMessages[lastUserMsgIndex] = {
-          ...userMsg,
-          content: userContent.substring(0, truncatedLength) + '\n[Content truncated to fit token limit]',
-        };
-      }
-    }
-
-    currentMessages = [...systemMessages, ...userAssistantMessages];
-  }
-
-  logger.info(`Messages truncated to ${estimateMessagesTokens(currentMessages as unknown as Message[])} tokens`);
-
+  logger.info(`Optimisation terminée: ${currentTokenCount} tokens utilisés`);
   return currentMessages;
 }
 
@@ -304,7 +302,7 @@ export async function streamText(props: {
 
   // Optimize system prompt if it's too large
   const systemPromptTokens = estimateTokens(systemPrompt);
-  if (systemPromptTokens > 3000) { // Set a reasonable threshold
+  if (systemPromptTokens > 6000) { // Set a reasonable threshold
     logger.warn(`System prompt is too large (${systemPromptTokens} tokens). Optimizing...`);
     systemPrompt = optimizeContextBuffer(systemPrompt, 30000); // More aggressive optimization
   }
@@ -455,7 +453,7 @@ const model = llmManager.getModelInstance({
    maxContextTokens,
  );
 
- logger.info(`Using ${truncatedMessages.length} messages out of ${multimodalMessages.length} after token check`);
+ logger.info(`Utilisation de ${truncatedMessages.length} messages sur ${multimodalMessages.length} après vérification des tokens`);
      return await _streamText({
       model,
 
@@ -491,7 +489,7 @@ const model = llmManager.getModelInstance({
  );
 
  logger.info(
-   `Using ${truncatedMessages.length} messages out of ${normalizedTextMessages.length} after token check`,
+   `Utilisation de ${truncatedMessages.length} messages sur ${normalizedTextMessages.length} après vérification des tokens`,
  );
 
      return await _streamText({
@@ -505,8 +503,8 @@ const model = llmManager.getModelInstance({
    }
  } catch (error: any) {
    // Special handling for format errors
-   if (error.message && error.message.includes('messages must be an array of CoreMessage or UIMessage')) {
-     logger.warn('Message format error detected, attempting recovery with explicit formatting...');
+   if (error.message && error.message.includes('les messages doivent être un tableau de CoreMessage ou UIMessage')) {
+     logger.warn('Erreur de format de message détectée, tentative de récupération avec un formatage explicite...');
 
      // Create properly formatted messages for all cases as a last resort
      const fallbackMessages = processedMessages.map((msg) => {
