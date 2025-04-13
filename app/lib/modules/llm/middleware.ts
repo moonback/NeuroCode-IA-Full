@@ -67,51 +67,67 @@ export function applyMiddleware(model: LanguageModelV1, modelInfo: ModelInfo): L
  * @returns The processed text and extracted reasoning
  */
 function processReasoningInText(text: string): { text: string; reasoning?: string } {
-  // Try to find reasoning blocks
+  // Enhanced patterns to detect reasoning blocks
   const reasoningPatterns = [
-    /<think>([\s\S]*?)<\/think>/,
-    /<reasoning>([\s\S]*?)<\/reasoning>/,
-    /<thinking>([\s\S]*?)<\/thinking>/,
+    /<think>([\s\S]*?)<\/think>/i,  // Case insensitive
+    /<reasoning>([\s\S]*?)<\/reasoning>/i,
+    /<thinking>([\s\S]*?)<\/thinking>/i,
+    /\[REASONING\]([\s\S]*?)\[\/REASONING\]/,
+    /\/\/\s*REASONING:\s*([\s\S]*?)(?:\n\n|\r\n\r\n|$)/,
+    /\/\*\s*REASONING:\s*([\s\S]*?)\*\//,
   ];
 
   let reasoning: string | undefined;
   let processedText = text;
 
+  // Process each pattern sequentially
   for (const pattern of reasoningPatterns) {
-    const match = text.match(pattern);
-
-    if (match) {
-      reasoning = match[1].trim();
-
-      // Remove the reasoning block from the text
-      processedText = text.replace(pattern, '').trim();
+    const matches = [...text.matchAll(pattern)];
+    
+    if (matches.length > 0) {
+      // Combine all reasoning blocks with separators
+      reasoning = matches.map(m => m[1].trim()).join('\n\n---\n\n');
+      
+      // Remove all matched reasoning blocks from the text
+      processedText = text.replace(pattern, (match) => {
+        // Preserve newlines before/after the block
+        return match.includes('\n') ? '\n\n' : ' ';
+      }).trim();
+      
       break;
     }
   }
 
-  return { text: processedText, reasoning };
+  // Clean up extra whitespace
+  processedText = processedText.replace(/\n{3,}/g, '\n\n');
+
+  return { 
+    text: processedText, 
+    reasoning: reasoning?.replace(/^\s+|\s+$/g, '') 
+  };
 }
 
-/**
- * Create a custom reasoning middleware that safely handles Anthropic's XML output
- * This creates a more robust extraction that can handle Claude's sometimes inconsistent XML formatting
- */
 function createCustomReasoningMiddleware(): LanguageModelV1Middleware {
   return {
     middlewareVersion: 'v1',
     wrapGenerate: async ({ doGenerate }) => {
       const result = await doGenerate();
-
+      
       if (result.text) {
         const processed = processReasoningInText(result.text);
-
+        
+        // Create a new object without modifying the original metadata
         return {
           ...result,
           text: processed.text,
           reasoning: processed.reasoning || result.reasoning,
+          // Add reasoning metadata as a separate property
+          usage: {
+            ...result.usage,
+            reasoningExtracted: !!processed.reasoning
+          }
         };
       }
-
       return result;
     },
 
