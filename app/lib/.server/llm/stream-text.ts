@@ -69,18 +69,29 @@ export function sanitizeReasoningOutput(content: string): string {
  * Optimize context buffer when it's too large
  * This reduces the token count for very large context windows
  */
-function optimizeContextBuffer(context: string, maxLength: number = 100000): string {
+function optimizeContextBuffer(context: string, maxLength: number = 50000): string {
   if (context.length <= maxLength) {
     return context;
   }
 
-  // If context is too large, keep the start and end but trim the middle
-  const halfMax = Math.floor(maxLength / 2);
+  // If context is too large, keep the most relevant parts
+  const quarterLength = Math.floor(maxLength / 4);
+  
+  // Keep start, important middle sections, and end
+  const start = context.substring(0, quarterLength);
+  const end = context.substring(context.length - quarterLength);
+  
+  // Extract code blocks and important sections from the middle
+  const middleSection = context.substring(quarterLength, context.length - quarterLength);
+  const codeBlockMatches = middleSection.match(/```[\s\S]*?```/g) || [];
+  const importantSections = codeBlockMatches.slice(0, 3).join('\n'); // Keep up to 3 code blocks
 
   return (
-    context.substring(0, halfMax) +
-    `\n\n... [Context truncated to reduce size] ...\n\n` +
-    context.substring(context.length - halfMax)
+    start +
+    '\n\n... [Context optimized for token efficiency] ...\n\n' +
+    (importantSections ? importantSections + '\n\n' : '') +
+    '... [Remaining context truncated] ...\n\n' +
+    end
   );
 }
 
@@ -276,18 +287,25 @@ export async function streamText(props: {
 
   const dynamicMaxTokens = modelDetails && modelDetails.maxTokenAllowed ? modelDetails.maxTokenAllowed : MAX_TOKENS;
 
-  let systemPrompt =
-    PromptLibrary.getPropmtFromLibrary(promptId || 'default', {
-      cwd: WORK_DIR,
-      allowedHtmlElements: allowedHTMLElements,
-      modificationTagName: MODIFICATIONS_TAG_NAME,
-      customInstructions, // Pass custom instructions to prompt library
-      supabase: {
-        isConnected: options?.supabaseConnection?.isConnected || false,
-        hasSelectedProject: options?.supabaseConnection?.hasSelectedProject || false,
-        credentials: options?.supabaseConnection?.credentials || undefined,
-      },
-    }) ?? getSystemPrompt();
+  // Get system prompt with optimized token management
+  let systemPrompt = PromptLibrary.getPropmtFromLibrary(promptId || 'optimized', {
+    cwd: WORK_DIR,
+    allowedHtmlElements: allowedHTMLElements,
+    modificationTagName: MODIFICATIONS_TAG_NAME,
+    customInstructions,
+    supabase: {
+      isConnected: options?.supabaseConnection?.isConnected || false,
+      hasSelectedProject: options?.supabaseConnection?.hasSelectedProject || false,
+      credentials: options?.supabaseConnection?.credentials || undefined,
+    },
+  }) ?? getSystemPrompt();
+
+  // Optimize system prompt if it's too large
+  const systemPromptTokens = estimateTokens(systemPrompt);
+  if (systemPromptTokens > 3000) { // Set a reasonable threshold
+    logger.warn(`System prompt is too large (${systemPromptTokens} tokens). Optimizing...`);
+    systemPrompt = optimizeContextBuffer(systemPrompt, 30000); // More aggressive optimization
+  }
 // Use reasoning prompt for models that support reasoning when no specific prompt is requested
 if (!promptId && modelDetails?.features?.reasoning) {
   systemPrompt =
