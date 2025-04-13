@@ -70,32 +70,66 @@ export function sanitizeReasoningOutput(content: string): string {
  * This reduces the token count for very large context windows
  */
 function optimizeContextBuffer(context: string, maxLength: number = 50000): string {
-  if (context.length <= maxLength) {
-    return context;
-  }
+  // Ensure modelDetails is defined before using it
+  const modelDetails = {
+    maxTokenAllowed: MAX_TOKENS // or any other appropriate value
+  };
 
-  // Optimisation agressive pour les grands contextes
-  const sixthLength = Math.floor(maxLength / 6);
-  
-  // Garder le début, les sections importantes du milieu et la fin
-  const start = context.substring(0, sixthLength * 2);
-  const end = context.substring(context.length - sixthLength * 2);
-  
-  // Extraire et prioriser les blocs de code et sections importantes
-  const middleSection = context.substring(sixthLength * 2, context.length - sixthLength * 2);
-  const codeBlockMatches = middleSection.match(/```[\s\S]*?```/g) || [];
-  const importantSections = codeBlockMatches
-    .slice(0, 4) // Augmenter à 4 blocs de code
-    .map(block => block.trim())
-    .join('\n\n'); // Meilleur espacement
+  // Ajouter une détection de langage pour une meilleure conservation du contexte
+  const languagePriorities: Record<string, number> = {
+    typescript: 1.2,
+    javascript: 1.1,
+    python: 1.0,
+    html: 0.9
+  };
 
-  return (
-    start +
-    '\n\n... [Context optimized for token efficiency] ...\n\n' +
-    (importantSections ? importantSections + '\n\n' : '') +
-    '... [Remaining context truncated] ...\n\n' +
-    end
-  );
+  // Nouvelle méthode de découpage avec fenêtre glissante
+  const slidingWindowChunk = (text: string, windowSize: number) => {
+    const chunks = [];
+    for (let i = 0; i < text.length; i += windowSize / 2) { // Chevauchement de 50%
+      chunks.push(text.substring(i, i + windowSize));
+    }
+    return chunks;
+  };
+
+  // Optimisation dynamique basée sur le modèle
+  const dynamicMaxLength = Math.min(maxLength, modelDetails.maxTokenAllowed * 3.5);
+
+  if (context.length <= dynamicMaxLength) return context;
+
+  // Priorisation des blocs de code avec score de pertinence
+  const codeBlocks = [...context.matchAll(/```(\w+)?\n([\s\S]*?)```/g)]
+    .map(match => {
+      const lang = match[1] || 'unknown';
+      return {
+        lang,
+        content: match[2],
+        score: languagePriorities[lang] || 1.0
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Sélection adaptative des blocs
+  const maxCodeBlocks = Math.floor(dynamicMaxLength / 2000);
+  const selectedCode = codeBlocks
+    .slice(0, maxCodeBlocks)
+    .map(b => `\`\`\`${b.lang}\n${b.content}\n\`\`\``)
+    .join('\n\n');
+
+  // Découpage intelligent du texte restant
+  const remainingText = context.replace(/```[\s\S]*?```/g, '');
+  const semanticChunks = slidingWindowChunk(remainingText, dynamicMaxLength / 4)
+    .filter(chunk => {
+      // Conservation des phrases complètes
+      const sentenceEnd = /[.!?]\s+/;
+      return sentenceEnd.test(chunk.slice(-10));
+    });
+
+  return [
+    selectedCode,
+    ...semanticChunks.slice(0, 3),
+    '\n\n...[Context optimized with semantic windowing]...'
+  ].join('\n\n');
 }
 
 const logger = createScopedLogger('stream-text');
