@@ -6,14 +6,15 @@ const logger = createScopedLogger('api.enhanced-context-cache');
 
 // Interface pour typer les données de la requête
 interface EnhancedContextCacheRequest {
-  action: 'clear' | 'stats' | 'configure' | 'toggle-compression' | 'toggle-adaptive-expiry';
+  action: 'clear' | 'stats' | 'configure' | 'toggle-compression' | 'toggle-adaptive-expiry' | 'toggle-memory-monitoring' | 'set-compression-threshold';
   maxSize?: number;
   expiryMs?: number;
   enabled?: boolean;
+  threshold?: number;
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { action, maxSize, expiryMs, enabled } = await request.json() as EnhancedContextCacheRequest;
+  const { action, maxSize, expiryMs, enabled, threshold } = await request.json() as EnhancedContextCacheRequest;
 
   switch (action) {
     case 'clear':
@@ -73,6 +74,30 @@ export async function action({ request }: ActionFunctionArgs) {
         success: true,
         message: `Expiration adaptative ${enabled ? 'activée' : 'désactivée'} avec succès`,
         adaptiveExpiryEnabled: enabled
+      });
+
+    case 'toggle-memory-monitoring':
+      if (enabled !== undefined) {
+        enhancedContextCache.setMemoryMonitoringEnabled(enabled);
+        logger.info(`Surveillance mémoire ${enabled ? 'activée' : 'désactivée'}`);
+      }
+      
+      return json({
+        success: true,
+        message: `Surveillance mémoire ${enabled ? 'activée' : 'désactivée'} avec succès`,
+        memoryMonitoringEnabled: enabled
+      });
+
+    case 'set-compression-threshold':
+      if (threshold !== undefined) {
+        enhancedContextCache.setAutoCompressionThreshold(threshold);
+        logger.info(`Seuil de compression configuré à ${threshold} bytes`);
+      }
+      
+      return json({
+        success: true,
+        message: `Seuil de compression configuré avec succès`,
+        autoCompressionThreshold: threshold
       });
 
     default:
