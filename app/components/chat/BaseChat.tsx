@@ -708,7 +708,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     </ClientOnly>
                   </div>
                   {contextOptimizationEnabled && progressAnnotations.length > 0 && (
-                      <div className="animate-fade-in">
+                      <div className="animate-fade-in mb-2">
                         <ProgressCompilation data={progressAnnotations} />
                       </div>
                     )}
