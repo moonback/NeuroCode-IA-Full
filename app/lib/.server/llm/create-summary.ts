@@ -4,6 +4,7 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constant
 import { extractCurrentContext, extractPropertiesFromMessage, simplifyBoltActions } from './utils';
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
+import { enhancedContextCache } from './enhanced-context-cache';
 
 const logger = createScopedLogger('create-summary');
 
@@ -16,7 +17,7 @@ export async function createSummary(props: {
   contextOptimization?: boolean;
   onFinish?: (resp: GenerateTextResult<Record<string, CoreTool<any, any>>, never>) => void;
 }) {
-  const { messages, env: serverEnv, apiKeys, providerSettings, onFinish } = props;
+  const { messages, env: serverEnv, apiKeys, providerSettings, onFinish, promptId, contextOptimization } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
   const processedMessages = messages.map((message) => {
@@ -30,7 +31,7 @@ export async function createSummary(props: {
       let content = message.content;
 
       content = simplifyBoltActions(content);
-      content = content.replace(/<div class=\\"__boltThought__\\">.*?<\/div>/s, '');
+      content = content.replace(/<div class=\"__boltThought__\">.*?<\/div>/s, '');
       content = content.replace(/<think>.*?<\/think>/s, '');
 
       return { ...message, content };
@@ -98,6 +99,24 @@ ${summary.summary}`;
     Array.isArray(message.content)
       ? (message.content.find((item) => item.type === 'text')?.text as string) || ''
       : message.content;
+
+  // Vérifier si un résumé est déjà en cache pour ces messages
+  if (contextOptimization) {
+    const cacheKey = enhancedContextCache.generateCacheKey({
+      promptId,
+      messageIds: slicedMessages.map(msg => msg.id || ''),
+      filePaths: [],
+    });
+    
+    const cachedSummary = enhancedContextCache.get(cacheKey);
+    if (cachedSummary && cachedSummary.summary) {
+      logger.info('Résumé récupéré depuis le cache');
+      return cachedSummary.summary;
+    }
+  }
+
+  // Mesurer le temps de génération du résumé
+  const startTime = performance.now();
 
   // select files from the list of code file from the project that might be useful for the current request from the user
   const resp = await generateText({
@@ -188,6 +207,23 @@ Please provide a summary of the chat till now including the hitorical summary of
   });
 
   const response = resp.text;
+  const endTime = performance.now();
+  logger.debug(`Résumé généré en ${(endTime - startTime).toFixed(2)}ms`);
+
+  // Mettre en cache le résumé généré
+  if (contextOptimization) {
+    const cacheKey = enhancedContextCache.generateCacheKey({
+      promptId,
+      messageIds: slicedMessages.map(msg => msg.id || ''),
+      filePaths: [],
+    });
+    
+    enhancedContextCache.set(cacheKey, {
+      contextFiles: {},
+      summary: response
+    });
+    logger.info('Résumé mis en cache');
+  }
 
   if (onFinish) {
     onFinish(resp);
