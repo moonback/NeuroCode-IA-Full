@@ -42,6 +42,7 @@ import { SupabaseConnection } from './SupabaseConnection';
 import { TargetedFilesDisplay } from './TargetedFilesDisplay';
 import { useStore } from '@nanostores/react';
 import { useSettings } from '~/lib/hooks/useSettings';
+import { EnhancedContextCacheManager } from './EnhancedContextCacheManager';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 /*
@@ -881,6 +882,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         {!chatStarted && ImportButtons(importChat)}
                         {!chatStarted && <GitCloneButton importChat={importChat} />}
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
+                        
+                        {/* Ajout du gestionnaire de cache de contexte amélioré */}
+                        {chatStarted && contextOptimizationEnabled && <EnhancedContextCacheManager />}
                         
                         <IconButton
                           title="Paramètres des modèles"
