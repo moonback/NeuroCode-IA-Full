@@ -636,11 +636,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       }}
                     />
                   )}
-                </div>{contextOptimizationEnabled && progressAnnotations.length > 0 && (
-                      <div className="animate-fade-in">
-                        <ProgressCompilation data={progressAnnotations} />
-                      </div>
-                    )}
+                </div>
                               <div
                   className={classNames(
                     'bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
@@ -711,6 +707,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       )}
                     </ClientOnly>
                   </div>
+                  {contextOptimizationEnabled && progressAnnotations.length > 0 && (
+                      <div className="animate-fade-in">
+                        <ProgressCompilation data={progressAnnotations} />
+                      </div>
+                    )}
                   <FilePreview
                     files={uploadedFiles}
                     imageDataList={imageDataList}
