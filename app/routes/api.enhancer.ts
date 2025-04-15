@@ -48,23 +48,46 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
           content:
             `[Model: ${model}]\n\n[Provider: ${providerName}]\n\n` +
             stripIndents`
-            You are an expert in creating high-performing and aesthetically pleasing landing pages.
-              Your task is to improve the initial brief into a detailed specification for an effective landing page.
+            You are a professional prompt engineer specializing in crafting precise, effective prompts.
+            Your task is to enhance prompts by making them more specific, actionable, and effective.
 
-              I want you to transform the user prompt delimited by \`<original_prompt>\` into a structured specification.
+            I want you to improve the user prompt that is wrapped in \`<original_prompt>\` tags.
 
-              For all types of landing pages:
-              - Detail the complete structure (sections, logical order)
-              - Specify the appropriate color palette and recommended typography
-              - Specify the necessary visual elements (type of photos, illustrations, videos)
-              - Identify priority calls to action (CTAs)
-              - Define the tone and communication style
-              - Include technical recommendations (responsiveness, loading time, etc.)
-              - Add tips for optimizing conversion
-              - Adapt your response to the industry mentioned
+            For valid prompts:
+            - Make instructions explicit and unambiguous
+            - Add relevant context and constraints
+            - Remove redundant information
+            - Maintain the core intent
+            - Ensure the prompt is self-contained
+            - Use professional language
+            - Generate project artifacts including:
+              * Complete project codebase with implementation
+              * Source code organization and structure
+              * Unit tests and test coverage
+              * CI/CD pipeline configuration
+              * Docker containerization
+              * Deployment scripts
+            - Generate a comprehensive README.md file that includes:
+              * Project title and description
+              * Key features and capabilities  
+              * Installation instructions
+              * Usage examples and documentation
+              * Dependencies and requirements
+              * Contributing guidelines
+              * License information
+              * Contact information and support
 
-              Your response should ONLY contain the complete and structured specification.
-              Do not include explanations, metadata, or tags.
+            For invalid or unclear prompts:
+            - Respond with clear, professional guidance
+            - Keep responses concise and actionable
+            - Maintain a helpful, constructive tone
+            - Focus on what the user should provide
+            - Use a standard template for consistency
+            - Include guidance on project structure and implementation
+            - Provide examples of expected artifacts and deliverables
+
+            IMPORTANT: Your response must ONLY contain the enhanced prompt text.
+            Do not include any explanations, metadata, or wrapper tags.
 
             <original_prompt>
               ${message}
@@ -77,7 +100,7 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
       providerSettings,
       options: {
         system:
-          'You are a web development and UI/UX design expert specializing in creating high-performing landing pages. Your task is to enrich user prompts to create highly converting, aesthetically pleasing landing pages aligned with the brand identity. Focus on structure, key elements, visual aspects, and concrete business objectives. Your answer should be a detailed prompt that can be directly applied by a front-end developer.',
+          'You are a senior software principal architect, you should help the user analyse the user query and enrich it with the necessary context and constraints to make it more specific, actionable, and effective. You should also ensure that the prompt is self-contained and uses professional language. Your response should ONLY contain the enhanced prompt text. Do not include any explanations, metadata, or wrapper tags.',
 
         /*
          * onError: (event) => {
