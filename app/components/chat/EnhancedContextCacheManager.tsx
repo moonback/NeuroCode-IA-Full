@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { IconButton } from '~/components/ui/IconButton';
 import WithTooltip from '~/components/ui/Tooltip';
 import { createScopedLogger } from '~/utils/logger';
+import { formatSize } from '~/utils/formatSize';
 
 const logger = createScopedLogger('EnhancedContextCacheManager');
 
@@ -29,6 +30,12 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [showStats, setShowStats] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState<number | null>(null);
+  const [maxSizeInput, setMaxSizeInput] = useState('');
+  const [expiryInput, setExpiryInput] = useState('');
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showConfigForm, setShowConfigForm] = useState(false);
+  const statsRef = useRef<HTMLDivElement>(null);
 
   // Fonction pour récupérer les statistiques du cache
   const fetchCacheStats = async () => {
