@@ -31,18 +31,11 @@ interface CacheStats {
   averageAccessTime: number;
   totalAccessTime: number;
   accessCount: number;
-  memoryMonitoringEnabled: boolean;
-  totalOriginalSize: number;
-  totalCompressedSize: number;
-  compressedEntries: number;
-  autoCompressionThreshold: number;
 }
 
 // Configuration du cache
 const CACHE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes par défaut
 const MAX_CACHE_SIZE = 100; // Nombre maximum d'entrées dans le cache
-const MEMORY_USAGE_THRESHOLD = 0.8; // Seuil d'utilisation mémoire (80%)
-const COMPRESSION_THRESHOLD = 10 * 1024; // Taille minimale pour compression (10KB)
 
 // Cache en mémoire amélioré pour stocker le contexte
 class EnhancedContextCache {
@@ -56,10 +49,6 @@ class EnhancedContextCache {
   private adaptiveExpiryEnabled: boolean = true;
   private totalAccessTime: number = 0;
   private accessCount: number = 0;
-  private memoryMonitoringEnabled: boolean = true;
-  private lastMemoryCheck: number = 0;
-  private memoryCheckInterval: number = 60 * 1000; // 1 minute
-  private autoCompressionThreshold: number = COMPRESSION_THRESHOLD;
 
   private constructor() {
     this.cache = new Map<string, EnhancedContextCacheEntry>();
@@ -67,10 +56,6 @@ class EnhancedContextCache {
     this.defaultExpiryMs = CACHE_EXPIRY_MS;
     // Nettoyer le cache périodiquement
     setInterval(() => this.cleanup(), CACHE_EXPIRY_MS / 2);
-    // Vérifier l'utilisation de la mémoire périodiquement
-    if (this.memoryMonitoringEnabled) {
-      setInterval(() => this.checkMemoryUsage(), this.memoryCheckInterval);
-    }
   }
 
   public static getInstance(): EnhancedContextCache {
@@ -107,12 +92,6 @@ class EnhancedContextCache {
   private compressData(data: FileMap): { compressed: Uint8Array; originalSize: number; compressedSize: number } {
     const serialized = JSON.stringify(data);
     const originalSize = serialized.length;
-    
-    // Ne compresser que si la taille dépasse le seuil
-    if (originalSize < this.autoCompressionThreshold && !this.isMemoryPressureHigh()) {
-      return { compressed: new TextEncoder().encode(serialized), originalSize, compressedSize: originalSize };
-    }
-    
     const compressed = gzip(serialized);
     const compressedSize = compressed.length;
     
@@ -134,17 +113,12 @@ class EnhancedContextCache {
   public set(key: string, value: { contextFiles: FileMap; summary?: string }, expiryMs?: number): void {
     this.cleanup(); // Nettoyer le cache avant d'ajouter une nouvelle entrée
 
-    // Vérifier la pression mémoire avant d'ajouter une entrée
-    if (this.memoryMonitoringEnabled) {
-      this.checkMemoryUsage();
-    }
-
     // Si le cache est plein, supprimer l'entrée la plus ancienne
     if (this.cache.size >= this.maxSize) {
       const oldestKey = this.getOldestEntry();
       if (oldestKey) {
         this.cache.delete(oldestKey);
-        logger.debug(`Cache plein, suppression de l'entrée la plus ancienne: ${oldestKey}`);
+        logger.info(`Cache plein, suppression de l'entrée la plus ancienne: ${oldestKey}`);
       }
     }
 
@@ -171,7 +145,7 @@ class EnhancedContextCache {
         // Stocker les données compressées dans une propriété non typée
         (entry as any).compressedData = compressed;
         
-        logger.debug(`Données compressées: ${originalSize} -> ${compressedSize} bytes (${(compressedSize / originalSize * 100).toFixed(2)}%)`);
+        logger.info(`Données compressées: ${originalSize} -> ${compressedSize} bytes (${(compressedSize / originalSize * 100).toFixed(2)}%)`);
       } catch (error) {
         logger.error(`Erreur lors de la compression: ${error}`);
         entry.compressed = false;
@@ -180,7 +154,7 @@ class EnhancedContextCache {
 
     this.cache.set(key, entry);
 
-    logger.debug(`Contexte mis en cache avec la clé: ${key}, expire dans ${expiry / 1000}s`);
+    logger.info(`Contexte mis en cache avec la clé: ${key}, expire dans ${expiry / 1000}s`);
   }
 
   /**
@@ -192,6 +166,7 @@ class EnhancedContextCache {
     
     if (!entry) {
       this.misses++;
+      logger.info(`Cache miss pour la clé: ${key}`);
       return null;
     }
 
@@ -199,7 +174,7 @@ class EnhancedContextCache {
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       this.misses++;
-      logger.debug(`Entrée de cache expirée: ${key}`);
+      logger.info(`Entrée de cache expirée: ${key}`);
       return null;
     }
 
@@ -231,7 +206,7 @@ class EnhancedContextCache {
       const accessBonus = Math.min(entry.accessCount * 0.1, 2.0); // Maximum 2x la durée initiale
       const newExpiry = this.defaultExpiryMs * (1 + accessBonus);
       entry.expiresAt = Date.now() + newExpiry;
-      logger.debug(`Expiration adaptative: durée prolongée à ${newExpiry / 1000}s pour la clé ${key}`);
+      logger.info(`Expiration adaptative: durée prolongée à ${newExpiry / 1000}s pour la clé ${key}`);
     }
     
     this.cache.set(key, entry);
@@ -242,7 +217,7 @@ class EnhancedContextCache {
     this.totalAccessTime += accessTime;
     this.accessCount++;
 
-    logger.debug(`Contexte récupéré depuis le cache avec la clé: ${key} en ${accessTime.toFixed(2)}ms`);
+    logger.info(`Cache hit pour la clé: ${key} en ${accessTime.toFixed(2)}ms`);
     return {
       contextFiles,
       summary: entry.summary,
@@ -284,78 +259,6 @@ class EnhancedContextCache {
 
     if (expiredCount > 0) {
       logger.debug(`Nettoyage du cache: ${expiredCount} entrées expirées supprimées`);
-    }
-  }
-
-  /**
-   * Vérifie l'utilisation de la mémoire et nettoie le cache si nécessaire
-   */
-  private checkMemoryUsage(): void {
-    // Éviter les vérifications trop fréquentes
-    const now = Date.now();
-    if (now - this.lastMemoryCheck < this.memoryCheckInterval) {
-      return;
-    }
-    this.lastMemoryCheck = now;
-
-    if (this.isMemoryPressureHigh()) {
-      logger.warn('Pression mémoire élevée détectée, nettoyage du cache');
-      this.reduceMemoryFootprint();
-    }
-  }
-
-  /**
-   * Vérifie si la pression mémoire est élevée
-   */
-  private isMemoryPressureHigh(): boolean {
-    // Cette fonction est une approximation, car nous n'avons pas accès à la mémoire réelle dans le navigateur
-    // Dans un environnement Node.js, on pourrait utiliser process.memoryUsage()
-    if (typeof performance !== 'undefined' && performance.memory) {
-      const memoryInfo = performance.memory as any;
-      if (memoryInfo.usedJSHeapSize && memoryInfo.jsHeapSizeLimit) {
-        const memoryUsage = memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit;
-        return memoryUsage > MEMORY_USAGE_THRESHOLD;
-      }
-    }
-    
-    // Si on ne peut pas vérifier la mémoire, on se base sur la taille du cache
-    return this.cache.size > this.maxSize * 0.9; // 90% de la taille max
-  }
-
-  /**
-   * Réduit l'empreinte mémoire du cache
-   */
-  private reduceMemoryFootprint(): void {
-    // Stratégie 1: Supprimer les entrées les moins utilisées
-    if (this.cache.size > this.maxSize / 2) {
-      const entries = Array.from(this.cache.entries());
-      // Trier par nombre d'accès (croissant)
-      entries.sort((a, b) => a[1].accessCount - b[1].accessCount);
-      // Supprimer 25% des entrées les moins utilisées
-      const toRemove = Math.ceil(entries.length * 0.25);
-      for (let i = 0; i < toRemove; i++) {
-        if (entries[i]) {
-          this.cache.delete(entries[i][0]);
-        }
-      }
-      logger.debug(`Réduction empreinte mémoire: ${toRemove} entrées supprimées`);
-    }
-
-    // Stratégie 2: Forcer la compression des entrées non compressées
-    for (const [key, entry] of this.cache.entries()) {
-      if (!entry.compressed && entry.contextFiles && Object.keys(entry.contextFiles).length > 0) {
-        try {
-          const { compressed, originalSize, compressedSize } = this.compressData(entry.contextFiles);
-          entry.contextFiles = {} as FileMap;
-          entry.compressed = true;
-          entry.originalSize = originalSize;
-          entry.compressedSize = compressedSize;
-          (entry as any).compressedData = compressed;
-        } catch (error) {
-          // En cas d'erreur, on supprime simplement l'entrée
-          this.cache.delete(key);
-        }
-      }
     }
   }
 
@@ -410,20 +313,6 @@ class EnhancedContextCache {
   }
 
   /**
-   * Active ou désactive la surveillance de la mémoire
-   */
-  public setMemoryMonitoringEnabled(enabled: boolean): void {
-    this.memoryMonitoringEnabled = enabled;
-  }
-
-  /**
-   * Configure le seuil de compression automatique
-   */
-  public setAutoCompressionThreshold(bytes: number): void {
-    this.autoCompressionThreshold = bytes;
-  }
-
-  /**
    * Retourne des statistiques détaillées sur le cache
    */
   public getStats(): CacheStats {
@@ -455,12 +344,7 @@ class EnhancedContextCache {
       compressionRatio,
       averageAccessTime,
       totalAccessTime: this.totalAccessTime,
-      accessCount: this.accessCount,
-      memoryMonitoringEnabled: this.memoryMonitoringEnabled,
-      totalOriginalSize,
-      totalCompressedSize,
-      compressedEntries,
-      autoCompressionThreshold: this.autoCompressionThreshold
+      accessCount: this.accessCount
     };
   }
 }
