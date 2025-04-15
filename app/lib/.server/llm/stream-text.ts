@@ -119,39 +119,46 @@ export async function streamText(props: {
   if (files && contextFiles && contextOptimization) {
     const codeContext = createFilesContext(contextFiles, true);
     const filePaths = getFilePaths(files);
-
+    
+    // Ajouter des métriques de performance pour le cache
+    const startTime = performance.now();
+    
     systemPrompt = `${systemPrompt}
-Below are all the files present in the project:
----
-${filePaths.join('\n')}
----
-
-Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fullfill current user request.
-CONTEXT BUFFER:
----
-${codeContext}
----
-`;
-
+    Below are all the files present in the project:
+    ---
+    ${filePaths.join('\n')}
+    ---
+    
+    Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fullfill current user request.
+    CONTEXT BUFFER:
+    ---
+    ${codeContext}
+    ---
+    `;
+    
     if (summary) {
       systemPrompt = `${systemPrompt}
       below is the chat history till now
-CHAT SUMMARY:
----
-${props.summary}
----
-`;
-
-      if (props.messageSliceId) {
-        processedMessages = processedMessages.slice(props.messageSliceId);
-      } else {
-        const lastMessage = processedMessages.pop();
-
-        if (lastMessage) {
-          processedMessages = [lastMessage];
-        }
+    CHAT SUMMARY:
+    ---
+    ${props.summary}
+    ---
+    `;
+    
+    if (props.messageSliceId) {
+      processedMessages = processedMessages.slice(props.messageSliceId);
+    } else {
+      const lastMessage = processedMessages.pop();
+    
+      if (lastMessage) {
+        processedMessages = [lastMessage];
       }
     }
+    }
+    
+    // Enregistrer les métriques de performance
+    const endTime = performance.now();
+    logger.debug(`Contexte chargé en ${(endTime - startTime).toFixed(2)}ms`);
   }
 
   logger.info(`Sending llm call to ${provider.name} with model ${modelDetails.name}`);
