@@ -1,7 +1,7 @@
 import { createScopedLogger } from '~/utils/logger';
 import type { FileMap } from './constants';
-import { gzip, ungzip } from 'pako';
-
+import pkg from 'pako';
+const {gzip, ungzip} = pkg;
 const logger = createScopedLogger('enhanced-context-cache');
 
 // Structure de l'entrée de cache amélioré
