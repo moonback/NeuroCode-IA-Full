@@ -31,6 +31,11 @@ interface CacheStats {
   averageAccessTime: number;
   totalAccessTime: number;
   accessCount: number;
+  memoryMonitoringEnabled?: boolean;
+  totalOriginalSize?: number;
+  totalCompressedSize?: number;
+  compressedEntries?: number;
+  autoCompressionThreshold?: number;
 }
 
 // Configuration du cache
@@ -47,6 +52,8 @@ class EnhancedContextCache {
   private misses: number = 0;
   private compressionEnabled: boolean = true;
   private adaptiveExpiryEnabled: boolean = true;
+  private memoryMonitoringEnabled: boolean = false;
+  private autoCompressionThreshold: number = 1024; // 1KB par défaut
   private totalAccessTime: number = 0;
   private accessCount: number = 0;
 
@@ -90,8 +97,32 @@ class EnhancedContextCache {
    * Compresse les données du contexte
    */
   private compressData(data: FileMap): { compressed: Uint8Array; originalSize: number; compressedSize: number } {
+    // Vérifier si les données sont vides ou très petites
+    if (!data || Object.keys(data).length === 0) {
+      logger.debug('Données vides ou trop petites pour la compression');
+      const emptyData = new TextEncoder().encode(JSON.stringify(data));
+      return { 
+        compressed: emptyData, 
+        originalSize: emptyData.length, 
+        compressedSize: emptyData.length 
+      };
+    }
+    
     const serialized = JSON.stringify(data);
     const originalSize = serialized.length;
+    
+    // Ne pas compresser les données trop petites
+    if (originalSize < this.autoCompressionThreshold) {
+      logger.debug(`Données trop petites pour compression (${originalSize} < ${this.autoCompressionThreshold} bytes)`);
+      const textEncoder = new TextEncoder();
+      return { 
+        compressed: textEncoder.encode(serialized), 
+        originalSize, 
+        compressedSize: originalSize 
+      };
+    }
+    
+    // Compresser les données
     const compressed = gzip(serialized);
     const compressedSize = compressed.length;
     
@@ -113,6 +144,12 @@ class EnhancedContextCache {
   public set(key: string, value: { contextFiles: FileMap; summary?: string }, expiryMs?: number): void {
     this.cleanup(); // Nettoyer le cache avant d'ajouter une nouvelle entrée
 
+    // Vérifier si la clé existe déjà
+    if (this.cache.has(key)) {
+      logger.info(`Mise à jour d'une entrée existante dans le cache: ${key}`);
+      this.delete(key);
+    }
+    
     // Si le cache est plein, supprimer l'entrée la plus ancienne
     if (this.cache.size >= this.maxSize) {
       const oldestKey = this.getOldestEntry();
@@ -120,6 +157,12 @@ class EnhancedContextCache {
         this.cache.delete(oldestKey);
         logger.info(`Cache plein, suppression de l'entrée la plus ancienne: ${oldestKey}`);
       }
+    }
+    
+    // Vérifier si les données sont valides
+    if (!value || !value.contextFiles) {
+      logger.warn(`Tentative de mise en cache de données invalides pour la clé: ${key}`);
+      return;
     }
 
     const expiry = expiryMs || this.defaultExpiryMs;
@@ -138,14 +181,22 @@ class EnhancedContextCache {
     if (this.compressionEnabled) {
       try {
         const { compressed, originalSize, compressedSize } = this.compressData(value.contextFiles);
-        entry.contextFiles = {} as FileMap; // Libérer la mémoire
-        entry.compressed = true;
-        entry.originalSize = originalSize;
-        entry.compressedSize = compressedSize;
-        // Stocker les données compressées dans une propriété non typée
-        (entry as any).compressedData = compressed;
         
-        logger.info(`Données compressées: ${originalSize} -> ${compressedSize} bytes (${(compressedSize / originalSize * 100).toFixed(2)}%)`);
+        // Vérifier si la compression est efficace (données compressées plus petites que les originales)
+        if (compressedSize < originalSize) {
+          entry.contextFiles = {} as FileMap; // Libérer la mémoire
+          entry.compressed = true;
+          entry.originalSize = originalSize;
+          entry.compressedSize = compressedSize;
+          // Stocker les données compressées dans une propriété non typée
+          (entry as any).compressedData = compressed;
+          
+          logger.info(`Données compressées: ${originalSize} -> ${compressedSize} bytes (${(compressedSize / originalSize * 100).toFixed(2)}%)`);
+        } else {
+          // Si la compression n'est pas efficace, conserver les données non compressées
+          entry.compressed = false;
+          logger.info(`Compression inefficace: ${originalSize} -> ${compressedSize} bytes. Données conservées non compressées.`);
+        }
       } catch (error) {
         logger.error(`Erreur lors de la compression: ${error}`);
         entry.compressed = false;
@@ -313,6 +364,21 @@ class EnhancedContextCache {
   }
 
   /**
+   * Active ou désactive la surveillance de la mémoire
+   */
+  public setMemoryMonitoringEnabled(enabled: boolean): void {
+    this.memoryMonitoringEnabled = enabled;
+  }
+
+  /**
+   * Configure le seuil de compression automatique
+   * Les données plus petites que ce seuil ne seront pas compressées
+   */
+  public setAutoCompressionThreshold(threshold: number): void {
+    this.autoCompressionThreshold = threshold;
+  }
+
+  /**
    * Retourne des statistiques détaillées sur le cache
    */
   public getStats(): CacheStats {
@@ -332,7 +398,7 @@ class EnhancedContextCache {
     const hitRatio = (this.hits + this.misses) > 0 ? this.hits / (this.hits + this.misses) : 0;
     const averageAccessTime = this.accessCount > 0 ? this.totalAccessTime / this.accessCount : 0;
 
-    return {
+    const stats: CacheStats = {
       size: this.cache.size,
       maxSize: this.maxSize,
       defaultExpiryMs: this.defaultExpiryMs,
@@ -344,8 +410,15 @@ class EnhancedContextCache {
       compressionRatio,
       averageAccessTime,
       totalAccessTime: this.totalAccessTime,
-      accessCount: this.accessCount
+      accessCount: this.accessCount,
+      memoryMonitoringEnabled: this.memoryMonitoringEnabled,
+      totalOriginalSize,
+      totalCompressedSize,
+      compressedEntries,
+      autoCompressionThreshold: this.autoCompressionThreshold
     };
+    
+    return stats;
   }
 }
 
