@@ -356,53 +356,59 @@ if (!promptId && modelDetails?.features?.reasoning) {
     }) ?? systemPrompt; // Fall back to the existing system prompt if reasoning prompt fails
 }
 
-
-  if (files && contextFiles && contextOptimization) {
-    // Optimization: Only create context if there are files
-    if (Object.keys(contextFiles).length > 0) {
-      const codeContext = createFilesContext(contextFiles, true);
-      const filePaths = getFilePaths(files);
-
- // Optimize context buffer if it's too large
- const optimizedCodeContext = optimizeContextBuffer(codeContext);
-
- systemPrompt = `${systemPrompt}Below are all the files present in the project:
+if (files && contextFiles && contextOptimization) {
+  // Performance metrics
+  const startTime = performance.now();
+  
+  // Optimization: Only create context if there are files
+  if (Object.keys(contextFiles).length > 0) {
+    const codeContext = createFilesContext(contextFiles, true);
+    const filePaths = getFilePaths(files);
+    
+    // Optimize context buffer if it's too large
+    const optimizedCodeContext = optimizeContextBuffer(codeContext);
+    
+    systemPrompt = `${systemPrompt}Below are all the files present in the project:
 ---
 ${filePaths.join('\n')}
 ---
-
 Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fullfill current user request.
 CONTEXT BUFFER:
 ---
 ${optimizedCodeContext}
 ---
 `;
-}
-    if (summary) {
-        // Optimize summary if it's too long
-        const optimizedSummary =
-        summary.length > 10000
-          ? summary.substring(0, 5000) + '\n[Summary truncated...]\n' + summary.substring(summary.length - 5000)
-          : summary;
-      systemPrompt = `${systemPrompt}
+  }
+  
+  if (summary) {
+    // Optimize summary if it's too long
+    const optimizedSummary =
+      summary.length > 10000
+        ? summary.substring(0, 5000) + '\n[Summary truncated...]\n' + summary.substring(summary.length - 5000)
+        : summary;
+    
+    systemPrompt = `${systemPrompt}
 below is the chat history till now
 CHAT SUMMARY:
 ---
 ${optimizedSummary}
 ---
 `;
-
-      if (props.messageSliceId) {
-        processedMessages = processedMessages.slice(props.messageSliceId);
-      } else {
-        const lastMessage = processedMessages.pop();
-
-        if (lastMessage) {
-          processedMessages = [lastMessage];
-        }
+    
+    if (props.messageSliceId) {
+      processedMessages = processedMessages.slice(props.messageSliceId);
+    } else {
+      const lastMessage = processedMessages.pop();
+      if (lastMessage) {
+        processedMessages = [lastMessage];
       }
     }
   }
+  
+  // Log performance metrics
+  const endTime = performance.now();
+  logger.debug(`Contexte chargé en ${(endTime - startTime).toFixed(2)}ms`);
+}
 
   logger.info(`Sending llm call to ${provider.name} with model ${modelDetails.name}`);
 

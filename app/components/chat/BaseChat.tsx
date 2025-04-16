@@ -42,6 +42,7 @@ import { SupabaseConnection } from './SupabaseConnection';
 import { TargetedFilesDisplay } from './TargetedFilesDisplay';
 import { useStore } from '@nanostores/react';
 import { useSettings } from '~/lib/hooks/useSettings';
+import { EnhancedContextCacheManager } from './EnhancedContextCacheManager';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 /*
@@ -635,11 +636,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       }}
                     />
                   )}
-                </div>{contextOptimizationEnabled && progressAnnotations.length > 0 && (
-                      <div className="animate-fade-in">
-                        <ProgressCompilation data={progressAnnotations} />
-                      </div>
-                    )}
+                </div>
                               <div
                   className={classNames(
                     'bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
@@ -710,6 +707,20 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       )}
                     </ClientOnly>
                   </div>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      {contextOptimizationEnabled && progressAnnotations.length > 0 && (
+                        <div className="animate-fade-in mb-2">
+                          <ProgressCompilation data={progressAnnotations} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-2 ml-4">
+                      {/* Ajout du gestionnaire de cache de contexte amélioré */}
+                      {chatStarted && contextOptimizationEnabled && <EnhancedContextCacheManager />}
+                    </div>
+                  </div>
+                    
                   <FilePreview
                     files={uploadedFiles}
                     imageDataList={imageDataList}
@@ -738,6 +749,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         imageDataList={imageDataList}
                       />
                     )}
+                    
                   </ClientOnly>
                   <div
                     className={classNames(
@@ -823,6 +835,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       translate="no"
                     />
                     <ClientOnly>
+                      
                       {() => (
                         <SendButton
                           show={input.length > 0 || isStreaming || uploadedFiles.length > 0}
@@ -841,6 +854,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         />
                       )}
                     </ClientOnly>
+                    
                     <TargetedFilesDisplay textareaRef={textareaRef} className="mt-2" />
                   <div className="flex justify-between items-center text-sm p-4 pt-2">
                       <div className="flex gap-1 items-center">
@@ -881,6 +895,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         {!chatStarted && ImportButtons(importChat)}
                         {!chatStarted && <GitCloneButton importChat={importChat} />}
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
+                        
                         
                         <IconButton
                           title="Paramètres des modèles"

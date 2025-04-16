@@ -90,6 +90,9 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
 
   // Calculate if all items are complete for styling
   const allComplete = progressList.every(item => item.status === 'complete');
+  const inProgress = progressList.some(item => item.status === 'in-progress');
+  const completedCount = progressList.filter(item => item.status === 'complete').length;
+  const totalCount = progressList.length;
 
   return (
     <AnimatePresence>
@@ -102,20 +105,50 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
           'bg-bolt-elements-background-depth-1/70',
           'border border-bolt-elements-borderColor/30',
           'shadow-sm rounded-md relative w-full max-w-chat mx-auto z-prompt',
-          ' mb-0 px-1 py-1',
-          allComplete ? 'border-violet-500/30' : ''
+          'mb-0 px-1 py-1',
+          allComplete ? 'border-violet-500/30' : inProgress ? 'border-blue-500/30' : ''
         )}
       >
         <div
           className={classNames(
-            'bg-bolt-elements-item-backgroundAccent/30',
-            'p-1 rounded-md text-bolt-elements-item-contentAccent/90',
-            'flex items-center',
+            // 'bg-bolt-elements-item-backgroundAccent/30',
+            'rounded-md text-bolt-elements-item-contentAccent/90',
+            'flex items-center justify-between',
+            expanded ? 'p-1' : 'p-1'
           )}
         >
-          <div className="flex-1">
+          {!expanded && (
+            <div className="flex items-center gap-2 flex-1">
+              <div className="flex items-center">
+                {inProgress ? (
+                  <div className="i-svg-spinners:90-ring-with-bg text-blue-400/70 text-sm" aria-label="In progress" />
+                ) : allComplete ? (
+                  <div className="i-ph:check-circle text-green-500/70 text-sm" aria-label="Complete" />
+                ) : (
+                  <div className="i-ph:info-circle text-gray-400/70 text-sm" aria-label="Info" />
+                )}
+                <div className="ml-1.5 text-xs font-medium">
+                  {inProgress ? (
+                    <span className="text-blue-400/90">En cours...</span>
+                  ) : allComplete ? (
+                    <span className="text-green-500/90">Terminé</span>
+                  ) : (
+                    <span className="text-gray-400/90">Info</span>
+                  )}
+                </div>
+              </div>
+              
+              {totalCount > 1 && (
+                <div className="text-xs text-gray-400/70 ml-2">
+                  {completedCount}/{totalCount}
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className={expanded ? "flex-1" : "hidden"}>
             <AnimatePresence mode="wait">
-              {expanded ? (
+              {expanded && (
                 <motion.div
                   className="progress-items space-y-1"
                   initial={{ height: 0, opacity: 0 }}
@@ -132,21 +165,20 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
                     />
                   ))}
                 </motion.div>
-              ) : latestProgress && (
-                <ProgressItem progress={latestProgress} isLast={true} />
               )}
             </AnimatePresence>
           </div>
+          
           <motion.button
             aria-label={expanded ? "Collapse progress details" : "Expand progress details"}
-            title={expanded ? "Hide details" : "Show all steps"}
+            title={expanded ? "Masquer les détails" : "Afficher toutes les étapes"}
             initial={{ scale: 1 }}
             animate={{ scale: 1 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.1, ease: cubicEasingFn }}
             className={classNames(
-              "p-1 ml-1 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColor/50 text-xs",
+              "p-1 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColor/50 text-xs",
               "hover:bg-bolt-elements-artifacts-backgroundHover/30",
               autoCollapseTimer ? "animate-pulse" : ""
             )}

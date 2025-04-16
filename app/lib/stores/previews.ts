@@ -26,6 +26,8 @@ export class PreviewsStore {
   #refreshTimeouts = new Map<string, NodeJS.Timeout>();
   #REFRESH_DELAY = 300;
   #storageChannel: BroadcastChannel;
+  #MAX_STORAGE_SIZE = 5 * 1024 * 1024; // 5MB limite par défaut
+  #STORAGE_CLEANUP_THRESHOLD = 0.9; // 90% de la limite
 
   previews = atom<PreviewInfo[]>([]);
 
@@ -85,14 +87,30 @@ export class PreviewsStore {
   }
 
   // Sync storage data between tabs
-  private _syncStorage(storage: Record<string, string>) {
+  private async _syncStorage(storage: Record<string, string>) {
     if (typeof window !== 'undefined') {
+      // Vérifier l'espace disponible avant la synchronisation
+      const totalSize = this._calculateStorageSize(storage);
+      if (totalSize > this.#MAX_STORAGE_SIZE) {
+        await this._cleanupStorage();
+      }
+
       Object.entries(storage).forEach(([key, value]) => {
         try {
+          // Compression des données si nécessaire
+          const compressedValue = this._shouldCompress(value) ? this._compress(value) : value;
           const originalSetItem = Object.getPrototypeOf(localStorage).setItem;
-          originalSetItem.call(localStorage, key, value);
+          originalSetItem.call(localStorage, key, compressedValue);
         } catch (error) {
-          console.error('[Preview] Error syncing storage:', error);
+          if (error instanceof Error && error.name === 'QuotaExceededError') {
+            this._cleanupStorage().then(() => {
+              // Réessayer après le nettoyage
+              const originalSetItem = Object.getPrototypeOf(localStorage).setItem;
+              originalSetItem.call(localStorage, key, value);
+            });
+          } else {
+            console.error('[Preview] Error syncing storage:', error);
+          }
         }
       });
 
@@ -118,6 +136,53 @@ export class PreviewsStore {
   }
 
   // Broadcast storage state to other tabs
+  private _calculateStorageSize(storage: Record<string, string>): number {
+    return Object.entries(storage).reduce((size, [key, value]) => {
+      return size + (key.length + value.length) * 2; // Approximation de la taille en bytes
+    }, 0);
+  }
+
+  private _shouldCompress(value: string): boolean {
+    return value.length > 1024; // Compresser si plus de 1KB
+  }
+
+  private _compress(value: string): string {
+    try {
+      return btoa(encodeURIComponent(value));
+    } catch (e) {
+      console.warn('[Preview] Compression failed:', e);
+      return value;
+    }
+  }
+
+  private _decompress(value: string): string {
+    try {
+      return decodeURIComponent(atob(value));
+    } catch (e) {
+      console.warn('[Preview] Decompression failed:', e);
+      return value;
+    }
+  }
+
+  private async _cleanupStorage(): Promise<void> {
+    const snapshotKeys = Object.keys(localStorage)
+      .filter(key => key.startsWith('snapshot:'))
+      .sort((a, b) => {
+        const timeA = JSON.parse(localStorage.getItem(a) || '{}').timestamp || 0;
+        const timeB = JSON.parse(localStorage.getItem(b) || '{}').timestamp || 0;
+        return timeA - timeB;
+      });
+
+    // Supprimer les snapshots les plus anciens jusqu'à libérer assez d'espace
+    while (this._calculateStorageSize(Object.fromEntries(Object.entries(localStorage))) > this.#MAX_STORAGE_SIZE * this.#STORAGE_CLEANUP_THRESHOLD
+      && snapshotKeys.length > 0) {
+      const oldestKey = snapshotKeys.shift();
+      if (oldestKey) {
+        localStorage.removeItem(oldestKey);
+      }
+    }
+  }
+
   private _broadcastStorageSync() {
     if (typeof window !== 'undefined') {
       const storage: Record<string, string> = {};
@@ -126,7 +191,8 @@ export class PreviewsStore {
         const key = localStorage.key(i);
 
         if (key) {
-          storage[key] = localStorage.getItem(key) || '';
+          const value = localStorage.getItem(key) || '';
+          storage[key] = this._shouldCompress(value) ? this._compress(value) : value;
         }
       }
 
