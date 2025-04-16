@@ -1,7 +1,7 @@
 
-# NeuroCode - Plateforme de Développement Web Assistée par IA
+# NeuroCode - Plateforme de Développement Web Assistée par IA V3
 
-[![Version](https://img.shields.io/badge/version-2.0.0-important)]()
+[![Version](https://img.shields.io/badge/version-3.0.0-important)]()
 [![License](https://img.shields.io/badge/license-MIT-success)](LICENSE)
 
 NeuroCode est une plateforme de développement web full-stack de nouvelle génération, propulsée par l'IA, conçue pour accélérer et optimiser le processus de développement. Elle s'exécute entièrement dans le navigateur grâce à [WebContainers](https://webcontainers.io/), offrant une expérience de développement intégrée et performante, sans nécessiter d'installation locale complexe.
@@ -25,39 +25,42 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
 ✅ **Déploiement direct sur Netlify ou Vercel**
 ✅ **Intégration de Supabase pour la gestion des bases de données**
 
-
 ---
 
-## ✅ Fonctionnalités récemment ajoutées  
+## ✅ Fonctionnalités récemment ajoutées (mise à jour)
 
 - **IA & Modèles**  
   - ✅ Intégration OpenRouter, Gemini, DeepSeek, Mistral, Cohere, HuggingFace, Together, xAI Grok  
   - ✅ Génération automatique des modèles Ollama à partir des téléchargements  
   - ✅ Définition dynamique de la longueur maximale des tokens  
-  - ✅ Amélioration du prompt pour des réponses plus pertinentes  
-  - ✅ Instructions personnalisées pour les modèles LLM
-  - ✅ Notifications sonores pour les réponses du chat
-  - ✅ Processeur de messages pour les commandes de configuration de projet
+  - ✅ Instructions personnalisées pour les modèles LLM  
+  - ✅ **Mécanisme intelligent de cache de contexte** pour optimiser les réponses des LLM  
+  - ✅ **Sélection affinée du contexte pertinent** via `EnhancedContextCacheManager`  
+  - ✅ Notifications sonores pour les réponses du chat  
+  - ✅ Processeur de messages pour les commandes de configuration de projet  
   - ✅ Extraction et analyse de texte à partir de documents
 
 - **Expérience utilisateur & Interface**  
   - ✅ Interface optimisée pour mobile  
-  - ✅ Ajout de la possibilité d'attacher des images aux prompts 
-  - ✅ Ajout d'un bouton "Cibler le fichier" pour demander au LLM de modifier le fichier en priorité
+  - ✅ Ajout de la possibilité d'attacher des images aux prompts  
+  - ✅ Ajout d'un bouton "Cibler le fichier" pour demander au LLM de modifier le fichier en priorité  
   - ✅ Ajout d'une bibliothèque de prompts avec variations selon les cas d'usage  
   - ✅ Fenêtre pop-up pour Web Container avec ajustement de taille  
-  - ✅ Mode de sélection multiple pour l'historique
-  - ✅ Masquage des variables d'environnement pour les fichiers .env
-  - ✅ Modal d'accueil pour les nouveaux utilisateurs
-  - ✅ Amélioration de l'onglet des fournisseurs locaux
+  - ✅ Mode de sélection multiple pour l'historique  
+  - ✅ Masquage des variables d'environnement pour les fichiers .env  
+  - ✅ Modal d'accueil pour les nouveaux utilisateurs  
+  - ✅ Amélioration de l'onglet des fournisseurs locaux  
+  - ✅ **Suivi de la compilation du contexte en temps réel (ProgressCompilation.tsx)**
 
 - **Gestion de projet & Code**  
   - ✅ Téléchargement des projets sous forme de fichier ZIP  
   - ✅ Importation Git via une URL & bouton "Git Clone"  
   - ✅ Détection et installation automatique des dépendances (`package.json`)  
   - ✅ Ajout d'une vue "Diff" pour comparer les modifications  
-  - ✅ Support pour la création de dépôts privés GitHub
-  - ✅ Fonctionnalité de téléversement de fichiers dans l'espace de travail
+  - ✅ Support pour la création de dépôts privés GitHub  
+  - ✅ Fonctionnalité de téléversement de fichiers dans l'espace de travail  
+  - ✅ **Amélioration des logs serveur pour les appels contextuels**  
+
 
 - **Déploiement & Intégration** 
   - ✅ Déploiement sur Vercel 
