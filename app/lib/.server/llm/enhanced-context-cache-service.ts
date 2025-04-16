@@ -32,7 +32,8 @@ interface EnhancedContextCacheEntry {
 // Configuration du cache amélioré
 const ENHANCED_CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes par défaut
 const MAX_ENHANCED_CACHE_SIZE = 200; // Augmentation du nombre maximum d'entrées
-const DEFAULT_COMPRESSION_THRESHOLD = 5 * 1024; // 5KB - Seuil de compression plus bas
+const DEFAULT_COMPRESSION_THRESHOLD = 512; // 512 bytes - Seuil de compression plus agressif
+const MIN_COMPRESSION_RATIO = 0.1; // Ratio minimum pour conserver la compression
 
 // Cache en mémoire amélioré pour stocker le contexte
 class EnhancedContextCache {
@@ -47,6 +48,12 @@ class EnhancedContextCache {
   private memoryMonitoringEnabled: boolean = true;
   private autoCompressionThreshold: number = DEFAULT_COMPRESSION_THRESHOLD;
   private llmCalls: LLMCallStats[] = [];
+  private compressionStats = {
+    successCount: 0,
+    failureCount: 0,
+    totalSavedBytes: 0,
+    averageCompressionRatio: 0
+  };
 
   private constructor() {
     this.cache = new Map<string, EnhancedContextCacheEntry>();
@@ -75,6 +82,16 @@ class EnhancedContextCache {
   /**
    * Génère une clé de cache basée sur les messages et les fichiers
    */
+  private hashString(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return hash.toString(36);
+  }
+
   public generateCacheKey(params: {
     promptId?: string;
     messageIds: string[];
@@ -91,15 +108,17 @@ class EnhancedContextCache {
     // Normaliser et trier les chemins de fichiers
     const normalizedFilePaths = filePaths
       .filter(path => path && path.trim().length > 0)
-      .map(path => path.trim().toLowerCase()) // Normaliser la casse
+      .map(path => path.trim().toLowerCase())
       .sort();
+    
+    // Générer un hash des chemins de fichiers pour une meilleure correspondance
+    const filePathsHash = this.hashString(normalizedFilePaths.join('|'));
     
     // Créer une clé de cache normalisée
     const cacheKey = {
       promptId: promptId?.trim() || null,
       messageIds: normalizedMessageIds,
-      filePaths: normalizedFilePaths
-      // timestamp: Math.floor(Date.now() / (60 * 1000)) // Supprimé pour améliorer le hit rate
+      filePathsHash
     };
     
     return JSON.stringify(cacheKey);
@@ -318,18 +337,43 @@ class EnhancedContextCache {
       const originalData = new TextEncoder().encode(serializedData);
       
       // Utiliser pako.deflate pour la compression
-      const compressedData = pako.deflate(originalData, { 
+      let compressedData = pako.deflate(originalData, { 
         level: 9 // Niveau de compression maximal
       });
       
-      const compressedSize = compressedData.length;
-      const compressionRatio = (1 - compressedSize/originalSize) * 100;
+      let compressedSize = compressedData.length;
+      let compressionRatio = (1 - compressedSize/originalSize) * 100;
       
-      // Vérifier si la compression est efficace
-      if (compressionRatio <= 0) {
-        logger.debug(`Compression inefficace (ratio: ${compressionRatio.toFixed(2)}%), utilisation des données non compressées`);
-        return entry;
+      // Vérifier si la compression est suffisamment efficace
+      if (compressionRatio <= MIN_COMPRESSION_RATIO) {
+        logger.debug(`Compression insuffisante (ratio: ${compressionRatio.toFixed(2)}%), minimum requis: ${MIN_COMPRESSION_RATIO * 100}%`);
+        this.compressionStats.failureCount++;
+        // Essayer une compression plus agressive si le ratio est insuffisant
+        const compressedDataAggressive = pako.deflate(originalData, { 
+          level: 9,
+          strategy: 2 // Z_HUFFMAN_ONLY
+        });
+        
+        const compressedSizeAggressive = compressedDataAggressive.length;
+        const compressionRatioAggressive = (1 - compressedSizeAggressive/originalSize) * 100;
+        
+        if (compressionRatioAggressive > MIN_COMPRESSION_RATIO) {
+          // Utiliser la compression plus agressive si elle donne un meilleur ratio
+          compressedData = compressedDataAggressive;
+          compressedSize = compressedSizeAggressive;
+          compressionRatio = compressionRatioAggressive;
+        } else {
+          return entry;
+        }
       }
+
+      // Mettre à jour les statistiques de compression
+      this.compressionStats.successCount++;
+      this.compressionStats.totalSavedBytes += (originalSize - compressedSize);
+      this.compressionStats.averageCompressionRatio = (
+        (this.compressionStats.averageCompressionRatio * (this.compressionStats.successCount - 1) + compressionRatio) /
+        this.compressionStats.successCount
+      );
       
       // Convertir les données compressées
       // Convertir les données compressées en base64
