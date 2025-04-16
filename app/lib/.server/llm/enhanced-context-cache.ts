@@ -1,5 +1,5 @@
 import { type ActionFunctionArgs, json } from '@remix-run/cloudflare';
-import { enhancedContextCache } from '~/lib/.server/llm/enhanced-context-cache';
+import { enhancedContextCache } from '~/lib/.server/llm/enhanced-context-cache-service';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.enhanced-context-cache');
