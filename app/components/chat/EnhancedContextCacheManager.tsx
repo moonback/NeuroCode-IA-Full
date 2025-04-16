@@ -38,7 +38,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
   const [refreshInterval, setRefreshInterval] = useState<number | null>(null);
   const [maxSizeInput, setMaxSizeInput] = useState('');
   const [expiryInput, setExpiryInput] = useState('');
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [, setShowAdvancedSettings] = useState(false);
   const [showConfigForm, setShowConfigForm] = useState(false);
   const [showPerformanceView, setShowPerformanceView] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
@@ -304,7 +304,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
     return (
       <div className="mt-3 border-t border-bolt-elements-borderColor pt-3">
         <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Performance du cache</h4>
-        <div className="flex justify-between text-xs text-bolt-elements-textSecondary mb-1">
+        {/* <div className="flex justify-between text-xs text-bolt-elements-textSecondary mb-1">
           <span>Ratio de succès</span>
           <button 
             className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
@@ -325,8 +325,8 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               <div className="i-ph:play-circle"></div>
             )}
           </button>
-        </div>
-        <div className="relative h-[50px] w-full bg-bolt-elements-background-depth-1 rounded overflow-hidden">
+        </div> */}
+        {/* <div className="relative h-[50px] w-full bg-bolt-elements-background-depth-1 rounded overflow-hidden">
           {statsHistory.map((stat, index) => {
             const hitRatio = stat.hitRatio || 0;
             const barHeight = Math.max(1, hitRatio * maxHeight);
@@ -343,11 +343,11 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               />
             );
           })}
-        </div>
-        <div className="flex justify-between text-xs text-bolt-elements-textSecondary mt-1">
+        </div> */}
+        {/* <div className="flex justify-between text-xs text-bolt-elements-textSecondary mt-1">
           <span>Temps d'accès</span>
-        </div>
-        <div className="relative h-[30px] w-full bg-bolt-elements-background-depth-1 rounded overflow-hidden">
+        </div> */}
+        {/* <div className="relative h-[30px] w-full bg-bolt-elements-background-depth-1 rounded overflow-hidden">
           {statsHistory.map((stat, index) => {
             // Normaliser le temps d'accès (max 100ms pour une hauteur complète)
             const accessTime = stat.averageAccessTime || 0;
@@ -366,13 +366,14 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               />
             );
           })}
-        </div>
+        </div> */}
         {stats?.compressionEnabled && (
           <>
-            <div className="flex justify-between text-xs text-bolt-elements-textSecondary mt-2">
-              <span>Taux de compression</span>
+            <div className="flex justify-between items-center text-xs text-bolt-elements-textSecondary mt-2">
+              <span>Compression Rate</span>
+              <span className="text-xs opacity-70">{(stats?.compressionRatio || 0 * 100).toFixed(1)}%</span>
             </div>
-            <div className="relative h-[20px] w-full bg-bolt-elements-background-depth-1 rounded overflow-hidden">
+            <div className="relative h-[24px] w-full bg-bolt-elements-background-depth-1 rounded-md overflow-hidden shadow-inner">
               {statsHistory.map((stat, index) => {
                 const compressionRatio = stat.compressionRatio || 0;
                 const barHeight = Math.max(1, compressionRatio * 20);
@@ -413,7 +414,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
       </WithTooltip>
 
       {showStats && stats && (
-        <div className="absolute bottom-50 right-4 bg-bolt-elements-background-depth-2 p-4 rounded-lg border border-bolt-elements-borderColor shadow-lg z-50 w-96">
+        <div className="absolute bottom-10 right-1 bg-bolt-elements-background-depth-2 p-4 rounded-lg border border-bolt-elements-borderColor shadow-lg z-50 w-96">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Cache de Contexte</h3>
             <div className="flex gap-2">
@@ -491,83 +492,72 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
           {showPerformanceView && renderPerformanceChart()}
           
           {showConfigForm && (
-            <div className="mb-4 p-3 bg-bolt-elements-background-depth-3 rounded-md">
-              <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Configuration avancée</h4>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-bolt-elements-textSecondary block mb-1">Taille maximale du cache</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="number" 
-                      className="flex-1 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded px-2 py-1 text-sm"
-                      value={maxSizeInput}
-                      onChange={(e) => setMaxSizeInput(e.target.value)}
-                      placeholder={`${stats.maxSize}`}
-                    />
-                    <button 
-                      className="px-2 py-1 bg-bolt-elements-button-primary text-white rounded-md text-xs"
-                      onClick={() => {
-                        const size = parseInt(maxSizeInput);
-                        if (!isNaN(size) && size > 0) {
-                          configureCache(size, undefined);
-                          setMaxSizeInput('');
-                        }
-                      }}
-                    >
-                      Appliquer
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-bolt-elements-textSecondary block mb-1">Durée d'expiration (ms)</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="number" 
-                      className="flex-1 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded px-2 py-1 text-sm"
-                      value={expiryInput}
-                      onChange={(e) => setExpiryInput(e.target.value)}
-                      placeholder={`${stats.defaultExpiryMs}`}
-                    />
-                    <button 
-                      className="px-2 py-1 bg-bolt-elements-button-primary text-white rounded-md text-xs"
-                      onClick={() => {
-                        const expiry = parseInt(expiryInput);
-                        if (!isNaN(expiry) && expiry > 0) {
-                          configureCache(undefined, expiry);
-                          setExpiryInput('');
-                        }
-                      }}
-                    >
-                      Appliquer
-                    </button>
-                  </div>
-                </div>
-                {stats.autoCompressionThreshold !== undefined && (
-                  <div>
-                    <label className="text-xs text-bolt-elements-textSecondary block mb-1">Seuil de compression (bytes)</label>
-                    <div className="flex gap-2">
-                      <select 
-                        className="flex-1 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded px-2 py-1 text-sm"
-                        onChange={(e) => {
-                          const threshold = parseInt(e.target.value);
-                          if (!isNaN(threshold)) {
-                            setCompressionThreshold(threshold);
-                          }
-                        }}
-                        defaultValue={stats.autoCompressionThreshold}
-                      >
-                        <option value="1024">1 KB</option>
-                        <option value="5120">5 KB</option>
-                        <option value="10240">10 KB</option>
-                        <option value="51200">50 KB</option>
-                        <option value="102400">100 KB</option>
-                        <option value="512000">500 KB</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+<div className="mb-4 p-2 bg-bolt-elements-background-depth-3 rounded-md">
+  <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Configuration avancée</h4>
+  <div className="grid gap-2">
+    <div className="flex items-center gap-2">
+      <input 
+        type="number" 
+        className="flex-1 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded px-2 py-1 text-sm"
+        value={maxSizeInput}
+        onChange={(e) => setMaxSizeInput(e.target.value)}
+        placeholder={`Taille max: ${stats.maxSize}`}
+      />
+      <button 
+        className="px-2 py-1 bg-bolt-elements-background-depth-3 text-white rounded-md text-xs hover:dark:bg-bolt-elements-background-depth-1"
+        onClick={() => {
+          const size = parseInt(maxSizeInput);
+          if (!isNaN(size) && size > 0) {
+            configureCache(size, undefined);
+            setMaxSizeInput('');
+          }
+        }}
+      >
+        OK
+      </button>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <input 
+        type="number" 
+        className="flex-1 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded px-2 py-1 text-sm"
+        value={expiryInput}
+        onChange={(e) => setExpiryInput(e.target.value)}
+        placeholder={`Expiration: ${stats.defaultExpiryMs}ms`}
+      />
+      <button 
+        className="px-2 py-1 bg-bolt-elements-background-depth-3 text-white rounded-md text-xs hover:dark:bg-bolt-elements-background-depth-1"
+        onClick={() => {
+          const expiry = parseInt(expiryInput);
+          if (!isNaN(expiry) && expiry > 0) {
+            configureCache(undefined, expiry);
+            setExpiryInput('');
+          }
+        }}
+      >
+        OK
+      </button>
+    </div>
+
+    {stats.autoCompressionThreshold !== undefined && (
+      <select 
+        className="w-full bg-bolt-elements-background-depth-1 text-white border border-bolt-elements-borderColor rounded px-2 py-1 text-sm"
+        onChange={(e) => {
+          const threshold = parseInt(e.target.value);
+          if (!isNaN(threshold)) setCompressionThreshold(threshold);
+        }}
+        defaultValue={stats.autoCompressionThreshold}
+      >
+        <option value="1024">Seuil compression: 1 KB</option>
+        <option value="5120">Seuil compression: 5 KB</option>
+        <option value="10240">Seuil compression: 10 KB</option>
+        <option value="51200">Seuil compression: 50 KB</option>
+        <option value="102400">Seuil compression: 100 KB</option>
+        <option value="512000">Seuil compression: 500 KB</option>
+      </select>
+    )}
+  </div>
+</div>
           )}
           
           <div className="flex flex-wrap gap-2">
