@@ -312,110 +312,6 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
     }
   };
 
-  // Rendu du mini-graphique de performance
-  const renderPerformanceChart = () => {
-    if (!statsHistory.length) return null;
-    
-    const maxHeight = 50; // hauteur maximale en pixels
-    const width = 200; // largeur totale
-    const barWidth = width / Math.max(statsHistory.length, 1);
-    
-    return (
-      <div className="mt-3 border-t border-bolt-elements-borderColor pt-3">
-        <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Performance du cache</h4>
-        {/* <div className="flex justify-between text-xs text-bolt-elements-textSecondary mb-1">
-          <span>Ratio de succès</span>
-          <button 
-            className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
-            onClick={() => {
-              if (refreshInterval) {
-                setRefreshInterval(null);
-                toast.info('Rafraîchissement automatique désactivé');
-              } else {
-                setRefreshInterval(5000); // 5 secondes
-                toast.info('Rafraîchissement automatique activé (5s)');
-                fetchCacheStats();
-              }
-            }}
-          >
-            {refreshInterval ? (
-              <div className="i-ph:pause-circle text-amber-500"></div>
-            ) : (
-              <div className="i-ph:play-circle"></div>
-            )}
-          </button>
-        </div> */}
-        {/* <div className="relative h-[50px] w-full bg-bolt-elements-background-depth-1 rounded overflow-hidden">
-          {statsHistory.map((stat, index) => {
-            const hitRatio = stat.hitRatio || 0;
-            const barHeight = Math.max(1, hitRatio * maxHeight);
-            return (
-              <div 
-                key={index}
-                className="absolute bottom-0 bg-green-500 opacity-80"
-                style={{
-                  height: `${barHeight}px`,
-                  width: `${barWidth}px`,
-                  left: `${index * barWidth}px`,
-                }}
-                title={`Ratio: ${(hitRatio * 100).toFixed(1)}%`}
-              />
-            );
-          })}
-        </div> */}
-        {/* <div className="flex justify-between text-xs text-bolt-elements-textSecondary mt-1">
-          <span>Temps d'accès</span>
-        </div> */}
-        {/* <div className="relative h-[30px] w-full bg-bolt-elements-background-depth-1 rounded overflow-hidden">
-          {statsHistory.map((stat, index) => {
-            // Normaliser le temps d'accès (max 100ms pour une hauteur complète)
-            const accessTime = stat.averageAccessTime || 0;
-            const normalizedHeight = Math.min(1, accessTime / 100) * 30;
-            const barHeight = Math.max(1, normalizedHeight);
-            return (
-              <div 
-                key={index}
-                className="absolute bottom-0 bg-blue-500 opacity-80"
-                style={{
-                  height: `${barHeight}px`,
-                  width: `${barWidth}px`,
-                  left: `${index * barWidth}px`,
-                }}
-                title={`Temps: ${accessTime.toFixed(2)}ms`}
-              />
-            );
-          })}
-        </div> */}
-        {stats?.compressionEnabled && (
-          <>
-            <div className="flex justify-between items-center text-xs text-bolt-elements-textSecondary mt-2">
-              <span>Compression Rate</span>
-              <span className="text-xs opacity-70">{(stats?.compressionRatio || 0 * 100).toFixed(1)}%</span>
-            </div>
-            <div className="relative h-[24px] w-full bg-bolt-elements-background-depth-1 rounded-md overflow-hidden shadow-inner">
-              {statsHistory.map((stat, index) => {
-                const compressionRatio = stat.compressionRatio || 0;
-                const barHeight = Math.max(1, compressionRatio * 20);
-                return (
-                  <div 
-                    key={index}
-                    className="absolute bottom-0 bg-purple-500 opacity-80"
-                    style={{
-                      height: `${barHeight}px`,
-                      width: `${barWidth}px`,
-                      left: `${index * barWidth}px`,
-                    }}
-                    title={`Compression: ${(compressionRatio * 100).toFixed(1)}%`}
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <WithTooltip tooltip="Gérer le cache de contexte">
@@ -681,7 +577,6 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
             </div>
           )}
           
-          {/* {showPerformanceView && renderPerformanceChart()} */}
           
           {showConfigForm && (
 <div className="mb-4 p-2 bg-bolt-elements-background-depth-3 rounded-md">
