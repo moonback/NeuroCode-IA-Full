@@ -6,6 +6,7 @@ import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
 import type { ActionCallbackData } from './message-parser';
 import type { BoltShell } from '~/utils/shell';
+import { createTwoFilesPatch } from 'diff';
 
 const logger = createScopedLogger('ActionRunner');
 
@@ -163,6 +164,11 @@ export class ActionRunner {
         }
         case 'file': {
           await this.#runFileAction(action);
+          
+          // Track file change after successful action
+          if (action.type === 'file' && !isStreaming) {
+            await this.trackFileChange(action.filePath, action.content, 'external');
+          }
           break;
         }
         case 'supabase': {
@@ -248,6 +254,53 @@ export class ActionRunner {
       throw error;
     }
   }
+  // Replace the stub implementation with a proper one
+  async trackFileChange(filePath: string, newContent: string, changeSource: 'user' | 'auto-save' | 'external' = 'external') {
+    try {
+      // Get existing history or create new one
+      let history = await this.getFileHistory(filePath);
+      const timestamp = Date.now();
+      
+      if (!history) {
+        // Create new history record
+        history = {
+          originalContent: newContent,
+          lastModified: timestamp,
+          changes: [],
+          versions: [{
+            timestamp,
+            content: newContent
+          }],
+          changeSource
+        };
+      } else {
+        // Update existing history
+        history.lastModified = timestamp;
+        history.changeSource = changeSource;
+        
+        // Add new version
+        history.versions.push({
+          timestamp,
+          content: newContent
+        });
+        
+        // Limit version history to last 10 versions to prevent excessive storage
+        if (history.versions.length > 10) {
+          history.versions = history.versions.slice(-10);
+        }
+        
+        // Calculate changes from original
+        const { diffLines } = await import('diff');
+        history.changes = diffLines(history.originalContent, newContent);
+      }
+      
+      // Save updated history
+      await this.saveFileHistory(filePath, history);
+      
+    } catch (error) {
+      logger.error('Failed to track file change:', error);
+    }
+  }
 
   async #runShellAction(action: ActionState) {
     if (action.type !== 'shell') {
@@ -324,10 +377,64 @@ export class ActionRunner {
     }
 
     try {
-      await webcontainer.fs.writeFile(relativePath, action.content);
-      logger.debug(`File written ${relativePath}`);
+      // Check if file exists first
+      let originalContent = '';
+      try {
+        // Try to read the existing file content
+        originalContent = await webcontainer.fs.readFile(relativePath, 'utf-8');
+      } catch (error) {
+        // File doesn't exist yet, which is fine for new files
+        logger.debug(`File doesn't exist yet: ${relativePath}`);
+      }
+
+      // If this is a new file or the file has no content, just write directly
+      if (!originalContent && action.content) {
+        await webcontainer.fs.writeFile(relativePath, action.content);
+        logger.debug(`New file written: ${relativePath}`);
+        return;
+      }
+
+      // Calculate diff and apply as patch
+      if (originalContent !== action.content) {
+        try {
+          // Import the diff library functions
+          const { applyPatch } = await import('diff');
+          
+          // Create a patch
+          const patch = createTwoFilesPatch(
+            relativePath, 
+            relativePath,
+            originalContent,
+            action.content
+          );
+          
+          // Apply the patch
+          const patchResult = applyPatch(originalContent, patch);
+          
+          if (typeof patchResult === 'boolean' && !patchResult) {
+            // Patch failed to apply
+            logger.error(`Failed to apply patch to ${relativePath}`);
+            
+            // Fallback to direct write
+            await webcontainer.fs.writeFile(relativePath, action.content);
+            logger.debug(`Fallback: File overwritten: ${relativePath}`);
+          } else {
+            // Patch applied successfully
+            await webcontainer.fs.writeFile(relativePath, patchResult);
+            logger.debug(`Patched file written: ${relativePath}`);
+          }
+        } catch (error) {
+          logger.error('Error applying patch, falling back to direct write', error);
+          // Fallback to direct write if patching fails
+          await webcontainer.fs.writeFile(relativePath, action.content);
+        }
+      } else {
+        // No changes needed
+        logger.debug(`No changes needed for ${relativePath}`);
+      }
     } catch (error) {
       logger.error('Failed to write file\n\n', error);
+      throw error;
     }
   }
 
@@ -342,7 +449,7 @@ export class ActionRunner {
       const webcontainer = await this.#webcontainer;
       const historyPath = this.#getHistoryPath(filePath);
       const content = await webcontainer.fs.readFile(historyPath, 'utf-8');
-
+  
       return JSON.parse(content);
     } catch (error) {
       logger.error('Failed to get file history:', error);
@@ -353,7 +460,10 @@ export class ActionRunner {
   async saveFileHistory(filePath: string, history: FileHistory) {
     // const webcontainer = await this.#webcontainer;
     const historyPath = this.#getHistoryPath(filePath);
-
+  
+    // Update the history with change source information
+    history.changeSource = 'auto-save';
+    
     await this.#runFileAction({
       type: 'file',
       filePath: historyPath,
