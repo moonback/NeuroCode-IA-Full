@@ -6,7 +6,7 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constant
 import { createFilesContext, extractCurrentContext, extractPropertiesFromMessage, simplifyBoltActions } from './utils';
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
-import { enhancedContextCache } from './enhanced-context-cache';
+import { enhancedContextCache } from './enhanced-context-cache-service';
 
 // Common patterns to ignore, similar to .gitignore
 
