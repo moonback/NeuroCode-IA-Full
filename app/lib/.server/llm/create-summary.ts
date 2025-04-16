@@ -1,7 +1,7 @@
 import { generateText, type CoreTool, type GenerateTextResult, type Message } from 'ai';
 import type { IProviderSetting } from '~/types/model';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constants';
-import { extractCurrentContext, extractPropertiesFromMessage, simplifyBoltActions } from './utils';
+import { createFilesContext, extractCurrentContext, extractPropertiesFromMessage, simplifyBoltActions } from './utils';
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import { enhancedContextCache } from './enhanced-context-cache';
@@ -210,12 +210,18 @@ Please provide a summary of the chat till now including the hitorical summary of
   const endTime = performance.now();
   logger.debug(`Résumé généré en ${(endTime - startTime).toFixed(2)}ms`);
 
-  // Mettre en cache le résumé généré
+  // Extraire le contenu des messages pour l'analyse de pertinence
+  const messageContent = slicedMessages
+    .map(msg => extractTextContent(msg))
+    .join(' ');
+
+  // Mettre en cache le résumé généré avec les fichiers pertinents
   if (contextOptimization) {
+    const relevantFiles = createFilesContext({}, true, messageContent);
     const cacheKey = enhancedContextCache.generateCacheKey({
       promptId,
       messageIds: slicedMessages.map(msg => msg.id || ''),
-      filePaths: [],
+      filePaths: Object.keys(relevantFiles),
     });
     
     enhancedContextCache.set(cacheKey, {
