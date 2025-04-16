@@ -84,10 +84,10 @@ class EnhancedContextCache {
    */
   private hashString(str: string): string {
     let hash = 0;
+    const prime = 31;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
+      hash = Math.imul(hash, prime) + char;
     }
     return hash.toString(36);
   }
@@ -99,11 +99,11 @@ class EnhancedContextCache {
   }): string {
     const { promptId, messageIds, filePaths } = params;
     
-    // Normaliser les IDs de messages pour une meilleure correspondance
+    // Normaliser et filtrer les IDs de messages
     const normalizedMessageIds = messageIds
       .filter(id => id && id.trim().length > 0)
       .map(id => id.trim())
-      .slice(-3); // Garder les 3 derniers messages
+      .slice(-5); // Garder les 5 derniers messages pour plus de contexte
     
     // Normaliser et trier les chemins de fichiers
     const normalizedFilePaths = filePaths
@@ -111,17 +111,20 @@ class EnhancedContextCache {
       .map(path => path.trim().toLowerCase())
       .sort();
     
-    // Générer un hash des chemins de fichiers pour une meilleure correspondance
-    const filePathsHash = this.hashString(normalizedFilePaths.join('|'));
+    // Créer une empreinte unique pour les fichiers
+    const fileFingerprint = normalizedFilePaths.map(path => {
+      const parts = path.split('/');
+      return `${parts[parts.length - 2] || ''}/${parts[parts.length - 1]}`;
+    }).join('|');
     
-    // Créer une clé de cache normalisée
-    const cacheKey = {
-      promptId: promptId?.trim() || null,
-      messageIds: normalizedMessageIds,
-      filePathsHash
-    };
+    // Générer un hash composite
+    const components = [
+      promptId?.trim() || '',
+      normalizedMessageIds.join('|'),
+      fileFingerprint
+    ];
     
-    return JSON.stringify(cacheKey);
+    return this.hashString(components.join('::'));
   }
 
   /**
@@ -167,11 +170,12 @@ class EnhancedContextCache {
    * Récupère le contexte depuis le cache
    */
   public get(key: string): { contextFiles: FileMap; summary?: string } | null {
-    const startTime = Date.now();
+    const startTime = performance.now();
     const entry = this.cache.get(key);
     
     if (!entry) {
       this.misses++;
+      logger.debug(`Cache miss pour la clé: ${key}`);
       return null;
     }
 
@@ -188,13 +192,16 @@ class EnhancedContextCache {
 
     // Mettre à jour les statistiques d'accès de manière atomique
     const now = Date.now();
-    const accessTime = now - startTime;
+    const accessTime = performance.now() - startTime;
     
-    // Mettre à jour les compteurs d'accès
-    decompressedEntry.accessCount = (decompressedEntry.accessCount || 0) + 1;
+    // Mettre à jour les compteurs d'accès avec validation
+    decompressedEntry.accessCount = Math.max(0, (decompressedEntry.accessCount || 0) + 1);
     decompressedEntry.lastAccessTime = now;
-    decompressedEntry.totalAccessTime = (decompressedEntry.totalAccessTime || 0) + accessTime;
+    decompressedEntry.totalAccessTime = Math.max(0, (decompressedEntry.totalAccessTime || 0) + accessTime);
     decompressedEntry.timestamp = now; // Mise à jour pour LRU
+    
+    // Enregistrer les statistiques d'accès
+    logger.debug(`Cache hit - Clé: ${key}, Temps d'accès: ${accessTime.toFixed(2)}ms, Total accès: ${decompressedEntry.accessCount}`)
     
     // Mettre à jour les statistiques globales
     this.hits++;
