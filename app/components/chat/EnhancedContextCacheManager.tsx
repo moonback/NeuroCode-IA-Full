@@ -319,9 +319,9 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
           disabled={isLoading}
         >
           {isLoading ? (
-            <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-xl animate-spin"></div>
+            <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-2xl animate-spin"></div>
           ) : (
-            <div className="i-ph:database text-xl"></div>
+            <div className="i-ph:database-duotone text-2xl"></div>
           )}
         </IconButton>
       </WithTooltip>
@@ -337,14 +337,14 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
                 onClick={() => setShowConfigForm(!showConfigForm)}
                 className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
               >
-                <div className="i-ph:gear text-lg"></div>
+                <div className="i-ph:gear-six-duotone text-xl"></div>
               </IconButton>
               <IconButton 
                 title="Fermer" 
                 onClick={() => setShowStats(false)}
                 className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
               >
-                <div className="i-ph:x text-lg"></div>
+                <div className="i-ph:x-circle-duotone text-xl"></div>
               </IconButton>
             </div>
           </div>
@@ -355,7 +355,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               onClick={() => setSelectedTab('cache')}
             >
               <div className="flex items-center gap-2">
-                <div className="i-ph:database text-lg"></div>
+                <div className="i-ph:database-duotone text-lg"></div>
                 Cache
               </div>
             </button>
@@ -365,7 +365,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               onClick={() => setSelectedTab('performance')}
             >
               <div className="flex items-center gap-2">
-                <div className="i-ph:chart-line text-lg"></div>
+                <div className="i-ph:chart-line-up-duotone text-lg"></div>
                 Performance
               </div>
             </button>
@@ -550,7 +550,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               onClick={clearCache}
               disabled={isLoading}
             >
-              <div className="i-ph:trash text-base"></div>
+              <div className="i-ph:trash-duotone text-base"></div>
               <span>Vider</span>
             </button>
             
@@ -559,7 +559,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               onClick={() => toggleCompression(!stats.compressionEnabled)}
               disabled={isLoading}
             >
-              <div className="i-ph:compress text-base"></div>
+              <div className="i-ph:arrows-in-duotone text-base"></div>
               <span>Compresser</span>
             </button>
 
@@ -568,7 +568,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
               onClick={() => toggleAdaptiveExpiry(!stats.adaptiveExpiryEnabled)}
               disabled={isLoading}
             >
-              <div className="i-ph:clock text-base"></div>
+              <div className="i-ph:clock-countdown-duotone text-base"></div>
               <span>Adapter</span>
             </button>
 
@@ -578,7 +578,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
                 onClick={() => toggleMemoryMonitoring(!stats.memoryMonitoringEnabled)}
                 disabled={isLoading}
               >
-                <div className="i-ph:chart-line-up text-base"></div>
+                <div className="i-ph:chart-line-up-duotone text-base"></div>
                 <span>Moniteur</span>
               </button>
             )}
