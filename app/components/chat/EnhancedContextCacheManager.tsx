@@ -560,35 +560,47 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
 </div>
           )}
           
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             <button
-              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm transition-colors"
+              className="px-2 py-0.5 bg-red-500 hover:bg-red-600 text-white rounded text-xs transition-colors"
               onClick={clearCache}
               disabled={isLoading}
             >
-              Vider le cache
+              <div className="flex items-center gap-1">
+                <div className="i-ph:trash"></div>
+                <span>Cache</span>
+              </div>
             </button>
             <button
-              className={`px-3 py-1 ${stats.compressionEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded-md text-sm transition-colors`}
+              className={`px-2 py-0.5 ${stats.compressionEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs transition-colors`}
               onClick={() => toggleCompression(!stats.compressionEnabled)}
               disabled={isLoading}
             >
-              {stats.compressionEnabled ? 'Désactiver' : 'Activer'} compression
+              <div className="flex items-center gap-1">
+                <div className="i-ph:compress"></div>
+                <span>{stats.compressionEnabled ? 'Off' : 'On'}</span>
+              </div>
             </button>
             <button
-              className={`px-3 py-1 ${stats.adaptiveExpiryEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded-md text-sm transition-colors`}
+              className={`px-2 py-0.5 ${stats.adaptiveExpiryEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs transition-colors`}
               onClick={() => toggleAdaptiveExpiry(!stats.adaptiveExpiryEnabled)}
               disabled={isLoading}
             >
-              {stats.adaptiveExpiryEnabled ? 'Désactiver' : 'Activer'} expiration adaptative
+              <div className="flex items-center gap-1">
+                <div className="i-ph:clock"></div>
+                <span>{stats.adaptiveExpiryEnabled ? 'Off' : 'On'}</span>
+              </div>
             </button>
             {stats.memoryMonitoringEnabled !== undefined && (
               <button
-                className={`px-3 py-1 ${stats.memoryMonitoringEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded-md text-sm transition-colors`}
+                className={`px-2 py-0.5 ${stats.memoryMonitoringEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs transition-colors`}
                 onClick={() => toggleMemoryMonitoring(!stats.memoryMonitoringEnabled)}
                 disabled={isLoading}
               >
-                {stats.memoryMonitoringEnabled ? 'Désactiver' : 'Activer'} surveillance mémoire
+                <div className="flex items-center gap-1">
+                  <div className="i-ph:chart-line-up"></div>
+                  <span>{stats.memoryMonitoringEnabled ? 'Off' : 'On'}</span>
+                </div>
               </button>
             )}
           </div>
