@@ -29,9 +29,9 @@ interface EnhancedContextCacheEntry {
 }
 
 // Configuration du cache amélioré
-const ENHANCED_CACHE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes par défaut
-const MAX_ENHANCED_CACHE_SIZE = 100; // Nombre maximum d'entrées dans le cache
-const DEFAULT_COMPRESSION_THRESHOLD = 10 * 1024; // 10KB
+const ENHANCED_CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes par défaut
+const MAX_ENHANCED_CACHE_SIZE = 200; // Augmentation du nombre maximum d'entrées
+const DEFAULT_COMPRESSION_THRESHOLD = 5 * 1024; // 5KB - Seuil de compression plus bas
 
 // Cache en mémoire amélioré pour stocker le contexte
 class EnhancedContextCache {
@@ -251,14 +251,40 @@ class EnhancedContextCache {
    * Compresse une entrée de cache
    */
   private compressEntry(entry: EnhancedContextCacheEntry): EnhancedContextCacheEntry {
-    // Simulation de compression (dans une implémentation réelle, utiliser une bibliothèque de compression)
     const originalSize = entry.size;
     
-    // Stocker la taille originale pour les statistiques
+    // Séparer les données du contexte et du résumé
+    const contextFilesStr = JSON.stringify(entry.contextFiles);
+    const summaryStr = entry.summary || '';
+    
+    // Créer un objet contenant toutes les données à compresser
+    const dataToCompress = {
+      contextFiles: entry.contextFiles,
+      summary: summaryStr
+    };
+    
+    // Convertir en JSON et créer un Buffer
+    const originalData = Buffer.from(JSON.stringify(dataToCompress));
+    
+    // Utiliser zlib pour la compression avec un niveau de compression optimal
+    const zlib = require('zlib');
+    const compressedData = zlib.deflateSync(originalData, { level: zlib.Z_BEST_COMPRESSION });
+    
+    // Convertir les fichiers compressés en format stockable
+    const compressedContextFiles = {
+      _compressed: compressedData.toString('base64'),
+      _originalSize: originalSize
+    } as unknown as FileMap;
+    
+    const compressedSize = compressedData.length;
+    
     return {
       ...entry,
+      contextFiles: compressedContextFiles,
+      summary: entry.summary,
       compressed: true,
-      originalSize
+      originalSize,
+      size: compressedSize
     };
   }
 
@@ -266,11 +292,32 @@ class EnhancedContextCache {
    * Décompresse une entrée de cache
    */
   private decompressEntry(entry: EnhancedContextCacheEntry): EnhancedContextCacheEntry {
-    // Simulation de décompression
-    return {
-      ...entry,
-      compressed: false
-    };
+    if (!entry.compressed) return entry;
+    
+    const zlib = require('zlib');
+    
+    try {
+      // Récupérer les données compressées
+      const compressedData = Buffer.from((entry.contextFiles as any)._compressed, 'base64');
+      
+      // Décompresser les données
+      const decompressedData = zlib.inflateSync(compressedData);
+      const decompressedStr = decompressedData.toString();
+      
+      // Parser les données décompressées
+      const parsedData = JSON.parse(decompressedStr);
+      
+      return {
+        ...entry,
+        contextFiles: parsedData.contextFiles,
+        summary: parsedData.summary,
+        compressed: false,
+        size: (entry.contextFiles as any)._originalSize || entry.size
+      };
+    } catch (error) {
+      logger.error(`Erreur lors de la décompression: ${error}`);
+      return entry;
+    }
   }
 
   /**
