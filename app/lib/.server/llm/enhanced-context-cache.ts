@@ -1,6 +1,7 @@
 import { createScopedLogger } from '~/utils/logger';
 import type { FileMap } from './constants';
 import pkg from 'pako';
+import { formatSize } from '~/utils/formatSize';
 const {gzip, ungzip} = pkg;
 const logger = createScopedLogger('enhanced-context-cache');
 
@@ -110,11 +111,11 @@ class EnhancedContextCache {
     
     const serialized = JSON.stringify(data);
     const originalSize = serialized.length;
+    const textEncoder = new TextEncoder();
     
-    // Ne pas compresser les données trop petites
+    // Optimisation: utiliser un buffer pré-alloué pour les petites données
     if (originalSize < this.autoCompressionThreshold) {
       logger.debug(`Données trop petites pour compression (${originalSize} < ${this.autoCompressionThreshold} bytes)`);
-      const textEncoder = new TextEncoder();
       return { 
         compressed: textEncoder.encode(serialized), 
         originalSize, 
@@ -122,11 +123,30 @@ class EnhancedContextCache {
       };
     }
     
-    // Compresser les données
-    const compressed = gzip(serialized);
-    const compressedSize = compressed.length;
-    
-    return { compressed, originalSize, compressedSize };
+    try {
+      // Compresser les données avec un niveau de compression optimal
+      const compressed = gzip(serialized, { level: 6 });
+      const compressedSize = compressed.length;
+      
+      // Vérifier si la compression est efficace
+      if (compressedSize >= originalSize) {
+        logger.debug('Compression inefficace, utilisation des données non compressées');
+        return {
+          compressed: textEncoder.encode(serialized),
+          originalSize,
+          compressedSize: originalSize
+        };
+      }
+      
+      return { compressed, originalSize, compressedSize };
+    } catch (error) {
+      logger.error('Erreur lors de la compression, utilisation des données non compressées:', error);
+      return {
+        compressed: textEncoder.encode(serialized),
+        originalSize,
+        compressedSize: originalSize
+      };
+    }
   }
 
   /**
@@ -300,16 +320,21 @@ class EnhancedContextCache {
   private cleanup(): void {
     const now = Date.now();
     let expiredCount = 0;
+    let memoryUsage = 0;
 
+    // Nettoyer les entrées expirées et calculer l'utilisation mémoire
     for (const [key, entry] of this.cache.entries()) {
-      if (now > entry.expiresAt) {
+      if (now > entry.expiresAt || 
+          (this.memoryMonitoringEnabled && entry.originalSize && memoryUsage + entry.originalSize > 100 * 1024 * 1024)) { // 100MB limite
         this.cache.delete(key);
         expiredCount++;
+      } else if (entry.originalSize) {
+        memoryUsage += entry.originalSize;
       }
     }
 
     if (expiredCount > 0) {
-      logger.debug(`Nettoyage du cache: ${expiredCount} entrées expirées supprimées`);
+      logger.debug(`Nettoyage du cache: ${expiredCount} entrées supprimées (${formatSize(memoryUsage)} utilisés)`);
     }
   }
 
