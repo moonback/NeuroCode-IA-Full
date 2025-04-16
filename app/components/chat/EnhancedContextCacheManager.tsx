@@ -413,7 +413,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
       </WithTooltip>
 
       {showStats && stats && (
-        <div className="absolute bottom-20 right-4 bg-bolt-elements-background-depth-2 p-4 rounded-lg border border-bolt-elements-borderColor shadow-lg z-50 w-96">
+        <div className="absolute bottom-50 right-4 bg-bolt-elements-background-depth-2 p-4 rounded-lg border border-bolt-elements-borderColor shadow-lg z-50 w-96">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Cache de Contexte</h3>
             <div className="flex gap-2">
