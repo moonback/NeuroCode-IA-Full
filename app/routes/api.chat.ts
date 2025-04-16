@@ -157,6 +157,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             promptId,
             contextOptimization,
             summary,
+            useCache: true, // Activer l'utilisation du cache pour le contexte
             onFinish(resp) {
               if (resp.usage) {
                 logger.debug('Utilisation du jeton selectContext', JSON.stringify(resp.usage));
