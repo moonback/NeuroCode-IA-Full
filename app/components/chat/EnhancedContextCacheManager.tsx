@@ -7,6 +7,16 @@ import { formatSize } from '~/utils/formatSize';
 
 const logger = createScopedLogger('EnhancedContextCacheManager');
 
+interface LLMCallStats {
+  modelName: string;
+  timestamp: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  summarized: boolean;
+  summaryMessageCount?: number;
+}
+
 interface CacheStats {
   size: number;
   maxSize: number;
@@ -25,6 +35,8 @@ interface CacheStats {
   totalCompressedSize?: number;
   compressedEntries?: number;
   autoCompressionThreshold?: number;
+  contextFiles?: string[];
+  llmCalls?: LLMCallStats[];
 }
 
 interface EnhancedContextCacheManagerProps {
@@ -41,8 +53,10 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
   const [, setShowAdvancedSettings] = useState(false);
   const [showConfigForm, setShowConfigForm] = useState(false);
   const [showPerformanceView, setShowPerformanceView] = useState(false);
+  const [showLLMHistory, setShowLLMHistory] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const [statsHistory, setStatsHistory] = useState<CacheStats[]>([]);
+  const [selectedTab, setSelectedTab] = useState<'cache' | 'llm' | 'performance'>('cache');
 
   // Fonction pour récupérer les statistiques du cache
   const fetchCacheStats = async () => {
@@ -414,17 +428,24 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
       </WithTooltip>
 
       {showStats && stats && (
-        <div className="absolute bottom-10 right-1 bg-bolt-elements-background-depth-2 p-4 rounded-lg border border-bolt-elements-borderColor shadow-lg z-50 w-96">
+        <div className="absolute bottom-50 right-1 w-full bg-bolt-elements-background-depth-2 p-4 rounded-lg border border-bolt-elements-borderColor shadow-lg z-50 w-[800px]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Cache de Contexte</h3>
             <div className="flex gap-2">
-              {/* <IconButton 
+              <IconButton 
+                title="Historique LLM" 
+                onClick={() => setShowLLMHistory(!showLLMHistory)}
+                className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
+              >
+                <div className="i-ph:chart-line text-lg"></div>
+              </IconButton>
+              <IconButton 
                 title="Performance" 
                 onClick={() => setShowPerformanceView(!showPerformanceView)}
                 className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
               >
-                <div className="i-ph:chart-line text-lg"></div>
-              </IconButton> */}
+                <div className="i-ph:activity text-lg"></div>
+              </IconButton>
               <IconButton 
                 title="Configurer" 
                 onClick={() => setShowConfigForm(!showConfigForm)}
@@ -442,52 +463,176 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
             </div>
           </div>
           
-          <div className="space-y-3 mb-4">
-            <div className="flex justify-between">
-              <span className="text-bolt-elements-textSecondary">Taille:</span>
-              <span className="text-bolt-elements-textPrimary font-medium">{stats.size} / {stats.maxSize} entrées</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-bolt-elements-textSecondary">Expiration:</span>
-              <span className="text-bolt-elements-textPrimary font-medium">{formatDuration(stats.defaultExpiryMs)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-bolt-elements-textSecondary">Ratio de succès:</span>
-              <span className="text-bolt-elements-textPrimary font-medium">{(stats.hitRatio * 100).toFixed(1)}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-bolt-elements-textSecondary">Compression:</span>
-              <span className="text-bolt-elements-textPrimary font-medium">
-                {stats.compressionEnabled ? 'Activée' : 'Désactivée'} ({(stats.compressionRatio * 100).toFixed(1)}%)
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-bolt-elements-textSecondary">Expiration adaptative:</span>
-              <span className="text-bolt-elements-textPrimary font-medium">
-                {stats.adaptiveExpiryEnabled ? 'Activée' : 'Désactivée'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-bolt-elements-textSecondary">Temps d'accès moyen:</span>
-              <span className="text-bolt-elements-textPrimary font-medium">{stats.averageAccessTime.toFixed(2)}ms</span>
-            </div>
-            {stats.totalOriginalSize !== undefined && (
-              <div className="flex justify-between">
-                <span className="text-bolt-elements-textSecondary">Taille des données:</span>
-                <span className="text-bolt-elements-textPrimary font-medium">
-                  {formatBytes(stats.totalCompressedSize || 0)} / {formatBytes(stats.totalOriginalSize || 0)}
-                </span>
+          <div className="flex gap-4 mb-4">
+            <button
+              className={`px-4 py-2 rounded-lg ${selectedTab === 'cache' ? 'bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary' : 'text-bolt-elements-textSecondary hover:bg-bolt-elements-background-depth-1'}`}
+              onClick={() => setSelectedTab('cache')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="i-ph:database text-lg"></div>
+                Cache
               </div>
-            )}
-            {stats.memoryMonitoringEnabled !== undefined && (
-              <div className="flex justify-between">
-                <span className="text-bolt-elements-textSecondary">Surveillance mémoire:</span>
-                <span className="text-bolt-elements-textPrimary font-medium">
-                  {stats.memoryMonitoringEnabled ? 'Activée' : 'Désactivée'}
-                </span>
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg ${selectedTab === 'llm' ? 'bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary' : 'text-bolt-elements-textSecondary hover:bg-bolt-elements-background-depth-1'}`}
+              onClick={() => setSelectedTab('llm')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="i-ph:brain text-lg"></div>
+                Appels LLM
               </div>
-            )}
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg ${selectedTab === 'performance' ? 'bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary' : 'text-bolt-elements-textSecondary hover:bg-bolt-elements-background-depth-1'}`}
+              onClick={() => setSelectedTab('performance')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="i-ph:chart-line text-lg"></div>
+                Performance
+              </div>
+            </button>
           </div>
+
+          {selectedTab === 'cache' && (
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between">
+                <span className="text-bolt-elements-textSecondary">Taille:</span>
+                <span className="text-bolt-elements-textPrimary font-medium">{stats.size} / {stats.maxSize} entrées</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-bolt-elements-textSecondary">Expiration:</span>
+                <span className="text-bolt-elements-textPrimary font-medium">{formatDuration(stats.defaultExpiryMs)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-bolt-elements-textSecondary">Ratio de succès:</span>
+                <span className="text-bolt-elements-textPrimary font-medium">{(stats.hitRatio * 100).toFixed(1)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-bolt-elements-textSecondary">Compression:</span>
+                <span className="text-bolt-elements-textPrimary font-medium">
+                  {stats.compressionEnabled ? 'Activée' : 'Désactivée'} ({(stats.compressionRatio * 100).toFixed(1)}%)
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-bolt-elements-textSecondary">Expiration adaptative:</span>
+                <span className="text-bolt-elements-textPrimary font-medium">
+                  {stats.adaptiveExpiryEnabled ? 'Activée' : 'Désactivée'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-bolt-elements-textSecondary">Temps d'accès moyen:</span>
+                <span className="text-bolt-elements-textPrimary font-medium">{stats.averageAccessTime.toFixed(2)}ms</span>
+              </div>
+              {stats.totalOriginalSize !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-bolt-elements-textSecondary">Taille des données:</span>
+                  <span className="text-bolt-elements-textPrimary font-medium">
+                    {formatBytes(stats.totalCompressedSize || 0)} / {formatBytes(stats.totalOriginalSize || 0)}
+                  </span>
+                </div>
+              )}
+              {stats.memoryMonitoringEnabled !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-bolt-elements-textSecondary">Surveillance mémoire:</span>
+                  <span className="text-bolt-elements-textPrimary font-medium">
+                    {stats.memoryMonitoringEnabled ? 'Activée' : 'Désactivée'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedTab === 'llm' && stats.llmCalls && (
+            <div className="space-y-4">
+              <div className="bg-bolt-elements-background-depth-1 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-3">Historique des appels LLM</h4>
+                <div className="space-y-3">
+                  {stats.llmCalls.map((call, index) => (
+                    <div key={index} className="bg-bolt-elements-background-depth-2 rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-bolt-elements-textPrimary font-medium">{call.modelName}</span>
+                        <span className="text-bolt-elements-textSecondary text-sm">
+                          {new Date(call.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <span className="text-bolt-elements-textSecondary">Prompt:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">{call.promptTokens}</span>
+                        </div>
+                        <div>
+                          <span className="text-bolt-elements-textSecondary">Completion:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">{call.completionTokens}</span>
+                        </div>
+                        <div>
+                          <span className="text-bolt-elements-textSecondary">Total:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">{call.totalTokens}</span>
+                        </div>
+                      </div>
+                      {call.summarized && (
+                        <div className="mt-2 text-sm">
+                          <span className="text-bolt-elements-textSecondary">Résumé généré:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">
+                            Oui ({call.summaryMessageCount} messages)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {selectedTab === 'performance' && (
+            <div className="space-y-4">
+              <div className="bg-bolt-elements-background-depth-1 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-3">Performance du Cache</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-bolt-elements-background-depth-2 rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-bolt-elements-textSecondary">Cache Hit/Miss</span>
+                      <span className="text-bolt-elements-textPrimary">
+                        {stats.hits}/{stats.hits + stats.misses}
+                      </span>
+                    </div>
+                    <div className="relative h-2 bg-bolt-elements-background-depth-3 rounded-full overflow-hidden">
+                      <div
+                        className="absolute h-full bg-green-500"
+                        style={{ width: `${(stats.hitRatio * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="bg-bolt-elements-background-depth-2 rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-bolt-elements-textSecondary">Compression</span>
+                      <span className="text-bolt-elements-textPrimary">
+                        {(stats.compressionRatio * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="relative h-2 bg-bolt-elements-background-depth-3 rounded-full overflow-hidden">
+                      <div
+                        className="absolute h-full bg-purple-500"
+                        style={{ width: `${(stats.compressionRatio * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {stats.contextFiles && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Fichiers contextuels</h4>
+                    <div className="bg-bolt-elements-background-depth-2 rounded-lg p-3 max-h-40 overflow-y-auto">
+                      {stats.contextFiles.map((file, index) => (
+                        <div key={index} className="text-sm text-bolt-elements-textSecondary py-1">
+                          {file}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           {/* {showPerformanceView && renderPerformanceChart()} */}
           
