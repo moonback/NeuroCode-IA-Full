@@ -54,8 +54,10 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
   const [showConfigForm, setShowConfigForm] = useState(false);
   const [showPerformanceView, setShowPerformanceView] = useState(false);
   const [showLLMHistory, setShowLLMHistory] = useState(false);
+  const [showLLMStats] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const [statsHistory, setStatsHistory] = useState<CacheStats[]>([]);
+  const [llmStats, setLLMStats] = useState<LLMCallStats[]>([]);
   const [selectedTab, setSelectedTab] = useState<'cache' | 'llm' | 'performance'>('cache');
 
   // Fonction pour récupérer les statistiques du cache
@@ -78,8 +80,11 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
       const newStats = (data as { stats: CacheStats }).stats;
       setStats(newStats);
       setStatsHistory(prev => [...prev.slice(-9), newStats]);
+      if (newStats.llmCalls) {
+        setLLMStats(newStats.llmCalls);
+      }
       setShowStats(true);
-      logger.debug('Statistiques du cache récupérées avec succès', (data as { stats: CacheStats }).stats);
+      logger.debug('Statistiques du cache récupérées avec succès', JSON.stringify(newStats, null, 2));
     } catch (error) {
       logger.error('Erreur lors de la récupération des statistiques du cache', error);
       toast.error('Impossible de récupérer les statistiques du cache');
@@ -630,6 +635,48 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {selectedTab === 'llm' && llmStats && llmStats.length > 0 && (
+            <div className="space-y-4">
+              <div className="bg-bolt-elements-background-depth-1 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-3">Historique des appels LLM</h4>
+                <div className="space-y-3">
+                  {llmStats.map((call, index) => (
+                    <div key={index} className="bg-bolt-elements-background-depth-2 rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-bolt-elements-textPrimary font-medium">{call.modelName}</span>
+                        <span className="text-bolt-elements-textSecondary text-sm">
+                          {new Date(call.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <span className="text-bolt-elements-textSecondary">Prompt:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">{call.promptTokens}</span>
+                        </div>
+                        <div>
+                          <span className="text-bolt-elements-textSecondary">Completion:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">{call.completionTokens}</span>
+                        </div>
+                        <div>
+                          <span className="text-bolt-elements-textSecondary">Total:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">{call.totalTokens}</span>
+                        </div>
+                      </div>
+                      {call.summarized && (
+                        <div className="mt-2 text-sm">
+                          <span className="text-bolt-elements-textSecondary">Résumé généré:</span>
+                          <span className="text-bolt-elements-textPrimary ml-2">
+                            Oui ({call.summaryMessageCount} messages)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
