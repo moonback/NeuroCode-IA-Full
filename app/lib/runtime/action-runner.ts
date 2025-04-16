@@ -448,9 +448,34 @@ export class ActionRunner {
     try {
       const webcontainer = await this.#webcontainer;
       const historyPath = this.#getHistoryPath(filePath);
-      const content = await webcontainer.fs.readFile(historyPath, 'utf-8');
-  
-      return JSON.parse(content);
+      
+      // Ensure the .history directory exists
+      const historyDir = nodePath.dirname(historyPath);
+      
+      try {
+        // Create the .history directory if it doesn't exist
+        await webcontainer.fs.mkdir(historyDir, { recursive: true });
+        logger.debug(`Created history directory: ${historyDir}`);
+      } catch (error) {
+        // If the error is not because the directory already exists, log it
+        if (!(error instanceof Error && error.message.includes('EEXIST'))) {
+          logger.error('Failed to create history directory', error);
+        }
+      }
+      
+      try {
+        // Try to read the existing history file
+        const content = await webcontainer.fs.readFile(historyPath, 'utf-8');
+        return JSON.parse(content);
+      } catch (error) {
+        // If the file doesn't exist, that's expected for new files
+        if (error instanceof Error && error.message.includes('ENOENT')) {
+          logger.debug(`History file doesn't exist yet: ${historyPath}`);
+        } else {
+          logger.error('Failed to read history file:', error);
+        }
+        return null;
+      }
     } catch (error) {
       logger.error('Failed to get file history:', error);
       return null;
@@ -458,22 +483,53 @@ export class ActionRunner {
   }
 
   async saveFileHistory(filePath: string, history: FileHistory) {
-    // const webcontainer = await this.#webcontainer;
-    const historyPath = this.#getHistoryPath(filePath);
-  
-    // Update the history with change source information
-    history.changeSource = 'auto-save';
-    
-    await this.#runFileAction({
-      type: 'file',
-      filePath: historyPath,
-      content: JSON.stringify(history),
-      changeSource: 'auto-save',
-    } as any);
+    try {
+      const webcontainer = await this.#webcontainer;
+      const historyPath = this.#getHistoryPath(filePath);
+      
+      // Ensure the .history directory exists
+      const historyDir = nodePath.dirname(historyPath);
+      
+      try {
+        // Create the .history directory if it doesn't exist
+        await webcontainer.fs.mkdir(historyDir, { recursive: true });
+        logger.debug(`Created history directory: ${historyDir}`);
+      } catch (error) {
+        // If the error is not because the directory already exists, log it
+        if (!(error instanceof Error && error.message.includes('EEXIST'))) {
+          logger.error('Failed to create history directory', error);
+        }
+      }
+      
+      // Update the history with change source information
+      history.changeSource = history.changeSource || 'auto-save';
+      
+      // Write the history file
+      await this.#runFileAction({
+        type: 'file',
+        filePath: historyPath,
+        content: JSON.stringify(history),
+        status: 'pending',
+        executed: false,
+        abort: () => {},
+        abortSignal: new AbortController().signal
+      });
+      
+      logger.debug(`File history saved: ${historyPath}`);
+    } catch (error) {
+      logger.error('Failed to save file history:', error);
+    }
   }
 
   #getHistoryPath(filePath: string) {
-    return nodePath.join('.history', filePath);
+    // Normaliser le chemin du fichier pour éviter les problèmes avec les chemins absolus
+    // Enlever le préfixe du répertoire de travail si présent
+    const normalizedPath = filePath.startsWith('/home/project/') 
+      ? filePath.substring('/home/project/'.length) 
+      : filePath;
+    
+    // Créer le chemin dans le dossier .history
+    return nodePath.join('.history', normalizedPath);
   }
 
   async #runBuildAction(action: ActionState) {
