@@ -62,6 +62,10 @@ class EnhancedContextCache {
     this.cache = new Map<string, EnhancedContextCacheEntry>();
     this.maxSize = MAX_CACHE_SIZE;
     this.defaultExpiryMs = CACHE_EXPIRY_MS;
+    this.hits = 0;
+    this.misses = 0;
+    this.totalAccessTime = 0;
+    this.accessCount = 0;
     // Nettoyer le cache périodiquement
     setInterval(() => this.cleanup(), CACHE_EXPIRY_MS / 2);
   }
