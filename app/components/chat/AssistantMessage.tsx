@@ -84,6 +84,7 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                     className="w-[650px] bg-gray-900/95 rounded-xl shadow-2xl border border-gray-700/50 
                              animate-in fade-in zoom-in-95 duration-200 relative z-[10000]"
                     onClick={e => e.stopPropagation()}
+                    style={{ marginTop: '-150px' }}
                   >
                     <div className="flex items-center justify-between p-3 border-b border-gray-700/50">
                       <div className="flex items-center gap-2">
