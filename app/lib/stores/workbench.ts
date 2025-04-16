@@ -38,6 +38,9 @@ type Artifacts = MapStore<Record<string, ArtifactState>>;
 export type WorkbenchViewType = 'code' | 'diff' | 'preview';
 
 export class WorkbenchStore {
+  getActionRunner() {
+    throw new Error('Method not implemented.');
+  }
   #previewsStore = new PreviewsStore(webcontainer);
   #filesStore = new FilesStore(webcontainer);
   #editorStore = new EditorStore(this.#filesStore);
