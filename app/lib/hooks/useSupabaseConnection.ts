@@ -9,6 +9,7 @@ import {
   isFetchingApiKeys,
   updateSupabaseConnection,
   fetchProjectApiKeys,
+  fetchSupabaseStats,
 } from '~/lib/stores/supabase';
 
 export function useSupabaseConnection() {
@@ -66,7 +67,7 @@ export function useSupabaseConnection() {
         stats: data.stats,
       });
 
-      toast.success('Connexion à Supabase réussie');
+      toast.success('Successfully connected to Supabase');
 
       setIsProjectsExpanded(true);
 
@@ -74,7 +75,7 @@ export function useSupabaseConnection() {
     } catch (error) {
       console.error('Connection error:', error);
       logStore.logError('Failed to authenticate with Supabase', { error });
-      toast.error(error instanceof Error ? error.message : 'Échec de la connexion à Supabase');
+      toast.error(error instanceof Error ? error.message : 'Failed to connect to Supabase');
       updateSupabaseConnection({ user: null, token: '' });
 
       return false;
@@ -85,7 +86,7 @@ export function useSupabaseConnection() {
 
   const handleDisconnect = () => {
     updateSupabaseConnection({ user: null, token: '' });
-    toast.success('Déconnecté de Supabase');
+    toast.success('Disconnected from Supabase');
     setIsDropdownOpen(false);
   };
 
@@ -105,13 +106,13 @@ export function useSupabaseConnection() {
     if (projectId && currentState.token) {
       try {
         await fetchProjectApiKeys(projectId, currentState.token);
-        toast.success('Projet sélectionné avec succès');
+        toast.success('Project selected successfully');
       } catch (error) {
         console.error('Failed to fetch API keys:', error);
-        toast.error('Projet sélectionné mais échec de la récupération des clés API');
+        toast.error('Selected project but failed to fetch API keys');
       }
     } else {
-      toast.success('Projet sélectionné avec succès');
+      toast.success('Project selected successfully');
     }
 
     setIsDropdownOpen(false);
@@ -119,6 +120,20 @@ export function useSupabaseConnection() {
 
   const handleCreateProject = async () => {
     window.open('https://app.supabase.com/new/new-project', '_blank');
+
+    // Set a flag in localStorage to indicate we're creating a new project
+    localStorage.setItem('supabase_creating_project', 'true');
+
+    // Show a notification to the user
+    toast.info('After creating your project, return here and click "Refresh Projects" to see it in the list');
+
+    // Schedule a refresh for when the user comes back to this tab
+    setTimeout(() => {
+      if (connection.token && localStorage.getItem('supabase_creating_project') === 'true') {
+        localStorage.removeItem('supabase_creating_project');
+        fetchSupabaseStats(connection.token).catch(console.error);
+      }
+    }, 5000); // Check after 5 seconds
   };
 
   return {

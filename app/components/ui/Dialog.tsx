@@ -354,7 +354,11 @@ export function SelectionDialog({
           >
             {item.label}
           </Label>
-          {item.description && <p className="text-xs text-gray-600 dark:text-gray-400">{item.description}</p>}
+          {item.description && (
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              {item.description}
+            </span>
+          )}
         </div>
       </div>
     );

@@ -23,7 +23,11 @@ export function useSnapScroll(options: ScrollOptions = {}) {
   const lastScrollTopRef = useRef<number>(0);
 
   const smoothScroll = useCallback(
-    (element: HTMLDivElement, targetPosition: number, duration: number, easingFunction: string) => {
+    (element: HTMLDivElement | null, targetPosition: number, duration: number, easingFunction: string) => {
+      if (!element) {
+        return;
+      }
+
       const startPosition = element.scrollTop;
       const distance = targetPosition - startPosition;
       const startTime = performance.now();
@@ -76,8 +80,13 @@ export function useSnapScroll(options: ScrollOptions = {}) {
   );
 
   const isScrolledToBottom = useCallback(
-    (element: HTMLDivElement): boolean => {
+    (element: HTMLDivElement | null): boolean => {
+      if (!element) {
+        return false;
+      }
+
       const { scrollTop, scrollHeight, clientHeight } = element;
+
       return scrollHeight - scrollTop - clientHeight <= bottomThreshold;
     },
     [bottomThreshold],

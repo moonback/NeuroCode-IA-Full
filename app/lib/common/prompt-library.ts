@@ -1,6 +1,9 @@
 import { getSystemPrompt } from './prompts/prompts';
 import optimized from './prompts/optimized';
+import reasoning from './prompts/reasoning';
 import debugging from './prompts/debugging';
+import { smallModel } from './prompts/small-model';
+
 
 export interface PromptOptions {
   cwd: string;
@@ -72,6 +75,16 @@ export class PromptLibrary {
         }
         return basePrompt;
       },
+    },
+    reasoning: {
+      label: 'AI SDK 4.2 Reasoning',
+      description: 'Enhanced prompt that leverages AI SDK 4.2 reasoning capabilities',
+      get: (options) => reasoning(options),
+    },
+    smallModel: {
+      label: 'Small Model Prompt',
+      description: 'Compact prompt for small LLMs (7B or less) to help with code generation',
+      get: (options) => smallModel(options),
     },
   };
   static getList() {
