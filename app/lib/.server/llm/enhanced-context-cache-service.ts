@@ -1,5 +1,6 @@
 import { createScopedLogger } from '~/utils/logger';
 import type { FileMap } from './constants';
+import pako from 'pako';
 
 const logger = createScopedLogger('enhanced-context-cache');
 
@@ -41,9 +42,9 @@ class EnhancedContextCache {
   private defaultExpiryMs: number;
   private hits: number = 0;
   private misses: number = 0;
-  private compressionEnabled: boolean = false;
-  private adaptiveExpiryEnabled: boolean = false;
-  private memoryMonitoringEnabled: boolean = false;
+  private compressionEnabled: boolean = true;
+  private adaptiveExpiryEnabled: boolean = true;
+  private memoryMonitoringEnabled: boolean = true;
   private autoCompressionThreshold: number = DEFAULT_COMPRESSION_THRESHOLD;
   private llmCalls: LLMCallStats[] = [];
 
@@ -51,8 +52,17 @@ class EnhancedContextCache {
     this.cache = new Map<string, EnhancedContextCacheEntry>();
     this.maxSize = MAX_ENHANCED_CACHE_SIZE;
     this.defaultExpiryMs = ENHANCED_CACHE_EXPIRY_MS;
-    // Nettoyer le cache périodiquement
-    setInterval(() => this.cleanup(), ENHANCED_CACHE_EXPIRY_MS);
+    // Nettoyer le cache périodiquement et vérifier la compression
+    setInterval(() => {
+      this.cleanup();
+      // Vérifier et ajuster le seuil de compression si nécessaire
+      if (this.compressionEnabled) {
+        const stats = this.getStats();
+        if (stats.compressionRatio < 0.1) { // Si le ratio de compression est faible
+          this.autoCompressionThreshold = Math.max(1024, this.autoCompressionThreshold / 2); // Réduire le seuil
+        }
+      }
+    }, ENHANCED_CACHE_EXPIRY_MS);
   }
 
   public static getInstance(): EnhancedContextCache {
@@ -71,16 +81,28 @@ class EnhancedContextCache {
     filePaths: string[];
   }): string {
     const { promptId, messageIds, filePaths } = params;
-    // Utiliser les 3 derniers messages pour la clé de cache
-    const lastMessageIds = messageIds.slice(-3);
-    // Trier les chemins de fichiers pour assurer la cohérence
-    const sortedFilePaths = [...filePaths].sort();
     
-    return JSON.stringify({
-      promptId,
-      messageIds: lastMessageIds,
-      filePaths: sortedFilePaths,
-    });
+    // Normaliser les IDs de messages pour une meilleure correspondance
+    const normalizedMessageIds = messageIds
+      .filter(id => id && id.trim().length > 0)
+      .map(id => id.trim())
+      .slice(-3); // Garder les 3 derniers messages
+    
+    // Normaliser et trier les chemins de fichiers
+    const normalizedFilePaths = filePaths
+      .filter(path => path && path.trim().length > 0)
+      .map(path => path.trim().toLowerCase()) // Normaliser la casse
+      .sort();
+    
+    // Créer une clé de cache normalisée
+    const cacheKey = {
+      promptId: promptId?.trim() || null,
+      messageIds: normalizedMessageIds,
+      filePaths: normalizedFilePaths
+      // timestamp: Math.floor(Date.now() / (60 * 1000)) // Supprimé pour améliorer le hit rate
+    };
+    
+    return JSON.stringify(cacheKey);
   }
 
   /**
@@ -145,23 +167,28 @@ class EnhancedContextCache {
     // Décompresser si nécessaire
     const decompressedEntry = entry.compressed ? this.decompressEntry(entry) : entry;
 
-    // Mettre à jour les statistiques d'accès
-    const accessTime = Date.now() - startTime;
-    decompressedEntry.accessCount++;
-    decompressedEntry.lastAccessTime = Date.now();
-    decompressedEntry.totalAccessTime += accessTime;
-
-    // Mettre à jour le timestamp pour la politique LRU
-    decompressedEntry.timestamp = Date.now();
-    this.cache.set(key, decompressedEntry);
-
+    // Mettre à jour les statistiques d'accès de manière atomique
+    const now = Date.now();
+    const accessTime = now - startTime;
+    
+    // Mettre à jour les compteurs d'accès
+    decompressedEntry.accessCount = (decompressedEntry.accessCount || 0) + 1;
+    decompressedEntry.lastAccessTime = now;
+    decompressedEntry.totalAccessTime = (decompressedEntry.totalAccessTime || 0) + accessTime;
+    decompressedEntry.timestamp = now; // Mise à jour pour LRU
+    
     // Mettre à jour les statistiques globales
     this.hits++;
-
+    
+    // Sauvegarder les modifications dans le cache
+    this.cache.set(key, decompressedEntry);
+    
     // Ajuster l'expiration si l'expiration adaptative est activée
     if (this.adaptiveExpiryEnabled) {
       this.adjustExpiry(key, decompressedEntry);
     }
+    
+    logger.debug(`Accès au cache - Clé: ${key}, Temps: ${accessTime}ms, Total accès: ${decompressedEntry.accessCount}`)
 
     logger.debug(`Contexte récupéré depuis le cache avec la clé: ${key}, temps d'accès: ${accessTime}ms`);
     return {
@@ -251,41 +278,83 @@ class EnhancedContextCache {
    * Compresse une entrée de cache
    */
   private compressEntry(entry: EnhancedContextCacheEntry): EnhancedContextCacheEntry {
-    const originalSize = entry.size;
-    
-    // Séparer les données du contexte et du résumé
-    const contextFilesStr = JSON.stringify(entry.contextFiles);
-    const summaryStr = entry.summary || '';
-    
-    // Créer un objet contenant toutes les données à compresser
-    const dataToCompress = {
-      contextFiles: entry.contextFiles,
-      summary: summaryStr
-    };
-    
-    // Convertir en JSON et créer un Buffer
-    const originalData = Buffer.from(JSON.stringify(dataToCompress));
-    
-    // Utiliser zlib pour la compression avec un niveau de compression optimal
-    const zlib = require('zlib');
-    const compressedData = zlib.deflateSync(originalData, { level: zlib.Z_BEST_COMPRESSION });
-    
-    // Convertir les fichiers compressés en format stockable
-    const compressedContextFiles = {
-      _compressed: compressedData.toString('base64'),
-      _originalSize: originalSize
-    } as unknown as FileMap;
-    
-    const compressedSize = compressedData.length;
-    
-    return {
-      ...entry,
-      contextFiles: compressedContextFiles,
-      summary: entry.summary,
-      compressed: true,
-      originalSize,
-      size: compressedSize
-    };
+    try {
+      // Vérifier si la compression est activée et si l'entrée n'est pas déjà compressée
+      if (!this.compressionEnabled || entry.compressed) {
+        logger.debug('Compression désactivée ou entrée déjà compressée');
+        return entry;
+      }
+
+      const originalSize = entry.size;
+      
+      // Vérifier si la taille est suffisante pour justifier la compression
+      if (originalSize <= this.autoCompressionThreshold) {
+        logger.debug(`Taille (${originalSize} bytes) inférieure au seuil de compression (${this.autoCompressionThreshold} bytes), compression ignorée`);
+        return entry;
+      }
+
+      // Vérifier si les données sont valides pour la compression
+      if (!entry.contextFiles || Object.keys(entry.contextFiles).length === 0) {
+        logger.debug('Données invalides pour la compression');
+        return entry;
+      }
+
+      // Préparer les données pour la compression
+      const dataToCompress = {
+        contextFiles: entry.contextFiles,
+        summary: entry.summary || ''
+      };
+      
+      // Sérialiser les données avec gestion d'erreur
+      let serializedData: string;
+      try {
+        serializedData = JSON.stringify(dataToCompress);
+      } catch (serializationError) {
+        logger.error(`Erreur lors de la sérialisation des données: ${serializationError}`);
+        return entry;
+      }
+      
+      // Convertir en Uint8Array et compresser avec pako
+      const originalData = new TextEncoder().encode(serializedData);
+      
+      // Utiliser pako.deflate pour la compression
+      const compressedData = pako.deflate(originalData, { 
+        level: 9 // Niveau de compression maximal
+      });
+      
+      const compressedSize = compressedData.length;
+      const compressionRatio = (1 - compressedSize/originalSize) * 100;
+      
+      // Vérifier si la compression est efficace
+      if (compressionRatio <= 0) {
+        logger.debug(`Compression inefficace (ratio: ${compressionRatio.toFixed(2)}%), utilisation des données non compressées`);
+        return entry;
+      }
+      
+      // Convertir les données compressées
+      // Convertir les données compressées en base64
+      const compressedBase64 = Buffer.from(compressedData).toString('base64');
+
+      const compressedContextFiles = {
+        _compressed: compressedBase64,
+        _originalSize: originalSize,
+        _compressionRatio: compressionRatio
+      } as unknown as FileMap;
+      
+      logger.debug(`Compression réussie - Taille originale: ${originalSize}, Taille compressée: ${compressedSize}, Ratio: ${compressionRatio.toFixed(2)}%`);
+      
+      return {
+        ...entry,
+        contextFiles: compressedContextFiles,
+        summary: entry.summary,
+        compressed: true,
+        originalSize,
+        size: compressedSize
+      };
+    } catch (error) {
+      logger.error(`Erreur lors de la compression: ${error}`);
+      return entry;
+    }
   }
 
   /**
@@ -294,26 +363,60 @@ class EnhancedContextCache {
   private decompressEntry(entry: EnhancedContextCacheEntry): EnhancedContextCacheEntry {
     if (!entry.compressed) return entry;
     
-    const zlib = require('zlib');
-    
     try {
-      // Récupérer les données compressées
-      const compressedData = Buffer.from((entry.contextFiles as any)._compressed, 'base64');
+      // Vérifier la validité des données compressées
+      const compressedData = (entry.contextFiles as any)?._compressed;
+      if (!compressedData || typeof compressedData !== 'string') {
+        throw new Error('Format des données compressées invalide');
+      }
+
+      // Récupérer les métadonnées de compression
+      const originalSize = (entry.contextFiles as any)._originalSize;
+      const compressionRatio = (entry.contextFiles as any)._compressionRatio;
       
-      // Décompresser les données
-      const decompressedData = zlib.inflateSync(compressedData);
-      const decompressedStr = decompressedData.toString();
+      if (!originalSize) {
+        throw new Error('Taille originale manquante');
+      }
+
+      // Décompresser les données avec pako et gestion d'erreur
+      let decompressedData: Uint8Array;
+      try {
+        const compressedBuffer = Buffer.from(compressedData, 'base64');
+        decompressedData = pako.inflate(compressedBuffer);
+      } catch (decompressionError) {
+        throw new Error(`Erreur lors de la décompression avec pako: ${decompressionError instanceof Error ? decompressionError.message : String(decompressionError)}`);
+      }
       
       // Parser les données décompressées
-      const parsedData = JSON.parse(decompressedStr);
+      let parsedData: { contextFiles: FileMap; summary?: string };
+      try {
+        const decompressedString = new TextDecoder().decode(decompressedData);
+        parsedData = JSON.parse(decompressedString);
+      } catch (parseError) {
+        throw new Error(`Erreur lors du parsing des données décompressées: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+      }
+      
+      // Valider la structure des données
+      if (!parsedData?.contextFiles || typeof parsedData.contextFiles !== 'object') {
+        throw new Error('Structure des données décompressées invalide');
+      }
+
+      logger.debug(
+        `Décompression réussie - ` +
+        `Taille originale: ${originalSize} bytes, ` +
+        `Taille compressée: ${entry.size} bytes, ` +
+        `Ratio: ${compressionRatio?.toFixed(2)}%, ` +
+        `Taille décompressée: ${decompressedData.length} bytes`
+      );
       
       return {
         ...entry,
         contextFiles: parsedData.contextFiles,
         summary: parsedData.summary,
         compressed: false,
-        size: (entry.contextFiles as any)._originalSize || entry.size
+        size: originalSize
       };
+
     } catch (error) {
       logger.error(`Erreur lors de la décompression: ${error}`);
       return entry;
