@@ -111,7 +111,7 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
       >
         <div
           className={classNames(
-            'bg-bolt-elements-item-backgroundAccent/30',
+            // 'bg-bolt-elements-item-backgroundAccent/30',
             'rounded-md text-bolt-elements-item-contentAccent/90',
             'flex items-center justify-between',
             expanded ? 'p-1' : 'p-1'
