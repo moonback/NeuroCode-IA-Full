@@ -418,13 +418,13 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Cache de Contexte</h3>
             <div className="flex gap-2">
-              <IconButton 
+              {/* <IconButton 
                 title="Performance" 
                 onClick={() => setShowPerformanceView(!showPerformanceView)}
                 className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
               >
                 <div className="i-ph:chart-line text-lg"></div>
-              </IconButton>
+              </IconButton> */}
               <IconButton 
                 title="Configurer" 
                 onClick={() => setShowConfigForm(!showConfigForm)}
@@ -489,7 +489,7 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
             )}
           </div>
           
-          {showPerformanceView && renderPerformanceChart()}
+          {/* {showPerformanceView && renderPerformanceChart()} */}
           
           {showConfigForm && (
 <div className="mb-4 p-2 bg-bolt-elements-background-depth-3 rounded-md">
