@@ -6,7 +6,16 @@ const logger = createScopedLogger('api.enhanced-context-cache');
 
 // Interface pour typer les données de la requête
 interface EnhancedContextCacheRequest {
-  action: 'clear' | 'stats' | 'configure' | 'toggle-compression' | 'toggle-adaptive-expiry' | 'toggle-memory-monitoring' | 'set-compression-threshold';
+  action: 'clear' | 'stats' | 'configure' | 'toggle-compression' | 'toggle-adaptive-expiry' | 'toggle-memory-monitoring' | 'set-compression-threshold' | 'add-llm-call';
+  llmCall?: {
+    modelName: string;
+    timestamp: number;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    summarized: boolean;
+    summaryMessageCount?: number;
+  };
   maxSize?: number;
   expiryMs?: number;
   enabled?: boolean;
@@ -98,6 +107,25 @@ export async function action({ request }: ActionFunctionArgs) {
         success: true,
         message: `Seuil de compression configuré avec succès`,
         autoCompressionThreshold: threshold
+      });
+
+    case 'add-llm-call':
+      const { llmCall } = await request.json() as EnhancedContextCacheRequest;
+      if (!llmCall) {
+        return json({ success: false, message: 'Données d\'appel LLM manquantes' }, { status: 400 });
+      }
+      
+      const currentStats = enhancedContextCache.getStats();
+      const llmCalls = currentStats.llmCalls || [];
+      llmCalls.push(llmCall);
+      
+      return json({
+        success: true,
+        message: 'Statistiques d\'appel LLM ajoutées avec succès',
+        stats: {
+          ...currentStats,
+          llmCalls
+        }
       });
 
     default:
