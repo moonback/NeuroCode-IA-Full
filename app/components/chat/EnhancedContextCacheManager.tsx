@@ -560,47 +560,42 @@ export function EnhancedContextCacheManager({ className = '' }: EnhancedContextC
 </div>
           )}
           
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1 mt-2">
             <button
-              className="px-2 py-0.5 bg-red-500 hover:bg-red-600 text-white rounded text-xs transition-colors"
+              className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1 shadow-sm"
               onClick={clearCache}
               disabled={isLoading}
             >
-              <div className="flex items-center gap-1">
-                <div className="i-ph:trash"></div>
-                <span>Cache</span>
-              </div>
+              <div className="i-ph:trash text-base"></div>
+              <span>Vider</span>
             </button>
+            
             <button
-              className={`px-2 py-0.5 ${stats.compressionEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs transition-colors`}
+              className={`px-2 py-1 ${stats.compressionEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1 shadow-sm`}
               onClick={() => toggleCompression(!stats.compressionEnabled)}
               disabled={isLoading}
             >
-              <div className="flex items-center gap-1">
-                <div className="i-ph:compress"></div>
-                <span>{stats.compressionEnabled ? 'Off' : 'On'}</span>
-              </div>
+              <div className="i-ph:compress text-base"></div>
+              <span>Compresser</span>
             </button>
+
             <button
-              className={`px-2 py-0.5 ${stats.adaptiveExpiryEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs transition-colors`}
+              className={`px-2 py-1 ${stats.adaptiveExpiryEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1 shadow-sm`}
               onClick={() => toggleAdaptiveExpiry(!stats.adaptiveExpiryEnabled)}
               disabled={isLoading}
             >
-              <div className="flex items-center gap-1">
-                <div className="i-ph:clock"></div>
-                <span>{stats.adaptiveExpiryEnabled ? 'Off' : 'On'}</span>
-              </div>
+              <div className="i-ph:clock text-base"></div>
+              <span>Adapter</span>
             </button>
+
             {stats.memoryMonitoringEnabled !== undefined && (
               <button
-                className={`px-2 py-0.5 ${stats.memoryMonitoringEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs transition-colors`}
+                className={`px-2 py-1 ${stats.memoryMonitoringEnabled ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1 shadow-sm`}
                 onClick={() => toggleMemoryMonitoring(!stats.memoryMonitoringEnabled)}
                 disabled={isLoading}
               >
-                <div className="flex items-center gap-1">
-                  <div className="i-ph:chart-line-up"></div>
-                  <span>{stats.memoryMonitoringEnabled ? 'Off' : 'On'}</span>
-                </div>
+                <div className="i-ph:chart-line-up text-base"></div>
+                <span>Moniteur</span>
               </button>
             )}
           </div>
