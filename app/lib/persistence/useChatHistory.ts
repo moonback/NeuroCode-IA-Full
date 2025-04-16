@@ -215,8 +215,32 @@ ${value.content}
         chatIndex: chatIdx,
         files,
         summary: chatSummary,
+        // Timestamp property removed as it's not defined in Snapshot type
       };
-      localStorage.setItem(`snapshot:${id}`, JSON.stringify(snapshot));
+      
+      try {
+        localStorage.setItem(`snapshot:${id}`, JSON.stringify(snapshot));
+      } catch (error) {
+        if (error instanceof Error && error.name === 'QuotaExceededError') {
+          // Supprimer d'anciens snapshots pour libérer de l'espace
+          const snapshotKeys = Object.keys(localStorage)
+            .filter(key => key.startsWith('snapshot:'))
+            .sort((a, b) => {
+              const timeA = JSON.parse(localStorage.getItem(a) || '{}').timestamp || 0;
+              const timeB = JSON.parse(localStorage.getItem(b) || '{}').timestamp || 0;
+              return timeA - timeB;
+            });
+
+          // Supprimer les 3 plus anciens snapshots
+          snapshotKeys.slice(0, 3).forEach(key => localStorage.removeItem(key));
+          
+          // Réessayer de sauvegarder
+          localStorage.setItem(`snapshot:${id}`, JSON.stringify(snapshot));
+        } else {
+          console.error('[ChatHistory] Error saving snapshot:', error);
+          toast.error('Erreur lors de la sauvegarde du snapshot');
+        }
+      }
     },
     [chatId],
   );
