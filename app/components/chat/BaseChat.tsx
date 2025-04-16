@@ -707,11 +707,20 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       )}
                     </ClientOnly>
                   </div>
-                  {contextOptimizationEnabled && progressAnnotations.length > 0 && (
-                      <div className="animate-fade-in mb-2">
-                        <ProgressCompilation data={progressAnnotations} />
-                      </div>
-                    )}
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      {contextOptimizationEnabled && progressAnnotations.length > 0 && (
+                        <div className="animate-fade-in mb-2">
+                          <ProgressCompilation data={progressAnnotations} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-2 ml-4">
+                      {/* Ajout du gestionnaire de cache de contexte amélioré */}
+                      {chatStarted && contextOptimizationEnabled && <EnhancedContextCacheManager />}
+                    </div>
+                  </div>
+                    
                   <FilePreview
                     files={uploadedFiles}
                     imageDataList={imageDataList}
@@ -740,6 +749,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         imageDataList={imageDataList}
                       />
                     )}
+                    
                   </ClientOnly>
                   <div
                     className={classNames(
@@ -825,6 +835,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       translate="no"
                     />
                     <ClientOnly>
+                      
                       {() => (
                         <SendButton
                           show={input.length > 0 || isStreaming || uploadedFiles.length > 0}
@@ -843,6 +854,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         />
                       )}
                     </ClientOnly>
+                    
                     <TargetedFilesDisplay textareaRef={textareaRef} className="mt-2" />
                   <div className="flex justify-between items-center text-sm p-4 pt-2">
                       <div className="flex gap-1 items-center">
@@ -884,8 +896,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         {!chatStarted && <GitCloneButton importChat={importChat} />}
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
                         
-                        {/* Ajout du gestionnaire de cache de contexte amélioré */}
-                        {chatStarted && contextOptimizationEnabled && <EnhancedContextCacheManager />}
                         
                         <IconButton
                           title="Paramètres des modèles"
