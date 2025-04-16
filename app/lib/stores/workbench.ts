@@ -17,7 +17,7 @@ import { extractRelativePath } from '~/utils/diff';
 import { description } from '~/lib/persistence';
 import Cookies from 'js-cookie';
 import { createSampler } from '~/utils/sampler';
-import type { ActionAlert, DeployAlert, SupabaseAlert } from '~/types/actions';
+import type { ActionAlert, DeployAlert, FileHistory, SupabaseAlert } from '~/types/actions';
 import type { Message } from 'ai';
 import { toast } from 'react-toastify';
 
@@ -39,13 +39,21 @@ export type WorkbenchViewType = 'code' | 'diff' | 'preview';
 
 export class WorkbenchStore {
   getActionRunner() {
-    throw new Error('Method not implemented.');
+    const artifact = this.firstArtifact;
+    if (!artifact) {
+      throw new Error('Aucun artefact disponible pour obtenir l\'ActionRunner');
+    }
+    return artifact.runner;
   }
   #previewsStore = new PreviewsStore(webcontainer);
   #filesStore = new FilesStore(webcontainer);
   #editorStore = new EditorStore(this.#filesStore);
   #terminalStore = new TerminalStore(webcontainer);
   pendingMessages = atom<Message[]>([]);
+  
+  // Propriétés pour la gestion de l'historique des fichiers
+  fileHistory: WritableAtom<Record<string, FileHistory>> = import.meta.hot?.data.fileHistory ?? atom<Record<string, FileHistory>>({});
+  selectedVersion: WritableAtom<{filePath: string, versionIndex: number} | null> = import.meta.hot?.data.selectedVersion ?? atom<{filePath: string, versionIndex: number} | null>(null);
 
 
   #reloadedMessages = new Set<string>();
@@ -60,8 +68,12 @@ export class WorkbenchStore {
     
   supabaseAlert: WritableAtom<SupabaseAlert | undefined> =
     import.meta.hot?.data.unsavedFiles ?? atom<ActionAlert | undefined>(undefined);
-    deployAlert: WritableAtom<DeployAlert | undefined> =
+  deployAlert: WritableAtom<DeployAlert | undefined> =
     import.meta.hot?.data.unsavedFiles ?? atom<DeployAlert | undefined>(undefined);
+  
+  // Propriétés pour la gestion de l'historique des fichiers
+  // fileHistory: WritableAtom<Record<string, FileHistory>> = import.meta.hot?.data.fileHistory ?? atom<Record<string, FileHistory>>({});
+  // selectedVersion: WritableAtom<{filePath: string, versionIndex: number} | null> = import.meta.hot?.data.selectedVersion ?? atom<{filePath: string, versionIndex: number} | null>(null);
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
   #globalExecutionQueue = Promise.resolve();
@@ -74,7 +86,8 @@ export class WorkbenchStore {
       import.meta.hot.data.actionAlert = this.actionAlert;
       import.meta.hot.data.supabaseAlert = this.supabaseAlert;
       import.meta.hot.data.deployAlert = this.deployAlert;
-
+      import.meta.hot.data.fileHistory = this.fileHistory;
+      import.meta.hot.data.selectedVersion = this.selectedVersion;
 
       // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();
@@ -683,6 +696,205 @@ export class WorkbenchStore {
           console.error(error);
         }
       }
+    }
+  }
+
+  /**
+   * Charge l'historique des fichiers à partir du système de fichiers
+   * @param filePath Chemin du fichier dont on veut charger l'historique
+   * @returns Promise<FileHistory | null> L'historique du fichier ou null si non trouvé
+   */
+  async loadFileHistory(filePath: string): Promise<FileHistory | null> {
+    try {
+      // Obtenir l'ActionRunner du premier artefact
+      const artifact = this.firstArtifact;
+      if (!artifact) {
+        console.error('Aucun artefact disponible pour charger l\'historique des fichiers');
+        return null;
+      }
+
+      const runner = artifact.runner;
+      const history = await runner.getFileHistory(filePath);
+      
+      if (history) {
+        const currentHistory = this.fileHistory.get();
+        this.fileHistory.set({
+          ...currentHistory,
+          [filePath]: history
+        });
+        return history;
+      }
+      
+      // Si aucun historique n'existe, créer un nouvel historique avec le contenu actuel
+      const file = this.#filesStore.getFile(filePath);
+      if (file) {
+        const newHistory: FileHistory = {
+          originalContent: file.content,
+          lastModified: Date.now(),
+          changes: [],
+          versions: [{
+            timestamp: Date.now(),
+            content: file.content
+          }],
+          changeSource: 'user'
+        };
+        
+        // Sauvegarder le nouvel historique
+        await runner.saveFileHistory(filePath, newHistory);
+        
+        // Mettre à jour le store
+        const updatedHistory = this.fileHistory.get();
+        this.fileHistory.set({
+          ...updatedHistory,
+          [filePath]: newHistory
+        });
+        
+        return newHistory;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'historique du fichier:', error);
+      toast.error('Erreur lors du chargement de l\'historique du fichier');
+      return null;
+    }
+  }
+
+  /**
+   * Sélectionne une version spécifique d'un fichier pour la comparaison
+   * @param filePath Chemin du fichier
+   * @param versionIndex Index de la version dans l'historique
+   * @returns Promise<boolean> Succès de l'opération
+   */
+  async selectFileVersion(filePath: string, versionIndex: number): Promise<boolean> {
+    try {
+      // Vérifier si l'historique est déjà chargé
+      let history = this.fileHistory.get()[filePath];
+      
+      // Si l'historique n'est pas chargé, le charger
+      if (!history) {
+        const loadedHistory = await this.loadFileHistory(filePath);
+        if (!loadedHistory) {
+          toast.error('Unable to load file history');
+          return false;
+        }
+        history = loadedHistory;
+        if (!history) {
+          toast.error('Impossible de charger l\'historique du fichier');
+          return false;
+        }
+      }
+      
+      // Vérifier que l'index de version est valide
+      if (versionIndex < 0 || versionIndex >= history.versions.length) {
+        toast.error('Version invalide');
+        return false;
+      }
+      
+      // Définir la version sélectionnée
+      this.selectedVersion.set({ filePath, versionIndex });
+      
+      // Basculer vers la vue diff pour afficher la comparaison
+      this.currentView.set('diff');
+      
+      // Ouvrir le workbench s'il n'est pas déjà ouvert
+      if (!this.showWorkbench.get()) {
+        this.showWorkbench.set(true);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Erreur lors de la sélection de la version:', error);
+      toast.error('Erreur lors de la sélection de la version');
+      return false;
+    }
+  }
+
+  /**
+   * Obtient le contenu d'une version spécifique d'un fichier
+   * @param filePath Chemin du fichier
+   * @param versionIndex Index de la version (si non spécifié, utilise la version sélectionnée)
+   * @returns Le contenu de la version ou undefined si non trouvé
+   */
+  getFileVersionContent(filePath: string, versionIndex?: number): string | undefined {
+    try {
+      const history = this.fileHistory.get()[filePath];
+      if (!history) {
+        console.warn(`Historique non trouvé pour le fichier: ${filePath}`);
+        return undefined;
+      }
+
+      // Si versionIndex n'est pas spécifié, utiliser la version sélectionnée
+      if (versionIndex === undefined) {
+        const selected = this.selectedVersion.get();
+        if (selected && selected.filePath === filePath) {
+          versionIndex = selected.versionIndex;
+        } else {
+          // Par défaut, utiliser la dernière version
+          versionIndex = history.versions.length - 1;
+        }
+      }
+
+      // Vérifier que l'index est valide
+      if (versionIndex < 0 || versionIndex >= history.versions.length) {
+        console.warn(`Index de version invalide: ${versionIndex} pour le fichier: ${filePath}`);
+        return undefined;
+      }
+
+      // Récupérer le contenu de la version
+      const versionContent = history.versions[versionIndex].content;
+      
+      // Vérifier que le contenu est une chaîne de caractères
+      if (typeof versionContent !== 'string') {
+        console.error(`Contenu de version invalide pour le fichier: ${filePath}, version: ${versionIndex}`);
+        return undefined;
+      }
+      
+      return versionContent;
+    } catch (error) {
+      console.error('Erreur lors de la récupération du contenu de la version:', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Restaure une version spécifique d'un fichier
+   * @param filePath Chemin du fichier
+   * @param versionIndex Index de la version à restaurer
+   * @returns Promise<boolean> Succès de l'opération
+   */
+  async restoreFileVersion(filePath: string, versionIndex: number): Promise<boolean> {
+    try {
+      const history = this.fileHistory.get()[filePath];
+      if (!history || versionIndex < 0 || versionIndex >= history.versions.length) {
+        return false;
+      }
+
+      const versionContent = history.versions[versionIndex].content;
+      await this.#filesStore.saveFile(filePath, versionContent);
+
+      // Mettre à jour le document courant si c'est le fichier actuellement ouvert
+      const currentDocument = this.currentDocument.get();
+      if (currentDocument && currentDocument.filePath === filePath) {
+        this.setCurrentDocumentContent(versionContent);
+      }
+
+      // Ajouter une entrée dans l'historique pour cette restauration
+      const artifact = this.firstArtifact;
+      if (artifact) {
+        const runner = artifact.runner;
+        await runner.trackFileChange(filePath, versionContent, 'user');
+        
+        // Recharger l'historique mis à jour
+        await this.loadFileHistory(filePath);
+      }
+
+      toast.success(`Version restaurée avec succès`);
+      return true;
+    } catch (error) {
+      console.error('Erreur lors de la restauration de la version:', error);
+      toast.error('Échec de la restauration de la version');
+      return false;
     }
   }
 
