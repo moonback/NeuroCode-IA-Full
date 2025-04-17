@@ -132,7 +132,12 @@ class EnhancedContextCache {
       }).join('|')
     };
     
-    return JSON.stringify(cacheKey);
+    const cacheKeyStr = JSON.stringify(cacheKey);
+    
+    // Ajouter un log pour tracer la génération des clés
+    logger.debug(`Clé de cache générée: ${cacheKeyStr.substring(0, 50)}... (basée sur ${messageIds.length} messages et ${filePaths.length} fichiers)`);
+    
+    return cacheKeyStr;
   }
 
   /**
@@ -169,9 +174,17 @@ class EnhancedContextCache {
       entry = this.compressEntry(entry);
     }
 
+    // Vérifier si la clé existe déjà (mise à jour vs nouvelle entrée)
+    const isUpdate = this.cache.has(key);
     this.cache.set(key, entry);
 
-    logger.debug(`Contexte mis en cache avec la clé: ${key}, expire dans ${expiry / 1000}s, taille: ${size} bytes`);
+    logger.debug(
+      `Contexte ${isUpdate ? 'mis à jour' : 'ajouté'} dans le cache - ` +
+      `Clé: ${key.substring(0, 30)}..., ` +
+      `Expire dans: ${expiry / 1000}s, ` +
+      `Taille: ${size} bytes, ` +
+      `Total entrées: ${this.cache.size}/${this.maxSize}`
+    );
   }
 
   /**
@@ -183,6 +196,7 @@ class EnhancedContextCache {
     
     if (!entry) {
       this.misses++;
+      logger.debug(`Cache miss - Clé: ${key.substring(0, 30)}..., Total misses: ${this.misses}`);
       return null;
     }
 
@@ -190,7 +204,7 @@ class EnhancedContextCache {
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       this.misses++;
-      logger.debug(`Entrée de cache expirée: ${key}`);
+      logger.debug(`Entrée de cache expirée - Clé: ${key.substring(0, 30)}..., Total misses: ${this.misses}`);
       return null;
     }
 
@@ -218,9 +232,15 @@ class EnhancedContextCache {
       this.adjustExpiry(key, decompressedEntry);
     }
     
-    logger.debug(`Accès au cache - Clé: ${key}, Temps: ${accessTime}ms, Total accès: ${decompressedEntry.accessCount}`)
+    logger.debug(
+      `Cache hit - ` +
+      `Clé: ${key.substring(0, 30)}..., ` +
+      `Temps d'accès: ${accessTime}ms, ` +
+      `Accès #${decompressedEntry.accessCount}, ` +
+      `Total hits: ${this.hits}, ` +
+      `Ratio: ${(this.hits / (this.hits + this.misses)).toFixed(2)}`
+    );
 
-    logger.debug(`Contexte récupéré depuis le cache avec la clé: ${key}, temps d'accès: ${accessTime}ms`);
     return {
       contextFiles: decompressedEntry.contextFiles,
       summary: decompressedEntry.summary,
@@ -532,7 +552,23 @@ class EnhancedContextCache {
   public setAutoCompressionThreshold(threshold: number): void {
     this.autoCompressionThreshold = threshold;
   }
-
+/**
+   * Affiche les clés actuellement dans le cache (pour le débogage)
+   */
+public debugCacheKeys(): void {
+  logger.debug(`==== CACHE KEYS DEBUG (${this.cache.size} entrées) ====`);
+  let i = 0;
+  for (const key of this.cache.keys()) {
+    const entry = this.cache.get(key)!;
+    logger.debug(
+      `[${i++}] Clé: ${key.substring(0, 50)}..., ` +
+      `Accès: ${entry.accessCount}, ` +
+      `Âge: ${Math.round((Date.now() - entry.timestamp) / 1000)}s, ` +
+      `Expire dans: ${Math.round((entry.expiresAt - Date.now()) / 1000)}s`
+    );
+  }
+  logger.debug(`=======================================`);
+}
   /**
    * Retourne des statistiques sur le cache
    */
@@ -598,3 +634,5 @@ class EnhancedContextCache {
 
 // Exporter l'instance singleton
 export const enhancedContextCache = EnhancedContextCache.getInstance();
+
+
