@@ -43,20 +43,22 @@ type DialogContent = { type: 'delete'; item: ChatHistoryItem } | { type: 'delete
 function CurrentDateTime() {
   const [dateTime, setDateTime] = useState(new Date());
 
-  useEffect(() => {
+ useEffect(() => {
+    // Update time every second
     const timer = setInterval(() => {
       setDateTime(new Date());
-    }, 60000);
-
+    }, 1000);
+    
+    // Clean up interval on unmount
     return () => clearInterval(timer);
   }, []);
-
+  
   return (
     <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800/50">
       <div className="h-4 w-4 i-lucide:clock opacity-80" />
       <div className="flex gap-2">
         <span>{dateTime.toLocaleDateString()}</span>
-        <span>{dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <span>{dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
       </div>
     </div>
   );
@@ -212,21 +214,30 @@ export const Menu = () => {
         <div className="h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50">
           <div className="text-gray-900 dark:text-white font-medium"></div>
           <div className="flex items-center gap-3">
-            <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
-              {profile?.username || 'Invité'}
-            </span>
-            <div className="flex items-center justify-center w-[32px] h-[32px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0">
-              {profile?.avatar ? (
-                <img
-                  src={profile.avatar}
-                  alt={profile?.username || 'User'}
-                  className="w-full h-full object-cover"
-                  loading="eager"
-                  decoding="sync"
-                />
-              ) : (
-                <div className="i-ph:user-fill text-lg" />
-              )}
+            <div className="flex items-center gap-2 group">
+              <span 
+                className="font-medium text-sm text-gray-900 dark:text-white truncate max-w-[120px]"
+                title={profile?.username || 'Invité'}
+                aria-label={`Utilisateur: ${profile?.username || 'Invité'}`}
+              >
+                {profile?.username || 'Invité'}
+              </span>
+              <div 
+                className="flex items-center justify-center w-[32px] h-[32px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0 transition-transform duration-200 group-hover:scale-105"
+                aria-hidden="true"
+              >
+                {profile?.avatar ? (
+                  <img
+                    src={profile.avatar}
+                    alt={profile?.username || 'User'}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                    decoding="sync"
+                  />
+                ) : (
+                  <div className="i-ph:user-fill text-lg" />
+                )}
+              </div>
             </div>
           </div>
         </div>
