@@ -65,13 +65,16 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
           {(codeContext || chatSummary) && (
             <>
               <div 
-                className="group flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-gray-800/50 cursor-pointer"
+                className="group flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-gray-800/50 cursor-pointer relative"
                 onClick={() => setIsPopoverOpen(true)}
               >
                 <div className="i-ph:info-fill text-blue-400/80 group-hover:text-blue-400" />
                 <span className="text-xs text-gray-400 group-hover:text-gray-300">
-                Contexte et résumé
+                  {codeContext ? `Contexte (${codeContext.length} fichier)` : 'Summary'}
                 </span>
+                {(codeContext?.length || 0) > 0 && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                )}
               </div>
 
               {isPopoverOpen && (
@@ -88,15 +91,21 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                   >
                     <div className="flex items-center justify-between p-3 border-b border-gray-700/50">
                       <div className="flex items-center gap-2">
-                        <div className="i-ph:window-fill text-gray-400" />
-                        <h2 className="text-sm font-medium text-gray-200">Informations contextuelles</h2>
+                        <div className="i-ph:window-fill text-blue-400" />
+                        <h2 className="text-sm font-medium text-gray-200">Contexte et résumé</h2>
                       </div>
-                      <button 
-                        onClick={() => setIsPopoverOpen(false)}
-                        className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-                      >
-                        <div className="i-ph:x-bold w-4 h-4 text-gray-400" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs text-gray-500">
+                          {codeContext?.length || 0} fichiers référencés
+                        </div>
+                        <button 
+                          onClick={() => setIsPopoverOpen(false)}
+                          className="p-1.5 hover:bg-gray-800 rounded-full transition-colors"
+                          aria-label="Fermer la boîte de dialogue"
+                        >
+                          <div className="i-ph:x-bold w-4 h-4 text-gray-400" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
