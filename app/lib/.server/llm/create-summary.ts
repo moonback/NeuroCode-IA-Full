@@ -95,12 +95,28 @@ ${summary.summary}`;
 
   logger.debug('Sliced Messages:', slicedMessages.length);
 
-  const extractTextContent = (message: Message) =>
-    Array.isArray(message.content)
+  // Enhance context analysis
+  const extractTextContent = (message: Message) => {
+    const content = Array.isArray(message.content)
       ? (message.content.find((item) => item.type === 'text')?.text as string) || ''
       : message.content;
+    
+    // Remove code blocks for better summary focus
+    return content.replace(/```[\s\S]*?```/g, '')
+                 .replace(/`[^`]*`/g, '')
+                 .trim();
+  };
 
-  // Vérifier si un résumé est déjà en cache pour ces messages
+  // Add context scoring
+  const calculateContextRelevance = (messageContent: string, existingSummary?: string): number => {
+    const keywords = messageContent.toLowerCase().split(/\W+/);
+    const existingKeywords = existingSummary?.toLowerCase().split(/\W+/) || [];
+    
+    const overlap = keywords.filter(word => existingKeywords.includes(word)).length;
+    return overlap / Math.max(keywords.length, existingKeywords.length);
+  };
+
+  // Enhance cache management
   if (contextOptimization) {
     const cacheKey = enhancedContextCache.generateCacheKey({
       promptId,
@@ -109,9 +125,16 @@ ${summary.summary}`;
     });
     
     const cachedSummary = enhancedContextCache.get(cacheKey);
-    if (cachedSummary && cachedSummary.summary) {
-      logger.info('Résumé récupéré depuis le cache');
-      return cachedSummary.summary;
+    if (cachedSummary?.summary) {
+      const relevance = calculateContextRelevance(
+        slicedMessages.map(msg => extractTextContent(msg)).join(' '),
+        cachedSummary.summary
+      );
+      
+      if (relevance > 0.7) { // High relevance threshold
+        logger.info('Using cached summary (high relevance)');
+        return cachedSummary.summary;
+      }
     }
   }
 
