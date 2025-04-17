@@ -425,8 +425,8 @@ export const Menu = () => {
                   value={promptId}
                   onChange={(e) => setPromptId(e.target.value)}
                   className="appearance-none bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg pl-2 pr-8 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50 cursor-pointer"
-                  aria-label="Select prompt template"
-                  title="Choose a prompt template"
+                  aria-label="Sélectionner un modèle de prompt"
+                  title="Choisir un modèle de prompt "  
                 >
                   {PromptLibrary.getList().map((prompt) => (
                     <option key={prompt.id} value={prompt.id}>
