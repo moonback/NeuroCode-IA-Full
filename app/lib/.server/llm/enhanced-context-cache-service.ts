@@ -106,38 +106,40 @@ class EnhancedContextCache {
   }): string {
     const { promptId, messageIds, filePaths } = params;
     
-    // Normaliser les IDs de messages pour une meilleure correspondance
+    // Normaliser et trier les IDs de messages pour une meilleure correspondance
     const normalizedMessageIds = messageIds
       .filter(id => id && id.trim().length > 0)
-      .map(id => id.trim())
+      .map(id => id.trim().toLowerCase()) // Convertir en minuscules pour la cohérence
+      .sort() // Trier pour garantir un ordre cohérent
       .slice(-3); // Garder les 3 derniers messages
     
     // Normaliser et trier les chemins de fichiers
-    // Convertir tous les séparateurs de chemin en format uniforme (/ au lieu de \)
     const normalizedFilePaths = filePaths
       .filter(path => path && path.trim().length > 0)
-      .map(path => path.trim().toLowerCase().replace(/\\/g, '/'))
+      .map(path => path.trim().toLowerCase().replace(/[\\/]+/g, '/')) // Normaliser les séparateurs de chemin
       .sort();
     
-    // Créer un hash stable pour les chemins de fichiers
-    // Utiliser un hash plus simple basé sur le nombre de fichiers et leur longueur totale
-    // pour éviter les variations entre les appels
+    // Créer une signature stable pour les chemins de fichiers
     const fileCount = normalizedFilePaths.length;
-    const filePathsSignature = fileCount > 0 
-      ? `${fileCount}-${this.hashString(normalizedFilePaths[0] || '')}`
+    const filePathsHash = fileCount > 0
+      ? this.hashString(normalizedFilePaths.join('|'))
       : '0';
     
-    // Créer une clé de cache simplifiée
+    // Créer une clé de cache simplifiée et déterministe
     const cacheKey = {
-      promptId: promptId?.trim() || "default",
+      promptId: (promptId || 'default').trim().toLowerCase(),
       messageIds: normalizedMessageIds,
-      fileCount: fileCount,
-      filePathsSignature
+      fileCount,
+      filePathsHash
     };
     
     const cacheKeyStr = JSON.stringify(cacheKey);
     
-    logger.debug(`Clé de cache générée: ${cacheKeyStr} (basée sur ${messageIds.length} messages et ${filePaths.length} fichiers)`);
+    logger.debug(
+      `Clé de cache générée: ${cacheKeyStr} ` +
+      `(${messageIds.length} messages, ${filePaths.length} fichiers, ` +
+      `hash: ${filePathsHash})`
+    );
     
     return cacheKeyStr;
   }
