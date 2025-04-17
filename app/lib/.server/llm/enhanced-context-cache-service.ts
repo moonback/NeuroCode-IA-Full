@@ -33,7 +33,7 @@ interface EnhancedContextCacheEntry {
 const ENHANCED_CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes par défaut
 const MAX_ENHANCED_CACHE_SIZE = 200; // Augmentation du nombre maximum d'entrées
 const DEFAULT_COMPRESSION_THRESHOLD = 512; // 512 bytes - Seuil de compression plus agressif
-const MIN_COMPRESSION_RATIO = 0.1; // Ratio minimum pour conserver la compression
+const MIN_COMPRESSION_RATIO = 0.5; // Ratio minimum pour conserver la compression
 
 // Cache en mémoire amélioré pour stocker le contexte
 class EnhancedContextCache {
@@ -83,13 +83,17 @@ class EnhancedContextCache {
    * Génère une clé de cache basée sur les messages et les fichiers
    */
   private hashString(str: string): string {
+    // Utiliser un algorithme plus robuste pour réduire les collisions
     let hash = 0;
+    const prime = 31;
+    
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
+      hash = Math.imul(hash, prime) + char;
     }
-    return hash.toString(36);
+    
+    // Convertir en base 36 pour une représentation plus compacte
+    return Math.abs(hash).toString(36);
   }
 
   public generateCacheKey(params: {
@@ -114,11 +118,18 @@ class EnhancedContextCache {
     // Générer un hash des chemins de fichiers pour une meilleure correspondance
     const filePathsHash = this.hashString(normalizedFilePaths.join('|'));
     
-    // Créer une clé de cache normalisée
+    // Créer une clé de cache normalisée avec plus d'informations pour éviter les collisions
     const cacheKey = {
       promptId: promptId?.trim() || null,
       messageIds: normalizedMessageIds,
-      filePathsHash
+      filePathsHash,
+      // Ajouter les 5 premiers caractères de chaque chemin pour une meilleure distinction
+      // sans trop augmenter la taille de la clé
+      filePathsSignature: normalizedFilePaths.map(path => {
+        const parts = path.split('/');
+        const fileName = parts[parts.length - 1];
+        return fileName.substring(0, 5);
+      }).join('|')
     };
     
     return JSON.stringify(cacheKey);
