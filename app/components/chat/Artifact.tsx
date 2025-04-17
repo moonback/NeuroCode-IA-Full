@@ -232,7 +232,57 @@ async function handleButtonAction(action: ButtonAction) {
 
 const ActionList = memo(({ actions }: ActionListProps) => {
   const [clickedButtons, setClickedButtons] = useState<Set<string>>(new Set());
-  const [skipClicked, setSkipClicked] = useState(false); // Nouvel état pour suivre si "Ignorer" a été cliqué
+  const [skipClicked, setSkipClicked] = useState(false);
+  
+  // Add a state to track file existence status
+  const [fileExistenceStatus, setFileExistenceStatus] = useState<Record<string, boolean>>({});
+  
+  // Check if files exist when component mounts or when actions change
+  useEffect(() => {
+    const checkFileExistence = async () => {
+      const fileActions = actions.filter(action => action.type === 'file');
+      const newStatus: Record<string, boolean> = {};
+      
+      for (const action of fileActions) {
+        if (action.type === 'file') {
+          try {
+            // Get the artifact that contains the action runner
+            const artifacts = workbenchStore.artifacts.get();
+            let runner = null;
+            
+            // Find the artifact that has this action
+            for (const artifactId in artifacts) {
+              const artifact = artifacts[artifactId];
+              if (artifact.runner && artifact.runner.actions) {
+                const actionIds = Object.keys(artifact.runner.actions.get());
+                // Check if this runner contains our action
+                if (actionIds.some(id => artifact.runner.actions.get()[id] === action)) {
+                  runner = artifact.runner;
+                  break;
+                }
+              }
+            }
+            
+            if (runner && runner.getFileHistory) {
+              // Check if file exists by trying to get its history
+              const history = await runner.getFileHistory((action as any).filePath);
+              newStatus[(action as any).filePath] = !!history;
+            } else {
+              // If we can't get the runner or it doesn't have getFileHistory, assume file is new
+              newStatus[(action as any).filePath] = false;
+            }
+          } catch (error) {
+            console.error('Error checking file existence:', error);
+            newStatus[(action as any).filePath] = false;
+          }
+        }
+      }
+      
+      setFileExistenceStatus(newStatus);
+    };
+    
+    checkFileExistence();
+  }, [actions]);
 
   const handleButtonClick = (action: ButtonAction) => {
     const buttonId = `${action.artifactId}-${action.value}`;
@@ -365,7 +415,8 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                 {
                   type === 'file' ? (
                     <div>
-                      Create{' '}
+                      {/* Show "Create" or "Modify" based on file existence */}
+                      {fileExistenceStatus[(action as any).filePath] ? 'Modifier' : 'Créer'}{' '}
                       <code
                         className="bg-bolt-elements-artifacts-inlineCode-background text-bolt-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-bolt-elements-item-contentAccent hover:underline cursor-pointer"
                         onClick={() => openArtifactInWorkbench((action as any).filePath)}
