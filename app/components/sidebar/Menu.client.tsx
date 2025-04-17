@@ -411,7 +411,7 @@ export const Menu = () => {
               <button
                 onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
                 className={classNames(
-                  'group relative flex items-center justify-center w-6 h-6 rounded-lg transition-colors',
+                  'group relative flex items-center justify-center w-7 h-7 rounded-lg transition-colors',
                   contextOptimizationEnabled
                     ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
                     : 'bg-gray-100 dark:bg-transparent text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary'
@@ -420,17 +420,24 @@ export const Menu = () => {
               >
               <span className="i-ph-brain-duotone text-xl" />              
               </button>
-              <select
-                value={promptId}
-                onChange={(e) => setPromptId(e.target.value)}
-                className=" bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-              >
-                {PromptLibrary.getList().map((prompt) => (
-                  <option key={prompt.id} value={prompt.id}>
-                    {prompt.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={promptId}
+                  onChange={(e) => setPromptId(e.target.value)}
+                  className="appearance-none bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg pl-2 pr-8 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50 cursor-pointer"
+                  aria-label="Select prompt template"
+                  title="Choose a prompt template"
+                >
+                  {PromptLibrary.getList().map((prompt) => (
+                    <option key={prompt.id} value={prompt.id}>
+                      {prompt.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <span className="i-ph:caret-down h-4 w-4 text-gray-400" />
+                </div>
+              </div>
               <ThemeSwitch />
             </div>
           </div>
