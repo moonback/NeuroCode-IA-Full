@@ -68,12 +68,12 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                 className="group flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-gray-800/50 cursor-pointer relative"
                 onClick={() => setIsPopoverOpen(true)}
               >
-                <div className="i-ph:info-fill text-blue-400/80 group-hover:text-blue-400" />
+                <div className="i-ph:info-fill text-green-400/80 group-hover:text-violet-400" />
                 <span className="text-xs text-gray-400 group-hover:text-gray-300">
                   {codeContext ? `Contexte (${codeContext.length} fichier)` : 'Résumé'}
                 </span>
                 {(codeContext?.length || 0) > 0 && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                  <div className="absolute -top-0 -right-1 w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
                 )}
               </div>
 
