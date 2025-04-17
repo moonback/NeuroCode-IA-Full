@@ -254,15 +254,53 @@ export class ActionRunner {
       throw error;
     }
   }
-  // Replace the stub implementation with a proper one
+  /**
+   * Suit les changements de fichiers et gère l'historique des versions
+   * Cette méthode peut soit créer un nouveau fichier, soit modifier un fichier existant
+   * 
+   * @param filePath - Le chemin du fichier à suivre
+   * @param newContent - Le nouveau contenu du fichier
+   * @param changeSource - La source du changement (user, auto-save, external)
+   */
   async trackFileChange(filePath: string, newContent: string, changeSource: 'user' | 'auto-save' | 'external' = 'external') {
     try {
-      // Get existing history or create new one
+      const webcontainer = await this.#webcontainer;
+      const relativePath = nodePath.relative(webcontainer.workdir, filePath);
+      
+      // Vérifier si le fichier existe déjà
+      let fileExists = false;
+      try {
+        const fileInfo = await webcontainer.fs.readdir(relativePath);
+        if (!fileInfo || fileInfo.length === 0) {
+          throw new Error('File not found');
+        }
+        fileExists = true;
+        logger.debug(`Le fichier existe déjà: ${relativePath}`);
+      } catch (error) {
+        // Le fichier n'existe pas encore
+        logger.debug(`Nouveau fichier à créer: ${relativePath}`);
+        
+        // Créer le dossier parent si nécessaire
+        const folder = nodePath.dirname(relativePath);
+        if (folder !== '.') {
+          try {
+            await webcontainer.fs.mkdir(folder, { recursive: true });
+            logger.debug(`Dossier créé: ${folder}`);
+          } catch (folderError) {
+            // Ignorer l'erreur si le dossier existe déjà
+            if (!(folderError instanceof Error && folderError.message.includes('EEXIST'))) {
+              logger.error('Échec de la création du dossier:', folderError);
+            }
+          }
+        }
+      }
+      
+      // Obtenir l'historique existant ou en créer un nouveau
       let history = await this.getFileHistory(filePath);
       const timestamp = Date.now();
       
       if (!history) {
-        // Create new history record
+        // Créer un nouvel enregistrement d'historique
         history = {
           originalContent: newContent,
           lastModified: timestamp,
@@ -273,32 +311,54 @@ export class ActionRunner {
           }],
           changeSource
         };
+        logger.debug(`Nouvel historique créé pour: ${filePath}`);
       } else {
-        // Update existing history
+        // Mettre à jour l'historique existant
         history.lastModified = timestamp;
         history.changeSource = changeSource;
         
-        // Add new version
+        // Ajouter une nouvelle version
         history.versions.push({
           timestamp,
           content: newContent
         });
         
-        // Limit version history to last 10 versions to prevent excessive storage
+        // Limiter l'historique des versions aux 10 dernières pour éviter un stockage excessif
         if (history.versions.length > 10) {
           history.versions = history.versions.slice(-10);
         }
         
-        // Calculate changes from original
+        // Calculer les changements par rapport à l'original
         const { diffLines } = await import('diff');
         history.changes = diffLines(history.originalContent, newContent);
+        logger.debug(`Historique mis à jour pour: ${filePath}`);
       }
       
-      // Save updated history
+      // Écrire le fichier si c'est un nouveau fichier ou si le contenu a changé
+      if (!fileExists) {
+        await webcontainer.fs.writeFile(relativePath, newContent);
+        logger.debug(`Nouveau fichier écrit: ${relativePath}`);
+      } else {
+        try {
+          const currentContent = await webcontainer.fs.readFile(relativePath, 'utf-8');
+          if (currentContent !== newContent) {
+            await webcontainer.fs.writeFile(relativePath, newContent);
+            logger.debug(`Fichier modifié: ${relativePath}`);
+          } else {
+            logger.debug(`Aucun changement nécessaire pour: ${relativePath}`);
+          }
+        } catch (readError) {
+          // En cas d'erreur de lecture, écrire directement le fichier
+          await webcontainer.fs.writeFile(relativePath, newContent);
+          logger.debug(`Fichier écrit après erreur de lecture: ${relativePath}`);
+        }
+      }
+      
+      // Sauvegarder l'historique mis à jour
       await this.saveFileHistory(filePath, history);
       
     } catch (error) {
-      logger.error('Failed to track file change:', error);
+      logger.error('Échec du suivi des modifications du fichier:', error);
     }
   }
 
