@@ -37,6 +37,9 @@ const MIN_COMPRESSION_RATIO = 0.5; // Ratio minimum pour conserver la compressio
 
 // Cache en mémoire amélioré pour stocker le contexte
 class EnhancedContextCache {
+  debugCacheKeysDetailed() {
+    throw new Error('Method not implemented.');
+  }
   private static instance: EnhancedContextCache;
   private cache: Map<string, EnhancedContextCacheEntry>;
   private maxSize: number;
@@ -110,32 +113,31 @@ class EnhancedContextCache {
       .slice(-3); // Garder les 3 derniers messages
     
     // Normaliser et trier les chemins de fichiers
+    // Convertir tous les séparateurs de chemin en format uniforme (/ au lieu de \)
     const normalizedFilePaths = filePaths
       .filter(path => path && path.trim().length > 0)
-      .map(path => path.trim().toLowerCase())
+      .map(path => path.trim().toLowerCase().replace(/\\/g, '/'))
       .sort();
     
-    // Générer un hash des chemins de fichiers pour une meilleure correspondance
-    const filePathsHash = this.hashString(normalizedFilePaths.join('|'));
+    // Créer un hash stable pour les chemins de fichiers
+    // Utiliser un hash plus simple basé sur le nombre de fichiers et leur longueur totale
+    // pour éviter les variations entre les appels
+    const fileCount = normalizedFilePaths.length;
+    const filePathsSignature = fileCount > 0 
+      ? `${fileCount}-${this.hashString(normalizedFilePaths[0] || '')}`
+      : '0';
     
-    // Créer une clé de cache normalisée avec plus d'informations pour éviter les collisions
+    // Créer une clé de cache simplifiée
     const cacheKey = {
-      promptId: promptId?.trim() || null,
+      promptId: promptId?.trim() || "default",
       messageIds: normalizedMessageIds,
-      filePathsHash,
-      // Ajouter les 5 premiers caractères de chaque chemin pour une meilleure distinction
-      // sans trop augmenter la taille de la clé
-      filePathsSignature: normalizedFilePaths.map(path => {
-        const parts = path.split('/');
-        const fileName = parts[parts.length - 1];
-        return fileName.substring(0, 5);
-      }).join('|')
+      fileCount: fileCount,
+      filePathsSignature
     };
     
     const cacheKeyStr = JSON.stringify(cacheKey);
     
-    // Ajouter un log pour tracer la génération des clés
-    logger.debug(`Clé de cache générée: ${cacheKeyStr.substring(0, 50)}... (basée sur ${messageIds.length} messages et ${filePaths.length} fichiers)`);
+    logger.debug(`Clé de cache générée: ${cacheKeyStr} (basée sur ${messageIds.length} messages et ${filePaths.length} fichiers)`);
     
     return cacheKeyStr;
   }
@@ -569,6 +571,76 @@ public debugCacheKeys(): void {
   }
   logger.debug(`=======================================`);
 }
+/**
+   * Ajoute une méthode pour diagnostiquer les problèmes de cache
+   */
+public diagnoseCache(): void {
+  logger.debug(`==== DIAGNOSTIC DU CACHE ====`);
+  logger.debug(`Taille du cache: ${this.cache.size}/${this.maxSize}`);
+  logger.debug(`Hits: ${this.hits}, Misses: ${this.misses}`);
+  logger.debug(`Ratio de hits: ${this.hits + this.misses > 0 ? (this.hits / (this.hits + this.misses) * 100).toFixed(2) : 0}%`);
+  
+  // Vérifier si le cache est vide
+  if (this.cache.size === 0) {
+    logger.debug(`Le cache est vide. Vérifiez si clear() est appelé quelque part ou si les entrées expirent trop rapidement.`);
+  } else {
+    // Afficher quelques exemples de clés
+    logger.debug(`Exemples de clés dans le cache:`);
+    let count = 0;
+    for (const key of this.cache.keys()) {
+      if (count < 3) { // Limiter à 3 exemples
+        logger.debug(`- ${key}`);
+        count++;
+      } else {
+        break;
+      }
+    }
+  }
+  
+  logger.debug(`============================`);
+}
+/**
+   * Méthode de test pour vérifier le fonctionnement du cache
+   */
+  public testCacheHit(): void {
+    // Créer une clé de test
+    const testKey = JSON.stringify({
+      promptId: "test",
+      messageIds: ["test1", "test2"],
+      fileCount: 1,
+      filePathsSignature: "1-test"
+    });
+    
+    const testData = {
+      contextFiles: { "test.txt": "Contenu de test" } as unknown as FileMap,
+      summary: "Résumé de test"
+    };
+    
+    // Stocker dans le cache
+    this.set(testKey, testData);
+    logger.debug(`Test: Données stockées dans le cache avec la clé ${testKey}`);
+    
+    // Récupérer du cache (première fois)
+    const cachedData1 = this.get(testKey);
+    
+    if (cachedData1) {
+      logger.debug(`Test: Première récupération réussie depuis le cache pour la clé ${testKey}`);
+      logger.debug(`Test: Hits=${this.hits}, Misses=${this.misses}`);
+      
+      // Récupérer du cache (deuxième fois)
+      const cachedData2 = this.get(testKey);
+      
+      if (cachedData2) {
+        logger.debug(`Test: Deuxième récupération réussie depuis le cache pour la clé ${testKey}`);
+        logger.debug(`Test: Hits=${this.hits}, Misses=${this.misses}`);
+      } else {
+        logger.error(`Test: ÉCHEC de la deuxième récupération depuis le cache pour la clé ${testKey}`);
+      }
+    } else {
+      logger.error(`Test: ÉCHEC de la première récupération depuis le cache pour la clé ${testKey}`);
+    }
+  }
+
   /**
    * Retourne des statistiques sur le cache
    */
@@ -634,5 +706,8 @@ public debugCacheKeys(): void {
 
 // Exporter l'instance singleton
 export const enhancedContextCache = EnhancedContextCache.getInstance();
+
+
+
 
 
