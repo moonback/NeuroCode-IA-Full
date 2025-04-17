@@ -420,21 +420,28 @@ export const Menu = () => {
               >
               <span className="i-ph-brain-duotone text-xl" />              
               </button>
-              <div className="relative">
+              <div className="relative min-w-[140px] focus-within:ring-2 focus-within:ring-purple-400 rounded-lg transition-all"
+                tabIndex={0}
+              >
                 <select
                   value={promptId}
                   onChange={(e) => setPromptId(e.target.value)}
-                  className="appearance-none bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg pl-2 pr-8 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50 cursor-pointer"
-                  aria-label="Sélectionner un modèle de prompt"
-                  title="Choisir un modèle de prompt "  
+                  className="appearance-none bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg pl-2 pr-8 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 transition-colors border border-gray-200 dark:border-gray-700 cursor-pointer w-full"
+                  aria-label="Prompt template selection"
+                  title="Select a prompt template for your new conversation"
+                  disabled={PromptLibrary.getList().length === 0}
                 >
-                  {PromptLibrary.getList().map((prompt) => (
-                    <option key={prompt.id} value={prompt.id}>
-                      {prompt.label}
-                    </option>
-                  ))}
+                  {PromptLibrary.getList().length === 0 ? (
+                    <option value="">No templates available</option>
+                  ) : (
+                    PromptLibrary.getList().map((prompt) => (
+                      <option key={prompt.id} value={prompt.id}>
+                        {prompt.label}
+                      </option>
+                    ))
+                  )}
                 </select>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 flex items-center h-full">
                   <span className="i-ph:caret-down h-4 w-4 text-gray-400" />
                 </div>
               </div>
