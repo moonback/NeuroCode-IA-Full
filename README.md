@@ -29,6 +29,19 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
 
 ## ✅ Fonctionnalités récemment ajoutées (mise à jour)
 
+### 🧩 Tableau de compatibilité des LLM
+
+| Fournisseur           | Modèles supportés               | Configuration requise          |
+|-----------------------|----------------------------------|---------------------------------|
+| OpenAI                | GPT-4, GPT-3.5                  | Clé API                         |
+| HuggingFace           | 1000+ modèles                   | Clé API/Inference Endpoint      |
+| Anthropic             | Claude 2                        | Clé API                         |
+| Google AI             | Gemini, PaLM                    | Clé API                         |
+| Mistral               | Mistral 7B                      | Clé API/Modèle local            |
+| Ollama                | Tous modèles locaux             | Installation Ollama requise    |
+
+---
+
 - **IA & Modèles**  
   - ✅ Intégration OpenRouter, Gemini, DeepSeek, Mistral, Cohere, HuggingFace, Together, xAI Grok  
   - ✅ Génération automatique des modèles Ollama à partir des téléchargements  
@@ -91,6 +104,16 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
 
 ---
 
+## 👥 Contribuer au Projet
+
+1. Forker le dépôt
+2. Créer une branche (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Valider les changements (`git commit -m 'Ajout d'une nouvelle fonctionnalité'`)
+4. Pousser vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Ouvrir une Pull Request
+
+---
+
 ## Technologies Utilisées
 
 *   **Framework principal**: [Remix](https://remix.run/)
@@ -111,6 +134,16 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
 
 ---
 
+## 📋 Prérequis Techniques
+
+- Node.js 18+ 
+- npm 9+ 
+- Git 2.35+
+- Python 3.10+ (pour l'analyse de documents)
+- Docker (optionnel pour le déploiement)
+
+---
+
 ## 🚀 Installation  
 
 Si vous n’êtes pas familier avec l’installation de logiciels via GitHub, pas d’inquiétude ! 🚀  
@@ -121,6 +154,16 @@ En cas de problème, vous pouvez :
 Suivez les instructions ci-dessous pour installer la **version stable** de Neurocode sur votre machine locale en quelques minutes.  
 
 > 📖 **Consultez la documentation complète pour une installation détaillée !**  
+
+---
+
+## 📸 Captures d'Écran
+
+![Interface principale](public/screenshots/main-interface-dark.png)
+*Interface principale (mode sombre)*
+
+![Chat avec l'IA](public/screenshots/chat-interface.png)
+*Interaction avec l'assistant IA*
 
 ---
 
