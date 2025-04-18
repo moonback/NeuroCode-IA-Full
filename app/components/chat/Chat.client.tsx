@@ -345,7 +345,7 @@ export const ChatImpl = memo(
       // Soumettre la tâche à l'agent et commencer le polling
       const result = await submitAgentTask(agentData);
       
-      if (result.success) {
+      if (result.success && result.taskId) {
         // Ajouter un message temporaire indiquant que la tâche est en cours
         append({
           role: 'assistant',
