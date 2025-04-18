@@ -24,7 +24,9 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
 ✅ **Support Docker** prêt à l'intégration pour une installation simplifiée  
 ✅ **Déploiement direct sur Netlify ou Vercel**
 ✅ **Intégration de Supabase pour la gestion des bases de données**
-
+✅ **Création d'applications mobiles multiplateformes avec Expo** (support iOS/Android)
+✅ **Hot Reload natif et prévisualisation en direct sur appareils mobiles**
+✅ **Gestion unifiée des builds via EAS (Expo Application Services)**
 ---
 
 ## ✅ Fonctionnalités récemment ajoutées (mise à jour)
@@ -52,6 +54,7 @@ NeuroCode combine un éditeur de code, un terminal, une prévisualisation en dir
   - ✅ Notifications sonores pour les réponses du chat  
   - ✅ Processeur de messages pour les commandes de configuration de projet  
   - ✅ Extraction et analyse de texte à partir de documents
+  
 
 - **Expérience utilisateur & Interface**  
   - ✅ Interface optimisée pour mobile  
