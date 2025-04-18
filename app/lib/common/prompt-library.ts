@@ -1,6 +1,5 @@
 import { getSystemPrompt } from './prompts/prompts';
 import optimized from './prompts/optimized';
-import debugging from './prompts/debugging';
 
 export interface PromptOptions {
   cwd: string;
@@ -40,18 +39,6 @@ export class PromptLibrary {
       get: (options) => {
         // Add custom instructions to optimized prompt if provided
         const basePrompt = optimized(options);
-        if (options.customInstructions && options.customInstructions.trim() !== '') {
-          return `<custom_user_instructions>\n${options.customInstructions.trim()}\n</custom_user_instructions>\n\n${basePrompt}`;
-        }
-        return basePrompt;
-      },
-    },
-    debugging: {
-      label: 'Débogage',
-      description: 'Prompt spécialisé pour le débogage de projets avec chaîne de pensée explicite',
-      get: (options) => {
-        // Use the debugging prompt with chain of thought methodology
-        const basePrompt = debugging(options);
         if (options.customInstructions && options.customInstructions.trim() !== '') {
           return `<custom_user_instructions>\n${options.customInstructions.trim()}\n</custom_user_instructions>\n\n${basePrompt}`;
         }
