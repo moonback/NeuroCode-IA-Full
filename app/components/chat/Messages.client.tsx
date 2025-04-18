@@ -12,17 +12,19 @@ import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
 import { forwardRef } from 'react';
 import type { ForwardedRef } from 'react';
+import { TaskStatusIndicator } from './TaskManager.client';
 
 interface MessagesProps {
   id?: string;
   className?: string;
   isStreaming?: boolean;
   messages?: Message[];
+  taskStatus?: 'idle' | 'submitted' | 'processing' | 'completed' | 'failed';
 }
 
 export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
   (props: MessagesProps, ref: ForwardedRef<HTMLDivElement> | undefined) => {
-    const { id, isStreaming = false, messages = [] } = props;
+    const { id, isStreaming = false, messages = [], taskStatus } = props;
     const location = useLocation();
     const profile = useStore(profileStore);
 
@@ -125,6 +127,11 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
           : null}
         {isStreaming && (
           <div className="text-center w-full text-bolt-elements-textSecondary i-svg-spinners:3-dots-fade text-4xl mt-4"></div>
+        )}
+        {taskStatus && taskStatus !== 'idle' && (
+          <div className="flex justify-center mt-4">
+            <TaskStatusIndicator status={taskStatus} />
+          </div>
         )}
       </div>
     );

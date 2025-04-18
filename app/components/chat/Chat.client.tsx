@@ -9,6 +9,7 @@ import { useAnimate } from 'framer-motion';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { cssTransition, toast, ToastContainer } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts, useSnapScroll } from '~/lib/hooks';
+import { useTaskManager, TaskStatusIndicator } from './TaskManager.client';
 import { description, useChatHistory } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
@@ -45,6 +46,9 @@ export function Chat() {
 
   const { ready, initialMessages, storeMessageHistory, importChat, exportChat } = useChatHistory();
   const title = useStore(description);
+  // État pour suivre si l'utilisateur souhaite utiliser l'agent en arrière-plan
+  const [useAgentMode, setUseAgentMode] = useState(false);
+  
   useEffect(() => {
     workbenchStore.setReloadedMessages(initialMessages.map((m) => m.id));
   }, [initialMessages]);
@@ -58,6 +62,8 @@ export function Chat() {
           exportChat={exportChat}
           storeMessageHistory={storeMessageHistory}
           importChat={importChat}
+          useAgentMode={useAgentMode}
+          setUseAgentMode={setUseAgentMode}
         />
       )}
             <MessageProcessor />
@@ -118,10 +124,12 @@ interface ChatProps {
   importChat: (description: string, messages: Message[]) => Promise<void>;
   exportChat: () => void;
   description?: string;
+  useAgentMode?: boolean;
+  setUseAgentMode?: (value: boolean) => void;
 }
 
 export const ChatImpl = memo(
-  ({ description, initialMessages, storeMessageHistory, importChat, exportChat }: ChatProps) => {
+  ({ description, initialMessages, storeMessageHistory, importChat, exportChat, useAgentMode, setUseAgentMode }: ChatProps) => {
     useShortcuts();
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -155,12 +163,38 @@ export const ChatImpl = memo(
       const savedProvider = Cookies.get('selectedProvider');
       return (PROVIDER_LIST.find((p) => p.name === savedProvider) || DEFAULT_PROVIDER) as ProviderInfo;
     });
+    
+    // Utiliser les props pour l'état de l'agent
 
     const { showChat } = useStore(chatStore);
 
     const [animationScope, animate] = useAnimate();
 
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+
+    // Initialiser le gestionnaire de tâches avec le système de polling
+    const {
+      activeTaskId,
+      taskStatus,
+      submitAgentTask,
+      pollStatus,
+      startPolling
+    } = useTaskManager({
+      onTaskCompleted: (result) => {
+        // Ajouter le résultat comme message de l'assistant
+        append({
+          role: 'assistant',
+          content: typeof result === 'string' ? result : JSON.stringify(result),
+        });
+      }
+    });
+    
+    // Nettoyage du polling à la désinstallation du composant
+    useEffect(() => {
+      return () => {
+        // Le nettoyage est géré dans le hook useTaskManager
+      };
+    }, []);
 
     const {
       messages,
@@ -315,7 +349,75 @@ export const ChatImpl = memo(
       setChatStarted(true);
     };
 
+    // Fonction pour soumettre une tâche à l'agent IA via la file d'attente
+    const submitToAgent = async (messageContent: string) => {
+      console.log('[Chat] Soumission d\'une tâche à l\'agent IA...');
+      
+      // Préparer les données pour l'agent
+      const agentData = {
+        prompt: messageContent,
+        model,
+        providerName: provider.name,
+        apiKeys,
+        // Ajouter les données contextuelles importantes pour l'agent
+        files,
+        uploadedFiles: uploadedFiles.map(file => ({
+          name: file.name,
+          size: file.size,
+          type: file.type
+        })),
+        imageDataList,
+        contextOptimization: contextOptimizationEnabled,
+        customInstructions,
+        targetedFiles: textareaRef.current ? 
+          JSON.parse(textareaRef.current.getAttribute('data-targeted-files') || '[]') : [],
+        options: {
+          // Options supplémentaires pour le modèle
+          maxTokens: 4000,
+          temperature: 0.7,
+          systemPrompt: customInstructions || 'Vous êtes un assistant IA utile et précis.',
+          // Utiliser un objet vide par défaut car 'settings' n'existe pas sur le type ProviderInfo
+          providerSettings: {}
+        }
+      };
+
+      console.log('[Chat] Données préparées pour l\'agent:', Object.keys(agentData));
+      
+      try {
+        // Soumettre la tâche à l'agent et commencer le polling
+        const result = await submitAgentTask(agentData);
+        
+        if (result.success && result.taskId) {
+          console.log(`[Chat] Tâche soumise avec succès, ID: ${result.taskId}`);
+          
+          // Ajouter un message temporaire indiquant que la tâche est en cours
+          append({
+            role: 'assistant',
+            content: `Tâche ${result.taskId.substring(0, 6)}... en cours de traitement...`,
+            id: `task-${result.taskId}`,
+          });
+          
+          // Commencer le polling immédiatement
+          startPolling(result.taskId);
+          
+          // Afficher un toast pour informer l'utilisateur
+          toast.info(`Tâche ${result.taskId.substring(0, 6)}... soumise et en cours de traitement.`);
+        } else if (!result.success) {
+          console.error('[Chat] Échec de la soumission de la tâche:', result.error);
+          // Afficher un message d'erreur si la soumission a échoué
+          toast.error(`Échec de la soumission de la tâche: ${result.error instanceof Error ? result.error.message : 'Erreur inconnue'}`);
+        }
+        
+        return result.success;
+      } catch (error) {
+        console.error('[Chat] Erreur lors de la soumission de la tâche:', error);
+        toast.error(`Erreur lors de la soumission de la tâche: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        return false;
+      }
+    };
+
     const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
+      console.log('sendMessage - chatStarted:', chatStarted);
       const messageContent = messageInput || input;
       const textarea = textareaRef.current;
       let targetedFiles = [];
@@ -338,6 +440,24 @@ export const ChatImpl = memo(
       }
 
       runAnimation();
+
+      // Si le mode agent est activé, utiliser l'agent en arrière-plan
+      if (useAgentMode && chatStarted) {
+        const success = await submitToAgent(messageContent);
+        if (success) {
+          // Si la soumission à l'agent a réussi, on arrête ici
+          setInput('');
+          Cookies.remove(PROMPT_COOKIE_KEY);
+          setUploadedFiles([]);
+          setImageDataList([]);
+          resetEnhancer();
+          textareaRef.current?.blur();
+          return;
+        }
+        // Si la soumission à l'agent a échoué, on continue avec l'API directe
+        toast.info('Échec de l\'exécution en arrière-plan, utilisation de l\'API directe à la place.');
+      }
+
 // Function to read file content as text
 const readFileContent = async (file: File): Promise<string> => {
   // For DOCX and PDF, use the specialized extractor
@@ -491,6 +611,10 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
 
               textareaRef.current?.blur();
               setFakeLoading(false);
+              
+              // Mettre à jour chatStarted après le premier échange
+              setChatStarted(true);
+              chatStore.setKey('started', true);
 
               return;
             }
@@ -538,6 +662,10 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
         resetEnhancer();
 
         textareaRef.current?.blur();
+        
+        // Mettre à jour chatStarted après le premier échange
+        setChatStarted(true);
+        chatStore.setKey('started', true);
 
         return;
       }
@@ -677,69 +805,97 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
       Cookies.set('selectedProvider', newProvider.name, { expires: 30 });
     };
 
-    return (
-      <BaseChat
-        ref={animationScope}
-        textareaRef={textareaRef}
-        input={input}
-        showChat={showChat}
-        chatStarted={chatStarted}
-        isStreaming={isLoading || fakeLoading}
-        onStreamingChange={(streaming) => {
-          streamingState.set(streaming);
-        }}
-        enhancingPrompt={enhancingPrompt}
-        promptEnhanced={promptEnhanced}
-        sendMessage={sendMessage}
-        model={model}
-        setModel={handleModelChange}
-        provider={provider}
-        setProvider={handleProviderChange}
-        providerList={activeProviders}
-        messageRef={messageRef}
-        scrollRef={scrollRef}
-        handleInputChange={(e) => {
-          onTextareaChange(e);
-          debouncedCachePrompt(e);
-        }}
-        handleStop={abort}
-        description={description}
-        importChat={importChat}
-        exportChat={exportChat}
-        messages={messages.map((message, i) => {
-          if (message.role === 'user') {
-            return message;
-          }
+    // Rendu de l'indicateur de statut de tâche
+    const renderTaskStatusIndicator = () => {
+      if (activeTaskId && taskStatus !== 'idle') {
+        return (
+          <div className="fixed bottom-24 right-4 z-50 bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor shadow-lg">
+            <div className="flex items-center gap-2">
+              <TaskStatusIndicator status={taskStatus} />
+              <span className="text-sm">
+                Tâche {activeTaskId.substring(0, 6)}...
+                {taskStatus === 'processing' && ' en cours de traitement'}
+                {taskStatus === 'submitted' && ' soumise'}
+                {taskStatus === 'completed' && ' terminée'}
+                {taskStatus === 'failed' && ' échouée'}
+              </span>
+            </div>
+          </div>
+        );
+      }
+      return null;
+    };
 
-          return {
-            ...message,
-            content: parsedMessages[i] || '',
-          };
-        })}
-        enhancePrompt={() => {
-          enhancePrompt(
-            input,
-            (input) => {
-              setInput(input);
-              scrollTextArea();
-            },
-            model,
-            provider,
-            apiKeys,
-          );
-        }}
-        uploadedFiles={uploadedFiles}
-        setUploadedFiles={setUploadedFiles}
-        imageDataList={imageDataList}
-        setImageDataList={setImageDataList}
-        actionAlert={actionAlert}
-        clearAlert={() => workbenchStore.clearAlert()}
-        supabaseAlert={supabaseAlert}
-        clearSupabaseAlert={() => workbenchStore.clearSupabaseAlert()}
-        deployAlert={deployAlert}
-        clearDeployAlert={() => workbenchStore.clearDeployAlert()}
-        data={chatData}
-      />
+    return (
+      <>
+        <BaseChat
+          ref={animationScope}
+          textareaRef={textareaRef}
+          input={input}
+          showChat={showChat}
+          chatStarted={chatStarted}
+          isStreaming={isLoading || fakeLoading}
+          onStreamingChange={(streaming) => {
+            streamingState.set(streaming);
+          }}
+          enhancingPrompt={enhancingPrompt}
+          promptEnhanced={promptEnhanced}
+          sendMessage={sendMessage}
+          model={model}
+          setModel={handleModelChange}
+          provider={provider}
+          setProvider={handleProviderChange}
+          providerList={activeProviders}
+          messageRef={messageRef}
+          scrollRef={scrollRef}
+          handleInputChange={(e) => {
+            onTextareaChange(e);
+            debouncedCachePrompt(e);
+          }}
+          handleStop={abort}
+          description={description}
+          importChat={importChat}
+          exportChat={exportChat}
+          taskStatus={taskStatus}
+          activeTaskId={activeTaskId}
+          TaskStatusIndicator={TaskStatusIndicator}
+          useAgentMode={useAgentMode}
+          setUseAgentMode={setUseAgentMode}
+          messages={messages.map((message, i) => {
+            if (message.role === 'user') {
+              return message;
+            }
+            return {
+              ...message,
+              content: parsedMessages[i] || '',
+            };
+          })}
+          enhancePrompt={() => {
+            enhancePrompt(
+              input,
+              (input) => {
+                setInput(input);
+                scrollTextArea();
+              },
+              model,
+              provider,
+              apiKeys,
+            );
+          }}
+          uploadedFiles={uploadedFiles}
+          setUploadedFiles={setUploadedFiles}
+          imageDataList={imageDataList}
+          setImageDataList={setImageDataList}
+          actionAlert={actionAlert}
+          clearAlert={() => workbenchStore.clearAlert()}
+          supabaseAlert={supabaseAlert}
+          clearSupabaseAlert={() => workbenchStore.clearSupabaseAlert()}
+          deployAlert={deployAlert}
+          clearDeployAlert={() => workbenchStore.clearDeployAlert()}
+          data={chatData}
+        />
+        {renderTaskStatusIndicator()}
+      </>
     );
   },
 );
