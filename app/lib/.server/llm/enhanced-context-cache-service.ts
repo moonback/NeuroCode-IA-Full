@@ -29,13 +29,13 @@ interface EnhancedContextCacheEntry {
   totalAccessTime: number;
 }
 
-// Configuration du cache amélioré
-const ENHANCED_CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes par défaut
-const MAX_ENHANCED_CACHE_SIZE = 200; // Augmentation du nombre maximum d'entrées
-const DEFAULT_COMPRESSION_THRESHOLD = 50; // 512 bytes - Seuil de compression plus agressif
-const MIN_COMPRESSION_RATIO = 0.3; // Ratio minimum pour conserver la compression
 
-// Cache en mémoire amélioré pour stocker le contexte
+const ENHANCED_CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes par défaut (augmenté de 10 à 30 minutes)
+const MAX_ENHANCED_CACHE_SIZE = 500; // Augmentation significative (de 100 à 500 entrées)
+const DEFAULT_COMPRESSION_THRESHOLD = 1024; // 1KB - Seuil plus réaliste (augmenté de 50 bytes)
+const MIN_COMPRESSION_RATIO = 0.3; // 30% de compression minimum (augmenté de 20%)
+
+// Nouvelles constantes ajoutées pour une meilleure gestion
 class EnhancedContextCache {
   debugCacheKeysDetailed() {
     throw new Error('Method not implemented.');
