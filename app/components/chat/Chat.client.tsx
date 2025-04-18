@@ -748,7 +748,6 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
         description={description}
         importChat={importChat}
         exportChat={exportChat}
-        // Ajouter les propriétés liées aux tâches
         taskStatus={taskStatus}
         activeTaskId={activeTaskId}
         TaskStatusIndicator={TaskStatusIndicator}
@@ -756,7 +755,6 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
           if (message.role === 'user') {
             return message;
           }
-
           return {
             ...message,
             content: parsedMessages[i] || '',
