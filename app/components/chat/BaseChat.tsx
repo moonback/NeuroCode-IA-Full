@@ -918,34 +918,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           disabled={isStreaming}
                         />
                         
-                        {/* Interrupteur pour le mode agent */}
-                        <Tooltip.Root>
-                          <Tooltip.Trigger asChild>
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-bolt-elements-background-depth-1 transition-colors">
-                              <Switch 
-                                checked={useAgentMode} 
-                                onCheckedChange={setUseAgentMode}
-                                disabled={isStreaming}
-                                className={useAgentMode ? "bg-accent-500" : ""}
-                              />
-                              <span className="text-xs text-bolt-elements-textSecondary">
-                                {useAgentMode ? "Mode agent" : "Mode direct"}
-                              </span>
-                            </div>
-                          </Tooltip.Trigger>
-                          <Tooltip.Portal>
-                            <Tooltip.Content
-                              className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary px-3 py-1.5 rounded-lg text-xs border border-bolt-elements-borderColor shadow-md animate-fade-in z-50"
-                              side="bottom"
-                              sideOffset={5}
-                            >
-                              {useAgentMode 
-                                ? "Exécution en arrière-plan via l'agent IA" 
-                                : "Exécution directe via l'API"}
-                              <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
-                            </Tooltip.Content>
-                          </Tooltip.Portal>
-                        </Tooltip.Root>
+                        
                         {!chatStarted && ImportButtons(importChat)}
                         {!chatStarted && <GitCloneButton importChat={importChat} />}
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
@@ -976,6 +949,34 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         </div>
                       ) : null}
                       <SupabaseConnection />
+                      {/* Interrupteur pour le mode agent */}
+                      <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-bolt-elements-background-depth-1 transition-colors">
+                              <Switch 
+                                checked={useAgentMode} 
+                                onCheckedChange={setUseAgentMode}
+                                disabled={isStreaming}
+                                className={useAgentMode ? "bg-accent-500" : ""}
+                              />
+                              <span className="text-xs text-bolt-elements-textSecondary">
+                                {useAgentMode ? "Mode agent" : "Mode direct"}
+                              </span>
+                            </div>
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content
+                              className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary px-3 py-1.5 rounded-lg text-xs border border-bolt-elements-borderColor shadow-md animate-fade-in z-50"
+                              side="bottom"
+                              sideOffset={5}
+                            >
+                              {useAgentMode 
+                                ? "Exécution en arrière-plan via l'agent IA" 
+                                : "Exécution directe via l'API"}
+                              <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
                     </div>
                   </div>
                 </div>
