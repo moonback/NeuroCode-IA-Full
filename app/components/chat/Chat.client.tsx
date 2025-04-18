@@ -417,6 +417,7 @@ export const ChatImpl = memo(
     };
 
     const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
+      console.log('sendMessage - chatStarted:', chatStarted);
       const messageContent = messageInput || input;
       const textarea = textareaRef.current;
       let targetedFiles = [];
@@ -610,6 +611,10 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
 
               textareaRef.current?.blur();
               setFakeLoading(false);
+              
+              // Mettre à jour chatStarted après le premier échange
+              setChatStarted(true);
+              chatStore.setKey('started', true);
 
               return;
             }
@@ -657,6 +662,10 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
         resetEnhancer();
 
         textareaRef.current?.blur();
+        
+        // Mettre à jour chatStarted après le premier échange
+        setChatStarted(true);
+        chatStore.setKey('started', true);
 
         return;
       }
