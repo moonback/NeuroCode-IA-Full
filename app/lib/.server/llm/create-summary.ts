@@ -95,23 +95,64 @@ ${summary.summary}`;
 
   logger.debug('Sliced Messages:', slicedMessages.length);
 
-  const extractTextContent = (message: Message) =>
-    Array.isArray(message.content)
+  // Enhance context analysis
+  // Add these utility functions after the logger declaration
+  const extractTextContent = (message: Message) => {
+    const content = Array.isArray(message.content)
       ? (message.content.find((item) => item.type === 'text')?.text as string) || ''
       : message.content;
+    
+    return content
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/`[^`]*`/g, '') // Remove inline code
+      .replace(/\b(https?:\/\/[^\s]+)\b/g, '') // Remove URLs
+      .replace(/[^\w\s]/g, ' ') // Replace special characters with spaces
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  };
+  
+  const calculateContextRelevance = (messageContent: string, existingSummary?: string): number => {
+    if (!existingSummary) return 0;
+  
+    const tokenize = (text: string) => {
+      return text.toLowerCase()
+        .split(/\W+/)
+        .filter(word => word.length > 2); // Filter out short words
+    };
+  
+    const messageTokens = new Set(tokenize(messageContent));
+    const summaryTokens = new Set(tokenize(existingSummary));
+  
+    const intersection = new Set([...messageTokens].filter(x => summaryTokens.has(x)));
+    const union = new Set([...messageTokens, ...summaryTokens]);
+  
+    return intersection.size / union.size;
+  };
 
-  // Vérifier si un résumé est déjà en cache pour ces messages
+  // Enhance cache management
   if (contextOptimization) {
+    const messageContent = slicedMessages
+      .map(msg => extractTextContent(msg))
+      .join(' ');
+  
+    // Générer les fichiers pertinents avant de créer la clé de cache
+    const relevantFiles = createFilesContext({}, true, messageContent);
+    const filePaths = Object.keys(relevantFiles);
+  
     const cacheKey = enhancedContextCache.generateCacheKey({
       promptId,
       messageIds: slicedMessages.map(msg => msg.id || ''),
-      filePaths: [],
+      filePaths: filePaths
     });
     
     const cachedSummary = enhancedContextCache.get(cacheKey);
-    if (cachedSummary && cachedSummary.summary) {
-      logger.info('Résumé récupéré depuis le cache');
-      return cachedSummary.summary;
+    if (cachedSummary?.summary) {
+      const relevance = calculateContextRelevance(messageContent, cachedSummary.summary);
+      
+      if (relevance > 0.7) {
+        logger.info(`Using cached summary (relevance: ${relevance.toFixed(2)})`);
+        return cachedSummary.summary;
+      }
     }
   }
 
@@ -217,13 +258,15 @@ Please provide a summary of the chat till now including the hitorical summary of
 
   // Mettre en cache le résumé généré avec les fichiers pertinents
   if (contextOptimization) {
+    // Les fichiers pertinents ont déjà été générés plus haut
+    // Réutiliser la même clé de cache pour assurer la cohérence
     const relevantFiles = createFilesContext({}, true, messageContent);
+    const filePaths = Object.keys(relevantFiles);
     const cacheKey = enhancedContextCache.generateCacheKey({
       promptId,
       messageIds: slicedMessages.map(msg => msg.id || ''),
-      filePaths: Object.keys(relevantFiles),
+      filePaths: filePaths
     });
-    
     enhancedContextCache.set(cacheKey, {
       contextFiles: {},
       summary: response
