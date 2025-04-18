@@ -55,18 +55,22 @@ export function useTaskManager({ onTaskCompleted }: TaskManagerProps = {}) {
 
   const pollStatus = useCallback(async (taskId: string) => {
     try {
+      console.log(`[TaskManager] Vérification du statut de la tâche ${taskId}...`);
       const response = await fetch(`/api/tasks/${taskId}`);
+      
       if (!response.ok) {
         // Gère 404 (not found) ou d'autres erreurs serveur
         if (response.status === 404) {
-          console.warn(`Tâche ${taskId} non trouvée.`);
+          console.warn(`[TaskManager] Tâche ${taskId} non trouvée.`);
           // Peut-être arrêter le polling ici ou après quelques tentatives
         } else {
-          console.error(`Erreur de polling ${response.status}`);
+          console.error(`[TaskManager] Erreur de polling ${response.status}`);
         }
         // Ne pas arrêter le polling immédiatement pour les erreurs serveur temporaires
         return;
       }
+      
+      console.log(`[TaskManager] Réponse reçue pour la tâche ${taskId}`);
 
       const data = await response.json() as TaskResponse;
 
@@ -149,16 +153,26 @@ export function useTaskManager({ onTaskCompleted }: TaskManagerProps = {}) {
     setActiveTaskId(null);
     setTaskStatus('submitted');
     // Afficher un indicateur de chargement initial
+    console.log('[TaskManager] Soumission d\'une tâche à l\'agent IA...', Object.keys(data));
 
     try {
+      // Vérifier que les données sont complètes
+      if (!data.model || !data.providerName || !data.prompt) {
+        console.error('[TaskManager] Données incomplètes pour la tâche:', data);
+        throw new Error('Données incomplètes pour la tâche');
+      }
+
+      console.log('[TaskManager] Envoi de la requête à /api/agents/enqueue');
       const response = await fetch('/api/agents/enqueue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
+      console.log('[TaskManager] Réponse reçue:', response.status);
       if (response.status === 202) {
         const responseData = await response.json() as EnqueueResponse;
+        console.log('[TaskManager] Tâche soumise avec succès, ID:', responseData.taskId);
         setActiveTaskId(responseData.taskId);
         setTaskStatus('processing');
         startPolling(responseData.taskId); // Commence à interroger le statut
@@ -166,9 +180,11 @@ export function useTaskManager({ onTaskCompleted }: TaskManagerProps = {}) {
         return { success: true, taskId: responseData.taskId };
       } else {
         const errorData = await response.json() as ErrorResponse;
+        console.error('[TaskManager] Erreur lors de la soumission:', errorData);
         throw new Error(errorData.error || `Erreur ${response.status}`);
       }
     } catch (error) {
+      console.error('[TaskManager] Exception lors de la soumission de la tâche:', error);
       setTaskStatus('failed');
       toast.error(`Échec de la soumission de la tâche: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
       // Gérer l'erreur dans l'UI

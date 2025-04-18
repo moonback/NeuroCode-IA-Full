@@ -351,6 +351,8 @@ export const ChatImpl = memo(
 
     // Fonction pour soumettre une tâche à l'agent IA via la file d'attente
     const submitToAgent = async (messageContent: string) => {
+      console.log('[Chat] Soumission d\'une tâche à l\'agent IA...');
+      
       // Préparer les données pour l'agent
       const agentData = {
         prompt: messageContent,
@@ -369,30 +371,49 @@ export const ChatImpl = memo(
         customInstructions,
         targetedFiles: textareaRef.current ? 
           JSON.parse(textareaRef.current.getAttribute('data-targeted-files') || '[]') : [],
+        options: {
+          // Options supplémentaires pour le modèle
+          maxTokens: 4000,
+          temperature: 0.7,
+          systemPrompt: customInstructions || 'Vous êtes un assistant IA utile et précis.',
+          // Utiliser un objet vide par défaut car 'settings' n'existe pas sur le type ProviderInfo
+          providerSettings: {}
+        }
       };
 
-      // Soumettre la tâche à l'agent et commencer le polling
-      const result = await submitAgentTask(agentData);
+      console.log('[Chat] Données préparées pour l\'agent:', Object.keys(agentData));
       
-      if (result.success && result.taskId) {
-        // Ajouter un message temporaire indiquant que la tâche est en cours
-        append({
-          role: 'assistant',
-          content: `Tâche ${result.taskId.substring(0, 6)}... en cours de traitement...`,
-          id: `task-${result.taskId}`,
-        });
+      try {
+        // Soumettre la tâche à l'agent et commencer le polling
+        const result = await submitAgentTask(agentData);
         
-        // Commencer le polling immédiatement
-        startPolling(result.taskId);
+        if (result.success && result.taskId) {
+          console.log(`[Chat] Tâche soumise avec succès, ID: ${result.taskId}`);
+          
+          // Ajouter un message temporaire indiquant que la tâche est en cours
+          append({
+            role: 'assistant',
+            content: `Tâche ${result.taskId.substring(0, 6)}... en cours de traitement...`,
+            id: `task-${result.taskId}`,
+          });
+          
+          // Commencer le polling immédiatement
+          startPolling(result.taskId);
+          
+          // Afficher un toast pour informer l'utilisateur
+          toast.info(`Tâche ${result.taskId.substring(0, 6)}... soumise et en cours de traitement.`);
+        } else if (!result.success) {
+          console.error('[Chat] Échec de la soumission de la tâche:', result.error);
+          // Afficher un message d'erreur si la soumission a échoué
+          toast.error(`Échec de la soumission de la tâche: ${result.error instanceof Error ? result.error.message : 'Erreur inconnue'}`);
+        }
         
-        // Afficher un toast pour informer l'utilisateur
-        toast.info(`Tâche ${result.taskId.substring(0, 6)}... soumise et en cours de traitement.`);
-      } else if (!result.success) {
-        // Afficher un message d'erreur si la soumission a échoué
-        toast.error(`Échec de la soumission de la tâche: ${result.error instanceof Error ? result.error.message : 'Erreur inconnue'}`);
+        return result.success;
+      } catch (error) {
+        console.error('[Chat] Erreur lors de la soumission de la tâche:', error);
+        toast.error(`Erreur lors de la soumission de la tâche: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        return false;
       }
-      
-      return result.success;
     };
 
     const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
