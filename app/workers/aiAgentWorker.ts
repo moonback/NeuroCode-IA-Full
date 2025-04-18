@@ -59,7 +59,7 @@ async function executeAgentLogic(jobData: AIAgentJobData): Promise<any> {
     // Préparation des messages pour le modèle
     const messages = [
       {
-        role: 'user',
+        role: 'user' as const,
         content: jobData.prompt
       }
     ];
