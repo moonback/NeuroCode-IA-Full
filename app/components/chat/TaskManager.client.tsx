@@ -127,7 +127,24 @@ export function useTaskManager({ onTaskCompleted }: TaskManagerProps = {}) {
     setPollingIntervalId(intervalId);
   }, [pollingIntervalId, pollStatus]);
 
-  const submitAgentTask = useCallback(async (data: any) => {
+  // Définition d'une interface pour la réponse de l'API d'enqueue
+  interface EnqueueResponse {
+    taskId: string;
+  }
+  
+  // Définition d'une interface pour la réponse d'erreur
+  interface ErrorResponse {
+    error: string;
+  }
+
+  // Définition d'une interface pour le résultat de submitAgentTask
+  interface TaskSubmissionResult {
+    success: boolean;
+    taskId?: string;
+    error?: any;
+  }
+
+  const submitAgentTask = useCallback(async (data: any): Promise<TaskSubmissionResult> => {
     if (pollingIntervalId) clearInterval(pollingIntervalId); // Arrête le polling précédent
     setActiveTaskId(null);
     setTaskStatus('submitted');
@@ -141,14 +158,14 @@ export function useTaskManager({ onTaskCompleted }: TaskManagerProps = {}) {
       });
 
       if (response.status === 202) {
-        const { taskId } = await response.json();
-        setActiveTaskId(taskId);
+        const responseData = await response.json() as EnqueueResponse;
+        setActiveTaskId(responseData.taskId);
         setTaskStatus('processing');
-        startPolling(taskId); // Commence à interroger le statut
-        toast.info(`Tâche ${taskId.substring(0, 6)}... soumise.`);
-        return { success: true, taskId };
+        startPolling(responseData.taskId); // Commence à interroger le statut
+        toast.info(`Tâche ${responseData.taskId.substring(0, 6)}... soumise.`);
+        return { success: true, taskId: responseData.taskId };
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json() as ErrorResponse;
         throw new Error(errorData.error || `Erreur ${response.status}`);
       }
     } catch (error) {
