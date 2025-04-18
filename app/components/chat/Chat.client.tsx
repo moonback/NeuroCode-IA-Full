@@ -46,6 +46,9 @@ export function Chat() {
 
   const { ready, initialMessages, storeMessageHistory, importChat, exportChat } = useChatHistory();
   const title = useStore(description);
+  // État pour suivre si l'utilisateur souhaite utiliser l'agent en arrière-plan
+  const [useAgentMode, setUseAgentMode] = useState(false);
+  
   useEffect(() => {
     workbenchStore.setReloadedMessages(initialMessages.map((m) => m.id));
   }, [initialMessages]);
@@ -59,6 +62,8 @@ export function Chat() {
           exportChat={exportChat}
           storeMessageHistory={storeMessageHistory}
           importChat={importChat}
+          useAgentMode={useAgentMode}
+          setUseAgentMode={setUseAgentMode}
         />
       )}
             <MessageProcessor />
@@ -119,10 +124,12 @@ interface ChatProps {
   importChat: (description: string, messages: Message[]) => Promise<void>;
   exportChat: () => void;
   description?: string;
+  useAgentMode?: boolean;
+  setUseAgentMode?: (value: boolean) => void;
 }
 
 export const ChatImpl = memo(
-  ({ description, initialMessages, storeMessageHistory, importChat, exportChat }: ChatProps) => {
+  ({ description, initialMessages, storeMessageHistory, importChat, exportChat, useAgentMode, setUseAgentMode }: ChatProps) => {
     useShortcuts();
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -157,8 +164,7 @@ export const ChatImpl = memo(
       return (PROVIDER_LIST.find((p) => p.name === savedProvider) || DEFAULT_PROVIDER) as ProviderInfo;
     });
     
-    // État pour suivre si l'utilisateur souhaite utiliser l'agent en arrière-plan
-    const [useAgentMode, setUseAgentMode] = useState(false);
+    // Utiliser les props pour l'état de l'agent
 
     const { showChat } = useStore(chatStore);
 
@@ -351,7 +357,18 @@ export const ChatImpl = memo(
         model,
         providerName: provider.name,
         apiKeys,
-        // Autres données nécessaires pour l'agent
+        // Ajouter les données contextuelles importantes pour l'agent
+        files,
+        uploadedFiles: uploadedFiles.map(file => ({
+          name: file.name,
+          size: file.size,
+          type: file.type
+        })),
+        imageDataList,
+        contextOptimization: contextOptimizationEnabled,
+        customInstructions,
+        targetedFiles: textareaRef.current ? 
+          JSON.parse(textareaRef.current.getAttribute('data-targeted-files') || '[]') : [],
       };
 
       // Soumettre la tâche à l'agent et commencer le polling
