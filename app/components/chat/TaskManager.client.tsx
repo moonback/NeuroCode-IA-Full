@@ -1,6 +1,39 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 
+// Définition des types pour les réponses de l'API des tâches
+interface TaskResponseBase {
+  status: 'completed' | 'failed' | 'processing' | 'pending' | 'not_found' | 'unknown';
+  message?: string;
+}
+
+interface CompletedTaskResponse extends TaskResponseBase {
+  status: 'completed';
+  result: any; // Le résultat peut être de n'importe quel type selon la tâche
+}
+
+interface FailedTaskResponse extends TaskResponseBase {
+  status: 'failed';
+  error: string;
+}
+
+interface ProcessingTaskResponse extends TaskResponseBase {
+  status: 'processing' | 'pending';
+  message: string;
+}
+
+interface NotFoundTaskResponse extends TaskResponseBase {
+  status: 'not_found';
+  message: string;
+}
+
+interface UnknownTaskResponse extends TaskResponseBase {
+  status: 'unknown';
+  message: string;
+}
+
+type TaskResponse = CompletedTaskResponse | FailedTaskResponse | ProcessingTaskResponse | NotFoundTaskResponse | UnknownTaskResponse;
+
 
 interface TaskManagerProps {
   onTaskCompleted?: (result: any) => void;
@@ -35,7 +68,7 @@ export function useTaskManager({ onTaskCompleted }: TaskManagerProps = {}) {
         return;
       }
 
-      const data = await response.json();
+      const data = await response.json() as TaskResponse;
 
       switch (data.status) {
         case 'completed':
