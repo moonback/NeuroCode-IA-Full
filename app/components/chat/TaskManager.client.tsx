@@ -169,20 +169,26 @@ export function useTaskManager({ onTaskCompleted }: TaskManagerProps = {}) {
         body: JSON.stringify(data),
       });
 
-      console.log('[TaskManager] Réponse reçue:', response.status);
-      if (response.status === 202) {
-        const responseData = await response.json() as EnqueueResponse;
-        console.log('[TaskManager] Tâche soumise avec succès, ID:', responseData.taskId);
-        setActiveTaskId(responseData.taskId);
-        setTaskStatus('processing');
-        startPolling(responseData.taskId); // Commence à interroger le statut
-        toast.info(`Tâche ${responseData.taskId.substring(0, 6)}... soumise.`);
-        return { success: true, taskId: responseData.taskId };
-      } else {
-        const errorData = await response.json() as ErrorResponse;
-        console.error('[TaskManager] Erreur lors de la soumission:', errorData);
-        throw new Error(errorData.error || `Erreur ${response.status}`);
+      console.log('[TaskManager] Réponse reçue:', response.status, response.statusText);
+      // Afficher le corps de la réponse en cas d'erreur
+      if (response.status !== 202) {
+        const errorText = await response.text();
+        console.error('[TaskManager] Corps de la réponse d\'erreur:', errorText);
+        try {
+          const errorData = JSON.parse(errorText) as ErrorResponse;
+          throw new Error(errorData.error || `Erreur ${response.status}`);
+        } catch (parseError) {
+          throw new Error(`Erreur ${response.status}: ${errorText.substring(0, 100)}...`);
+        }
       }
+      
+      const responseData = await response.json() as EnqueueResponse;
+      console.log('[TaskManager] Tâche soumise avec succès, ID:', responseData.taskId);
+      setActiveTaskId(responseData.taskId);
+      setTaskStatus('processing');
+      startPolling(responseData.taskId); // Commence à interroger le statut
+      toast.info(`Tâche ${responseData.taskId.substring(0, 6)}... soumise.`);
+      return { success: true, taskId: responseData.taskId };
     } catch (error) {
       console.error('[TaskManager] Exception lors de la soumission de la tâche:', error);
       setTaskStatus('failed');
