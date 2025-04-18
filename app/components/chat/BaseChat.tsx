@@ -45,6 +45,7 @@ import { useSettings } from '~/lib/hooks/useSettings';
 import { EnhancedContextCacheManager } from './EnhancedContextCacheManager';
 import { TaskStatusIndicator } from './TaskManager.client';
 
+
 const TEXTAREA_MIN_HEIGHT = 76;
 /*
  * Flag to use only fallback method
@@ -133,6 +134,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       clearDeployAlert,
       data,
       actionRunner,
+      // Add these props to the destructuring
+      taskStatus,
+      TaskStatusIndicator,
     },
     ref,
   ) => {
