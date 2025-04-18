@@ -156,6 +156,9 @@ export const ChatImpl = memo(
       const savedProvider = Cookies.get('selectedProvider');
       return (PROVIDER_LIST.find((p) => p.name === savedProvider) || DEFAULT_PROVIDER) as ProviderInfo;
     });
+    
+    // État pour suivre si l'utilisateur souhaite utiliser l'agent en arrière-plan
+    const [useAgentMode, setUseAgentMode] = useState(false);
 
     const { showChat } = useStore(chatStore);
 
@@ -398,6 +401,24 @@ export const ChatImpl = memo(
       }
 
       runAnimation();
+
+      // Si le mode agent est activé, utiliser l'agent en arrière-plan
+      if (useAgentMode && chatStarted) {
+        const success = await submitToAgent(messageContent);
+        if (success) {
+          // Si la soumission à l'agent a réussi, on arrête ici
+          setInput('');
+          Cookies.remove(PROMPT_COOKIE_KEY);
+          setUploadedFiles([]);
+          setImageDataList([]);
+          resetEnhancer();
+          textareaRef.current?.blur();
+          return;
+        }
+        // Si la soumission à l'agent a échoué, on continue avec l'API directe
+        toast.info('Échec de l\'exécution en arrière-plan, utilisation de l\'API directe à la place.');
+      }
+
 // Function to read file content as text
 const readFileContent = async (file: File): Promise<string> => {
   // For DOCX and PDF, use the specialized extractor
@@ -791,6 +812,8 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
           taskStatus={taskStatus}
           activeTaskId={activeTaskId}
           TaskStatusIndicator={TaskStatusIndicator}
+          useAgentMode={useAgentMode}
+          setUseAgentMode={setUseAgentMode}
           messages={messages.map((message, i) => {
             if (message.role === 'user') {
               return message;
