@@ -65,16 +65,13 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
           {(codeContext || chatSummary) && (
             <>
               <div 
-                className="group flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-gray-800/50 cursor-pointer relative"
+                className="group flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-gray-800/50 cursor-pointer"
                 onClick={() => setIsPopoverOpen(true)}
               >
-                <div className="i-ph:info-fill text-green-400/80 group-hover:text-violet-400" />
+                <div className="i-ph:info-fill text-blue-400/80 group-hover:text-blue-400" />
                 <span className="text-xs text-gray-400 group-hover:text-gray-300">
-                  {codeContext ? `Contexte (${codeContext.length} fichier)` : 'Résumé'}
+                Contexte et résumé
                 </span>
-                {(codeContext?.length || 0) > 0 && (
-                  <div className="absolute -top-0 -right-1 w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
-                )}
               </div>
 
               {isPopoverOpen && (
@@ -91,21 +88,15 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                   >
                     <div className="flex items-center justify-between p-3 border-b border-gray-700/50">
                       <div className="flex items-center gap-2">
-                        <div className="i-ph:window-fill text-blue-400" />
-                        <h2 className="text-sm font-medium text-gray-200">Contexte et résumé</h2>
+                        <div className="i-ph:window-fill text-gray-400" />
+                        <h2 className="text-sm font-medium text-gray-200">Informations contextuelles</h2>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs text-gray-500">
-                          {codeContext?.length || 0} fichiers référencés
-                        </div>
-                        <button 
-                          onClick={() => setIsPopoverOpen(false)}
-                          className="p-1.5 hover:bg-gray-800 rounded-full transition-colors"
-                          aria-label="Fermer la boîte de dialogue"
-                        >
-                          <div className="i-ph:x-bold w-4 h-4 text-gray-400" />
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => setIsPopoverOpen(false)}
+                        className="p-1 hover:bg-gray-800 rounded-full transition-colors"
+                      >
+                        <div className="i-ph:x-bold w-4 h-4 text-gray-400" />
+                      </button>
                     </div>
 
                     <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
@@ -142,7 +133,7 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                               <div className="i-ph:code-fill text-blue-400" />
                               <h3 className="font-medium">Fichiers référencés</h3>
                             </div>
-                            <span className="text-xs text-gray-500">{codeContext.length} fichiers</span>
+                            <span className="text-xs text-gray-500">{codeContext.length} files</span>
                           </div>
                           <div className="bg-gray-800/30 rounded-lg p-3">
                             <div className="flex justify-between items-center mb-2">
@@ -153,28 +144,19 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                               {codeContext.map((x, index) => {
                                 const normalized = normalizedFilePath(x);
                                 const extension = normalized.split('.').pop() || '';
-                                const fileName = normalized.split('/').pop() || normalized;
-                                
-                                // Enhanced file type categorization with more specific icons
+                                // Déterminer l'icône et la couleur en fonction de l'extension
                                 let iconClass = "i-ph:file-code";
                                 let bgColorClass = "bg-blue-500/10";
                                 let textColorClass = "text-blue-400";
                                 let hoverBgClass = "hover:bg-blue-500/20";
                                 let hoverTextClass = "hover:text-blue-300";
                                 
-                                // JavaScript/TypeScript files
-                                if (['js', 'jsx'].includes(extension)) {
+                                if (['js', 'jsx', 'ts', 'tsx'].includes(extension)) {
                                   iconClass = "i-ph:file-js";
                                   bgColorClass = "bg-yellow-500/10";
                                   textColorClass = "text-yellow-400";
                                   hoverBgClass = "hover:bg-yellow-500/20";
                                   hoverTextClass = "hover:text-yellow-300";
-                                } else if (['ts', 'tsx'].includes(extension)) {
-                                  iconClass = "i-ph:file-ts";
-                                  bgColorClass = "bg-blue-500/10";
-                                  textColorClass = "text-blue-400";
-                                  hoverBgClass = "hover:bg-blue-500/20";
-                                  hoverTextClass = "hover:text-blue-300";
                                 } else if (['css', 'scss', 'sass'].includes(extension)) {
                                   iconClass = "i-ph:file-css";
                                   bgColorClass = "bg-purple-500/10";
@@ -187,60 +169,36 @@ export const AssistantMessage = memo(({ content, annotations }: AssistantMessage
                                   textColorClass = "text-orange-400";
                                   hoverBgClass = "hover:bg-orange-500/20";
                                   hoverTextClass = "hover:text-orange-300";
-                                } else if (['json'].includes(extension)) {
+                                } else if (['json', 'yml', 'yaml'].includes(extension)) {
                                   iconClass = "i-ph:brackets-curly";
                                   bgColorClass = "bg-green-500/10";
                                   textColorClass = "text-green-400";
                                   hoverBgClass = "hover:bg-green-500/20";
                                   hoverTextClass = "hover:text-green-300";
-                                } else if (['yml', 'yaml'].includes(extension)) {
-                                  iconClass = "i-ph:file-text";
-                                  bgColorClass = "bg-teal-500/10";
-                                  textColorClass = "text-teal-400";
-                                  hoverBgClass = "hover:bg-teal-500/20";
-                                  hoverTextClass = "hover:text-teal-300";
-                                } else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+                                } else if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(extension)) {
                                   iconClass = "i-ph:image";
                                   bgColorClass = "bg-pink-500/10";
                                   textColorClass = "text-pink-400";
                                   hoverBgClass = "hover:bg-pink-500/20";
                                   hoverTextClass = "hover:text-pink-300";
-                                } else if (['svg'].includes(extension)) {
-                                  iconClass = "i-ph:file-svg";
-                                  bgColorClass = "bg-indigo-500/10";
-                                  textColorClass = "text-indigo-400";
-                                  hoverBgClass = "hover:bg-indigo-500/20";
-                                  hoverTextClass = "hover:text-indigo-300";
-                                } else if (['md', 'markdown'].includes(extension)) {
-                                  iconClass = "i-ph:file-doc";
-                                  bgColorClass = "bg-gray-500/10";
-                                  textColorClass = "text-gray-400";
-                                  hoverBgClass = "hover:bg-gray-500/20";
-                                  hoverTextClass = "hover:text-gray-300";
                                 }
                                 
-                                // Truncate long filenames for better display
-                                const displayName = fileName.length > 25 
-                                  ? fileName.substring(0, 22) + '...' 
-                                  : fileName;
-                                
-                                // Show full path on hover
                                 return (
                                   <code
                                     key={index}
                                     className={`text-xs ${bgColorClass} ${textColorClass} px-2 py-1.5 rounded-md 
                                       ${hoverBgClass} ${hoverTextClass} cursor-pointer transition-all
-                                      flex items-center gap-1.5 group shadow-sm hover:shadow-md`}
+                                      flex items-center gap-1.5 group`}
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
                                       openArtifactInWorkbench(normalized);
-                                      setIsPopoverOpen(false);
+                                      setIsPopoverOpen(false); // Fermer le popover après avoir cliqué sur un fichier
                                     }}
-                                    title={`${normalized}`}
+                                    title={`Ouvrir ${normalized}`}
                                   >
                                     <div className={`${iconClass} group-hover:scale-110 transition-transform`} />
-                                    <span className="truncate max-w-[180px]">{displayName}</span>
+                                    {normalized}
                                   </code>
                                 );
                               })}
