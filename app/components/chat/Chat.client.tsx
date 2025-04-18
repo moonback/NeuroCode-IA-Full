@@ -9,6 +9,7 @@ import { useAnimate } from 'framer-motion';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { cssTransition, toast, ToastContainer } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts, useSnapScroll } from '~/lib/hooks';
+import { useTaskManager, TaskStatusIndicator } from './TaskManager.client';
 import { description, useChatHistory } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
@@ -162,6 +163,21 @@ export const ChatImpl = memo(
 
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
 
+    // Initialiser le gestionnaire de tâches
+    const {
+      activeTaskId,
+      taskStatus,
+      submitAgentTask,
+    } = useTaskManager({
+      onTaskCompleted: (result) => {
+        // Ajouter le résultat comme message de l'assistant
+        append({
+          role: 'assistant',
+          content: typeof result === 'string' ? result : JSON.stringify(result),
+        });
+      }
+    });
+
     const {
       messages,
       isLoading,
@@ -313,6 +329,32 @@ export const ChatImpl = memo(
       chatStore.setKey('started', true);
 
       setChatStarted(true);
+    };
+
+    // Fonction pour soumettre une tâche à l'agent IA via la file d'attente
+    const submitToAgent = async (messageContent: string) => {
+      // Préparer les données pour l'agent
+      const agentData = {
+        prompt: messageContent,
+        model,
+        providerName: provider.name,
+        apiKeys,
+        // Autres données nécessaires pour l'agent
+      };
+
+      // Soumettre la tâche à l'agent et commencer le polling
+      const result = await submitAgentTask(agentData);
+      
+      if (result.success) {
+        // Ajouter un message temporaire indiquant que la tâche est en cours
+        append({
+          role: 'assistant',
+          content: `Tâche ${result.taskId.substring(0, 6)}... en cours de traitement...`,
+          id: `task-${result.taskId}`,
+        });
+      }
+      
+      return result.success;
     };
 
     const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
@@ -706,6 +748,10 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
         description={description}
         importChat={importChat}
         exportChat={exportChat}
+        // Ajouter les propriétés liées aux tâches
+        taskStatus={taskStatus}
+        activeTaskId={activeTaskId}
+        TaskStatusIndicator={TaskStatusIndicator}
         messages={messages.map((message, i) => {
           if (message.role === 'user') {
             return message;

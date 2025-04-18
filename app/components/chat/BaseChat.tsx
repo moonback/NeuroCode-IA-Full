@@ -43,6 +43,7 @@ import { TargetedFilesDisplay } from './TargetedFilesDisplay';
 import { useStore } from '@nanostores/react';
 import { useSettings } from '~/lib/hooks/useSettings';
 import { EnhancedContextCacheManager } from './EnhancedContextCacheManager';
+import { TaskStatusIndicator } from './TaskManager.client';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 /*
@@ -87,6 +88,11 @@ interface BaseChatProps {
   clearDeployAlert?: () => void;
   data?: JSONValue[] | undefined;
   actionRunner?: ActionRunner;
+  // Propriétés pour le gestionnaire de tâches
+  taskStatus?: 'idle' | 'submitted' | 'processing' | 'completed' | 'failed';
+  activeTaskId?: string | null;
+  TaskStatusIndicator?: React.ComponentType<{status: 'idle' | 'submitted' | 'processing' | 'completed' | 'failed'}>;
+  submitAgentTask?: (prompt: string, options?: Record<string, any>) => Promise<void>;
 }
 
 export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
@@ -857,6 +863,12 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     
                     <TargetedFilesDisplay textareaRef={textareaRef} className="mt-2" />
                   <div className="flex justify-between items-center text-sm p-4 pt-2">
+                      {/* Afficher l'indicateur de statut de tâche s'il est disponible */}
+                      {TaskStatusIndicator && taskStatus && taskStatus !== 'idle' && (
+                        <div className="mb-2">
+                          <TaskStatusIndicator status={taskStatus} />
+                        </div>
+                      )}
                       <div className="flex gap-1 items-center">
                       <Tooltip.Root>
                           <Tooltip.Trigger asChild>
