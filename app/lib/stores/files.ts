@@ -166,42 +166,10 @@ export class FilesStore {
     // Clean up any files that were previously deleted
     this.#cleanupDeletedFiles();
 
-    try {
-      // Use the watchPaths method with optimized file patterns
-      webcontainer.internal.watchPaths(
-        {
-          // Only watch specific file types that affect the preview
-          include: [
-            '**/*.html', '**/*.css', '**/*.js', '**/*.jsx', 
-            '**/*.ts', '**/*.tsx', '**/*.json', '**/*.md',
-            '**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg',
-            '**/*.gif', '**/*.webp', '**/*.ico'
-          ],
-          exclude: [
-            '**/node_modules/**', '**/.git/**', '**/dist/**', 
-            '**/build/**', '**/coverage/**', '**/tmp/**',
-            '**/.cache/**', '**/.next/**', '**/out/**'
-          ],
-          includeContent: true
-        },
-        bufferWatchEvents(100, this.#processEventBuffer.bind(this)),
-      );
-      
-      logger.info('File watcher initialized with optimized patterns');
-    } catch (error) {
-      logger.error('Failed to initialize file watcher', error);
-      
-      // Fallback to a simpler watching approach if the optimized one fails
-      try {
-        webcontainer.internal.watchPaths(
-          { includeContent: true },
-          bufferWatchEvents(100, this.#processEventBuffer.bind(this)),
-        );
-        logger.info('File watcher initialized with fallback approach');
-      } catch (fallbackError) {
-        logger.error('Failed to initialize fallback file watcher', fallbackError);
-      }
-    }
+    webcontainer.internal.watchPaths(
+      { include: [`${WORK_DIR}/**`], exclude: ['**/node_modules', '.git'], includeContent: true },
+      bufferWatchEvents(100, this.#processEventBuffer.bind(this)),
+    );
   }
 
   /**
