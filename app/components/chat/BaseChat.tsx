@@ -44,6 +44,7 @@ import { useStore } from '@nanostores/react';
 import { useSettings } from '~/lib/hooks/useSettings';
 import { EnhancedContextCacheManager } from './EnhancedContextCacheManager';
 import { TaskStatusIndicator } from './TaskManager.client';
+import { Switch } from '~/components/ui/Switch';
 
 
 const TEXTAREA_MIN_HEIGHT = 76;
@@ -93,7 +94,10 @@ interface BaseChatProps {
   taskStatus?: 'idle' | 'submitted' | 'processing' | 'completed' | 'failed';
   activeTaskId?: string | null;
   TaskStatusIndicator?: React.ComponentType<{status: 'idle' | 'submitted' | 'processing' | 'completed' | 'failed'}>;
-  submitAgentTask?: (prompt: string, options?: Record<string, any>) => Promise<void>;
+  submitAgentTask?: (data: any) => Promise<any>;
+  // Propriétés pour le mode agent
+  useAgentMode?: boolean;
+  setUseAgentMode?: (useAgent: boolean) => void;
 }
 
 export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
@@ -134,9 +138,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       clearDeployAlert,
       data,
       actionRunner,
-      // Add these props to the destructuring
+      // Propriétés pour le gestionnaire de tâches
       taskStatus,
       TaskStatusIndicator,
+      submitAgentTask,
+      // Propriétés pour le mode agent
+      useAgentMode = false,
+      setUseAgentMode,
     },
     ref,
   ) => {
@@ -909,6 +917,35 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           onStop={stopListening}
                           disabled={isStreaming}
                         />
+                        
+                        {/* Interrupteur pour le mode agent */}
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-bolt-elements-background-depth-1 transition-colors">
+                              <Switch 
+                                checked={useAgentMode} 
+                                onCheckedChange={setUseAgentMode}
+                                disabled={isStreaming}
+                                className={useAgentMode ? "bg-accent-500" : ""}
+                              />
+                              <span className="text-xs text-bolt-elements-textSecondary">
+                                {useAgentMode ? "Mode agent" : "Mode direct"}
+                              </span>
+                            </div>
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content
+                              className="bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary px-3 py-1.5 rounded-lg text-xs border border-bolt-elements-borderColor shadow-md animate-fade-in z-50"
+                              side="bottom"
+                              sideOffset={5}
+                            >
+                              {useAgentMode 
+                                ? "Exécution en arrière-plan via l'agent IA" 
+                                : "Exécution directe via l'API"}
+                              <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
                         {!chatStarted && ImportButtons(importChat)}
                         {!chatStarted && <GitCloneButton importChat={importChat} />}
                         {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
