@@ -8,9 +8,6 @@ import { workbenchStore } from '~/lib/stores/workbench';
 import { classNames } from '~/utils/classNames';
 import { cubicEasingFn } from '~/utils/easings';
 import { WORK_DIR } from '~/utils/constants';
-import { generateId } from '~/utils/fileUtils';
-import type { ButtonAction } from '~/types/actions';
-import type { Message } from 'ai';
 
 const highlighterOptions = {
   langs: ['shell'],
@@ -66,68 +63,74 @@ export const Artifact = memo(({ messageId }: ArtifactProps) => {
   }, [actions]);
 
   return (
-    <div className="artifact border border-bolt-elements-borderColor flex flex-col overflow-hidden rounded-lg w-full transition-border duration-150">
-      <div className="flex">
-        <button
-          className="flex items-stretch bg-bolt-elements-artifacts-background hover:bg-bolt-elements-artifacts-backgroundHover w-full overflow-hidden"
-          // onClick={() => {
-          //   const showWorkbench = workbenchStore.showWorkbench.get();
-          //   workbenchStore.showWorkbench.set(!showWorkbench);
-          // }}
-        >
-          {artifact.type == 'bundled' && (
-            <>
-              <div className="p-4">
-                {allActionFinished ? (
-                  <div className={'i-ph:files-light'} style={{ fontSize: '2rem' }}></div>
-                ) : (
-                  <div className={'i-svg-spinners:90-ring-with-bg'} style={{ fontSize: '2rem' }}></div>
-                )}
+    <>
+      <div className="artifact border border-bolt-elements-borderColor flex flex-col overflow-hidden rounded-lg w-full transition-border duration-150">
+        <div className="flex">
+          <button
+            className="flex items-stretch bg-bolt-elements-artifacts-background hover:bg-bolt-elements-artifacts-backgroundHover w-full overflow-hidden"
+            onClick={() => {
+              const showWorkbench = workbenchStore.showWorkbench.get();
+              workbenchStore.showWorkbench.set(!showWorkbench);
+            }}
+          >
+            <div className="px-5 p-3.5 w-full text-left">
+              <div className="w-full text-bolt-elements-textPrimary font-medium leading-5 text-sm">
+                {artifact.type === 'bundled' ? 'Setup Project' : artifact?.title}
               </div>
-              <div className="bg-bolt-elements-artifacts-borderColor w-[1px]" />
-            </>
-          )}
-          <div className="px-5 p-3.5 w-full text-left">
-            <div className="w-full text-bolt-elements-textPrimary font-medium leading-5 text-sm">{artifact?.title}</div>
-            {/* <div className="w-full w-full t:ext-bolt-elements-textSecondary text-xs mt-0.5">Click to open Workbench</div> */}
+              <div className="w-full w-full text-bolt-elements-textSecondary text-xs mt-0.5">
+                Click to open Workbench
+              </div>
+            </div>
+          </button>
+          {artifact.type !== 'bundled' && <div className="bg-bolt-elements-artifacts-borderColor w-[1px]" />}
+          <AnimatePresence>
+            {actions.length && artifact.type !== 'bundled' && (
+              <motion.button
+                initial={{ width: 0 }}
+                animate={{ width: 'auto' }}
+                exit={{ width: 0 }}
+                transition={{ duration: 0.15, ease: cubicEasingFn }}
+                className="bg-bolt-elements-artifacts-background hover:bg-bolt-elements-artifacts-backgroundHover"
+                onClick={toggleActions}
+              >
+                <div className="p-4">
+                  <div className={showActions ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'}></div>
+                </div>
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+        {artifact.type === 'bundled' && (
+          <div className="flex items-center gap-1.5 p-5 bg-bolt-elements-actions-background border-t border-bolt-elements-artifacts-borderColor">
+            <div className={classNames('text-lg', getIconColor(allActionFinished ? 'complete' : 'running'))}>
+              {allActionFinished ? (
+                <div className="i-ph:check"></div>
+              ) : (
+                <div className="i-svg-spinners:90-ring-with-bg"></div>
+              )}
+            </div>
+            <div className="text-bolt-elements-textPrimary font-medium leading-5 text-sm">Create initial files</div>
           </div>
-        </button>
-        <div className="bg-bolt-elements-artifacts-borderColor w-[1px]" />
+        )}
         <AnimatePresence>
-          {actions.length && artifact.type !== 'bundled' && (
-            <motion.button
-              initial={{ width: 0 }}
-              animate={{ width: 'auto' }}
-              exit={{ width: 0 }}
-              transition={{ duration: 0.15, ease: cubicEasingFn }}
-              className="bg-bolt-elements-artifacts-background hover:bg-bolt-elements-artifacts-backgroundHover"
-              onClick={toggleActions}
+          {artifact.type !== 'bundled' && showActions && actions.length > 0 && (
+            <motion.div
+              className="actions"
+              initial={{ height: 0 }}
+              animate={{ height: 'auto' }}
+              exit={{ height: '0px' }}
+              transition={{ duration: 0.15 }}
             >
-              <div className="p-4">
-                <div className={showActions ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'}></div>
+              <div className="bg-bolt-elements-artifacts-borderColor h-[1px]" />
+
+              <div className="p-5 text-left bg-bolt-elements-actions-background">
+                <ActionList actions={actions} />
               </div>
-            </motion.button>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
-      <AnimatePresence>
-        {artifact.type !== 'bundled' && showActions && actions.length > 0 && (
-          <motion.div
-            className="actions"
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: '0px' }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="bg-bolt-elements-artifacts-borderColor h-[1px]" />
-
-            <div className="p-5 text-left bg-bolt-elements-actions-background">
-              <ActionList actions={actions} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </>
   );
 });
 
@@ -167,167 +170,12 @@ function openArtifactInWorkbench(filePath: any) {
   workbenchStore.setSelectedFile(`${WORK_DIR}/${filePath}`);
 }
 
-// Helper function to create the actual run commands message
-function createRunCommandsMessage(setupCmd?: string, startCmd?: string): Message | null {
-  if (!setupCmd && !startCmd) {
-    return null;
-  }
-
-  let commandString = '';
-
-  if (setupCmd) {
-    commandString += `\n<boltAction type="shell">${setupCmd}</boltAction>`;
-  }
-
-  if (startCmd) {
-    commandString += `\n<boltAction type="start">${startCmd}</boltAction>\n`;
-  }
-
-  return {
-    role: 'assistant',
-    content: `\n<boltArtifact id="project-run-${generateId()}" title="Running Project Setup">\n${commandString}\n</boltArtifact>\nSetting up and starting the application...`,
-    id: generateId(),
-    createdAt: new Date(),
-  };
-}
-
-async function handleButtonAction(action: ButtonAction) {
-  const { value, artifactId } = action;
-  console.log('Button clicked:', value, 'for artifact:', artifactId);
-
-  const userMessage: Message = {
-    role: 'user',
-    id: generateId(),
-    content: value.startsWith('proceed') ? 'Oui, installez et démarrez.' : "Non, je vais sauter pour l'instant.",
-    createdAt: new Date(),
-  };
-
-  if (value.startsWith('proceed')) {
-    // Parse commands from the value: "proceed|setupCmd|startCmd"
-    const parts = value.split('|');
-    const setupCmd = parts[1] || undefined; // Get setup command or undefined
-    const startCmd = parts[2] || undefined; // Get start command or undefined
-
-    console.log('Parsed commands:', { setupCmd, startCmd });
-
-    if (setupCmd || startCmd) {
-      const runCommandsMsg = createRunCommandsMessage(setupCmd, startCmd);
-
-      if (runCommandsMsg) {
-        console.log('Proceeding: Adding user message and run commands message.');
-        workbenchStore.addCommandsMessage(userMessage, runCommandsMsg);
-      } else {
-        console.error('Failed to create run commands message even though commands were parsed.');
-        workbenchStore.addCommandsMessage(userMessage, null); // Add only user message
-      }
-    } else {
-      console.warn('Proceed clicked, but no commands embedded in value. Adding only user message.');
-      workbenchStore.addCommandsMessage(userMessage, null);
-    }
-  } else if (value === 'skip') {
-    console.log('Skipping setup. Adding user message.');
-    workbenchStore.addCommandsMessage(userMessage, null);
-  }
-}
-
 const ActionList = memo(({ actions }: ActionListProps) => {
-  const [clickedButtons, setClickedButtons] = useState<Set<string>>(new Set());
-  const [skipClicked, setSkipClicked] = useState(false); // Nouvel état pour suivre si "Ignorer" a été cliqué
-
-  const handleButtonClick = (action: ButtonAction) => {
-    const buttonId = `${action.artifactId}-${action.value}`;
-    console.log('handleButtonClick triggered for:', buttonId, 'Action:', action);
-
-    if (!clickedButtons.has(buttonId)) {
-      setClickedButtons((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(buttonId);
-        return newSet;
-      });
-      
-      if (action.value === 'skip') {
-        setSkipClicked(true); // Mettre à jour l'état si c'est "Ignorer" qui a été cliqué
-      }
-      
-      handleButtonAction(action);
-    } else {
-      console.log('Button already clicked:', buttonId);
-    }
-  };
-
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
       <ul className="list-none space-y-2.5">
         {actions.map((action, index) => {
-          if (action.type === 'button') {
-            const buttonAction = action as ButtonAction;
-
-            // Use the full value for the ID to differentiate between proceed buttons with different commands
-            const buttonId = `${buttonAction.artifactId}-${buttonAction.value}`;
-            const isButtonClicked = clickedButtons.has(buttonId);
-            const displayValue = buttonAction.value.startsWith('proceed') ? 'proceed' : buttonAction.value; // Use 'proceed' for display
-
-            return (
-              <motion.li
-                key={buttonId}
-                variants={actionVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ duration: 0.2, ease: cubicEasingFn }}
-                className="relative"
-              >
-                {!isButtonClicked ? (
-                  <div className="mt-4 flex gap-3 justify-center">
-                    {/* Only show buttons if no installation is in progress AND skip hasn't been clicked */}
-                    {!Array.from(clickedButtons).some(id => id.includes('proceed')) && !skipClicked && (
-                      <button
-                        onClick={() => handleButtonClick(buttonAction)}
-                        className={classNames(
-                          'px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
-                          displayValue === 'proceed'
-                            ? 'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent hover:brightness-110 hover:scale-105'
-                            : 'bg-bolt-elements-artifacts-background text-bolt-elements-textPrimary hover:bg-bolt-elements-artifacts-backgroundHover hover:scale-105',
-                          'flex items-center gap-2 shadow-sm hover:shadow-md'
-                        )}
-                      >
-                        {displayValue === 'proceed' ? (
-                          <>
-                            <div className="i-ph:check-circle-bold animate-pulse"></div>
-                            <span className="relative">
-                              Installez et démarrez
-                              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-current transform scale-x-0 transition-transform origin-left group-hover:scale-x-100"></span>
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <div className="i-ph:x-circle-bold"></div>
-                            <span className="relative">
-                              Ignorer pour l'instant
-                              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-current transform scale-x-0 transition-transform origin-left group-hover:scale-x-100"></span>
-                            </span>
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="mt-3 text-sm font-medium flex items-center gap-2 justify-center">
-                    {displayValue === 'proceed' ? (
-                      <>
-                        <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-item-contentAccent animate-spin"></div>
-                        <span className="text-bolt-elements-item-contentAccent font-medium">
-                          Installation en cours...
-                        </span>
-                      </>
-                    ) : null}
-                  </div>
-                )}
-              </motion.li>
-            );
-          }
-
-          // Existing rendering for other action types
-          const { status, type, content } = action as any; // Cast to any for existing logic
+          const { status, type, content } = action;
           const isLast = index === actions.length - 1;
 
           return (
@@ -342,8 +190,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
               }}
             >
               <div className="flex items-center gap-1.5 text-sm">
-                <div className={classNames('text-lg', getIconColor(status))}>
-                  {/* Icon rendering based on status */}
+                <div className={classNames('text-lg', getIconColor(action.status))}>
                   {status === 'running' ? (
                     <>
                       {type !== 'start' ? (
@@ -360,40 +207,39 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                     <div className="i-ph:x"></div>
                   ) : null}
                 </div>
-
-                {/* Content rendering based on type */}
-                {
-                  type === 'file' ? (
-                    <div>
-                      Create{' '}
-                      <code
-                        className="bg-bolt-elements-artifacts-inlineCode-background text-bolt-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-bolt-elements-item-contentAccent hover:underline cursor-pointer"
-                        onClick={() => openArtifactInWorkbench((action as any).filePath)}
-                      >
-                        {(action as any).filePath}
-                      </code>
-                    </div>
-                  ) : type === 'shell' ? (
-                    <div className="flex items-center w-full min-h-[28px]">
-                      <span className="flex-1">Run command</span>
-                    </div>
-                  ) : type === 'start' ? (
-                    <a
-                      onClick={(e) => {
-                        e.preventDefault();
-                        workbenchStore.currentView.set('preview');
-                      }}
-                      className="flex items-center w-full min-h-[28px]"
+                {type === 'file' ? (
+                  <div>
+                    Create{' '}
+                    <code
+                      className="bg-bolt-elements-artifacts-inlineCode-background text-bolt-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-bolt-elements-item-contentAccent hover:underline cursor-pointer"
+                      onClick={() => openArtifactInWorkbench(action.filePath)}
                     >
-                      <span className="flex-1">Start Application</span>
-                    </a>
-                  ) : null /* Handle other types if necessary */
-                }
+                      {action.filePath}
+                    </code>
+                  </div>
+                ) : type === 'shell' ? (
+                  <div className="flex items-center w-full min-h-[28px]">
+                    <span className="flex-1">Run command</span>
+                  </div>
+                ) : type === 'start' ? (
+                  <a
+                    onClick={(e) => {
+                      e.preventDefault();
+                      workbenchStore.currentView.set('preview');
+                    }}
+                    className="flex items-center w-full min-h-[28px]"
+                  >
+                    <span className="flex-1">Start Application</span>
+                  </a>
+                ) : null}
               </div>
-
-              {/* ShellCodeBlock rendering */}
               {(type === 'shell' || type === 'start') && (
-                <ShellCodeBlock classsName={classNames('mt-1', { 'mb-3.5': !isLast })} code={content} />
+                <ShellCodeBlock
+                  classsName={classNames('mt-1', {
+                    'mb-3.5': !isLast,
+                  })}
+                  code={content}
+                />
               )}
             </motion.li>
           );
