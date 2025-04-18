@@ -26,14 +26,15 @@ async function executeAgentLogic(jobData: AIAgentJobData): Promise<any> {
   try {
     // Initialisation du LLMManager avec les variables d'environnement du serveur
     // Convertir process.env en Record<string, string>
-const envVars: Record<string, string> = {};
-for (const [key, value] of Object.entries(process.env)) {
-  if (value !== undefined) {
-    envVars[key] = value;
-  }
-}
+    const envVars: Record<string, string> = {};
+    for (const [key, value] of Object.entries(process.env)) {
+      if (value !== undefined) {
+        envVars[key] = value;
+      }
+    }
 
-const llmManager = LLMManager.getInstance(envVars);
+    // Obtenir l'instance du LLMManager avec les variables d'environnement
+    const llmManager = LLMManager.getInstance(envVars);
     
     // Récupération du provider demandé
     const providerInstance = llmManager.getProvider(jobData.providerName);
@@ -41,27 +42,41 @@ const llmManager = LLMManager.getInstance(envVars);
       throw new Error(`Provider ${jobData.providerName} non trouvé`);
     }
     
-    // Configuration du modèle avec les clés API fournies
-    const modelConfig = {
+    // Obtention de l'instance du modèle avec les paramètres corrects
+    const modelInstance = providerInstance.getModelInstance({
       model: jobData.model,
-      apiKey: jobData.apiKeys?.[jobData.providerName],
-      ...jobData.options
-    };
+      serverEnv: envVars as any,
+      apiKeys: jobData.apiKeys,
+      providerSettings: jobData.options?.providerSettings
+    });
     
-    // Obtention de l'instance du modèle
-    const modelInstance = providerInstance.getModelInstance(modelConfig);
+    // Importation de la fonction generateText depuis la bibliothèque ai
+    const { generateText } = await import('ai');
     
-    // Génération de texte avec le modèle
+    // Génération de texte avec le modèle en utilisant la fonction generateText
     console.log(`[Worker] Génération de texte avec ${jobData.model}...`);
-    const response = await providerInstance.generateText({
+    
+    // Préparation des messages pour le modèle
+    const messages = [
+      {
+        role: 'user',
+        content: jobData.prompt
+      }
+    ];
+    
+    // Appel à la fonction generateText avec les paramètres appropriés
+    const response = await generateText({
       model: modelInstance,
-      prompt: jobData.prompt,
-      options: jobData.options
+      messages: messages,
+      maxTokens: jobData.options?.maxTokens || 4000,
+      temperature: jobData.options?.temperature || 0.7,
+      system: jobData.options?.systemPrompt || 'Vous êtes un assistant IA utile et précis.',
     });
     
     console.log(`[Worker] Tâche ${jobData.taskId} terminée.`);
     return {
-      result: response,
+      result: response.text,
+      usage: response.usage,
       completionTime: new Date().toISOString()
     };
   } catch (error) {
