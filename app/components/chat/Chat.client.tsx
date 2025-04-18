@@ -163,11 +163,13 @@ export const ChatImpl = memo(
 
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
 
-    // Initialiser le gestionnaire de tâches
+    // Initialiser le gestionnaire de tâches avec le système de polling
     const {
       activeTaskId,
       taskStatus,
       submitAgentTask,
+      pollStatus,
+      startPolling
     } = useTaskManager({
       onTaskCompleted: (result) => {
         // Ajouter le résultat comme message de l'assistant
@@ -177,6 +179,13 @@ export const ChatImpl = memo(
         });
       }
     });
+    
+    // Nettoyage du polling à la désinstallation du composant
+    useEffect(() => {
+      return () => {
+        // Le nettoyage est géré dans le hook useTaskManager
+      };
+    }, []);
 
     const {
       messages,
@@ -352,6 +361,15 @@ export const ChatImpl = memo(
           content: `Tâche ${result.taskId.substring(0, 6)}... en cours de traitement...`,
           id: `task-${result.taskId}`,
         });
+        
+        // Commencer le polling immédiatement
+        startPolling(result.taskId);
+        
+        // Afficher un toast pour informer l'utilisateur
+        toast.info(`Tâche ${result.taskId.substring(0, 6)}... soumise et en cours de traitement.`);
+      } else if (!result.success) {
+        // Afficher un message d'erreur si la soumission a échoué
+        toast.error(`Échec de la soumission de la tâche: ${result.error instanceof Error ? result.error.message : 'Erreur inconnue'}`);
       }
       
       return result.success;
@@ -719,71 +737,95 @@ const contentWithFilesInfo = textFilesInfo ? `${textFilesInfo}\n\n${messageConte
       Cookies.set('selectedProvider', newProvider.name, { expires: 30 });
     };
 
+    // Rendu de l'indicateur de statut de tâche
+    const renderTaskStatusIndicator = () => {
+      if (activeTaskId && taskStatus !== 'idle') {
+        return (
+          <div className="fixed bottom-24 right-4 z-50 bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor shadow-lg">
+            <div className="flex items-center gap-2">
+              <TaskStatusIndicator status={taskStatus} />
+              <span className="text-sm">
+                Tâche {activeTaskId.substring(0, 6)}...
+                {taskStatus === 'processing' && ' en cours de traitement'}
+                {taskStatus === 'submitted' && ' soumise'}
+                {taskStatus === 'completed' && ' terminée'}
+                {taskStatus === 'failed' && ' échouée'}
+              </span>
+            </div>
+          </div>
+        );
+      }
+      return null;
+    };
+
     return (
-      <BaseChat
-        ref={animationScope}
-        textareaRef={textareaRef}
-        input={input}
-        showChat={showChat}
-        chatStarted={chatStarted}
-        isStreaming={isLoading || fakeLoading}
-        onStreamingChange={(streaming) => {
-          streamingState.set(streaming);
-        }}
-        enhancingPrompt={enhancingPrompt}
-        promptEnhanced={promptEnhanced}
-        sendMessage={sendMessage}
-        model={model}
-        setModel={handleModelChange}
-        provider={provider}
-        setProvider={handleProviderChange}
-        providerList={activeProviders}
-        messageRef={messageRef}
-        scrollRef={scrollRef}
-        handleInputChange={(e) => {
-          onTextareaChange(e);
-          debouncedCachePrompt(e);
-        }}
-        handleStop={abort}
-        description={description}
-        importChat={importChat}
-        exportChat={exportChat}
-        taskStatus={taskStatus}
-        activeTaskId={activeTaskId}
-        TaskStatusIndicator={TaskStatusIndicator}
-        messages={messages.map((message, i) => {
-          if (message.role === 'user') {
-            return message;
-          }
-          return {
-            ...message,
-            content: parsedMessages[i] || '',
-          };
-        })}
-        enhancePrompt={() => {
-          enhancePrompt(
-            input,
-            (input) => {
-              setInput(input);
-              scrollTextArea();
-            },
-            model,
-            provider,
-            apiKeys,
-          );
-        }}
-        uploadedFiles={uploadedFiles}
-        setUploadedFiles={setUploadedFiles}
-        imageDataList={imageDataList}
-        setImageDataList={setImageDataList}
-        actionAlert={actionAlert}
-        clearAlert={() => workbenchStore.clearAlert()}
-        supabaseAlert={supabaseAlert}
-        clearSupabaseAlert={() => workbenchStore.clearSupabaseAlert()}
-        deployAlert={deployAlert}
-        clearDeployAlert={() => workbenchStore.clearDeployAlert()}
-        data={chatData}
-      />
+      <>
+        <BaseChat
+          ref={animationScope}
+          textareaRef={textareaRef}
+          input={input}
+          showChat={showChat}
+          chatStarted={chatStarted}
+          isStreaming={isLoading || fakeLoading}
+          onStreamingChange={(streaming) => {
+            streamingState.set(streaming);
+          }}
+          enhancingPrompt={enhancingPrompt}
+          promptEnhanced={promptEnhanced}
+          sendMessage={sendMessage}
+          model={model}
+          setModel={handleModelChange}
+          provider={provider}
+          setProvider={handleProviderChange}
+          providerList={activeProviders}
+          messageRef={messageRef}
+          scrollRef={scrollRef}
+          handleInputChange={(e) => {
+            onTextareaChange(e);
+            debouncedCachePrompt(e);
+          }}
+          handleStop={abort}
+          description={description}
+          importChat={importChat}
+          exportChat={exportChat}
+          taskStatus={taskStatus}
+          activeTaskId={activeTaskId}
+          TaskStatusIndicator={TaskStatusIndicator}
+          messages={messages.map((message, i) => {
+            if (message.role === 'user') {
+              return message;
+            }
+            return {
+              ...message,
+              content: parsedMessages[i] || '',
+            };
+          })}
+          enhancePrompt={() => {
+            enhancePrompt(
+              input,
+              (input) => {
+                setInput(input);
+                scrollTextArea();
+              },
+              model,
+              provider,
+              apiKeys,
+            );
+          }}
+          uploadedFiles={uploadedFiles}
+          setUploadedFiles={setUploadedFiles}
+          imageDataList={imageDataList}
+          setImageDataList={setImageDataList}
+          actionAlert={actionAlert}
+          clearAlert={() => workbenchStore.clearAlert()}
+          supabaseAlert={supabaseAlert}
+          clearSupabaseAlert={() => workbenchStore.clearSupabaseAlert()}
+          deployAlert={deployAlert}
+          clearDeployAlert={() => workbenchStore.clearDeployAlert()}
+          data={chatData}
+        />
+        {renderTaskStatusIndicator()}
+      </>
     );
   },
 );
