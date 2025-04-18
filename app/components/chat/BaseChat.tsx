@@ -40,10 +40,12 @@ import { enableContextOptimizationStore, LOCAL_PROVIDERS } from '~/lib/stores/se
 import { SupabaseChatAlert } from '~/components/chat/SupabaseAlert';
 import { SupabaseConnection } from './SupabaseConnection';
 import { TargetedFilesDisplay } from './TargetedFilesDisplay';
-import { useStore } from '@nanostores/react';
+// import { useStore } from '@nanostores/react';
 import { useSettings } from '~/lib/hooks/useSettings';
 import { EnhancedContextCacheManager } from './EnhancedContextCacheManager';
-
+import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
+import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
+import { useStore } from '@nanostores/react';
 const TEXTAREA_MIN_HEIGHT = 76;
 /*
  * Flag to use only fallback method
@@ -141,7 +143,15 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
     const { autoSelectTemplate } = useSettings();
-    
+    const expoUrl = useStore(expoUrlAtom);
+    const [qrModalOpen, setQrModalOpen] = useState(false);
+
+    useEffect(() => {
+      if (expoUrl) {
+        setQrModalOpen(true);
+      }
+    }, [expoUrl]);
+
     useEffect(() => {
       if (data) {
         const progressList = data.filter(
@@ -621,7 +631,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 />
               )}
               <div
-                className={classNames('flex flex-col gap-4 w-full max-w-chat mx-auto z-prompt mb-6', {
+                className={classNames('flex flex-col gap-2 w-full max-w-chat mx-auto z-prompt mb-6', {
                   'sticky bottom-2': chatStarted,
                 })}
               >
@@ -922,6 +932,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         </div>
                       ) : null}
                       <SupabaseConnection />
+                      <ExpoQrModal open={qrModalOpen} onClose={() => setQrModalOpen(false)} />
+
                     </div>
                   </div>
                 </div>
