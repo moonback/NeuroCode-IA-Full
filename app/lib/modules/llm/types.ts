@@ -6,7 +6,6 @@ export interface ModelInfo {
   label: string;
   provider: string;
   maxTokenAllowed: number;
-  free?: boolean;
 }
 
 export interface ProviderInfo {
