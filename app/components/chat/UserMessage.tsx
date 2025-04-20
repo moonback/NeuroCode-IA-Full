@@ -3,7 +3,7 @@
  * Preventing TS checks with files presented in the video for a better presentation.
  */
 import { MODEL_REGEX, PROVIDER_REGEX } from '~/utils/constants';
-import { Markdown } from './Markdown';
+import Markdown from './Markdown';
 
 // Function to determine the appropriate icon based on file extension
 function getFileIcon(fileName: string) {
