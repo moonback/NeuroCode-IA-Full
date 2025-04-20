@@ -28,6 +28,7 @@ export const ModelSelector = ({
   const [modelSearchQuery, setModelSearchQuery] = useState('');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [showFreeModelsOnly, setShowFreeModelsOnly] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const optionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -45,9 +46,10 @@ export const ModelSelector = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter models based on search query
+  // Filter models based on search query and free filter
   const filteredModels = [...modelList]
     .filter((e) => e.provider === provider?.name && e.name)
+    .filter((model) => !showFreeModelsOnly || model.free === true)
     .filter(
       (model) =>
         model.label.toLowerCase().includes(modelSearchQuery.toLowerCase()) ||
@@ -251,6 +253,21 @@ export const ModelSelector = ({
                 <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
                   <span className="i-ph:magnifying-glass text-bolt-elements-textTertiary" />
                 </div>
+              </div>
+              <div className="mt-2 flex items-center">
+                <label className="flex items-center text-sm text-bolt-elements-textPrimary cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showFreeModelsOnly}
+                    onChange={(e) => {
+                      setShowFreeModelsOnly(e.target.checked);
+                      setFocusedIndex(-1);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mr-2 h-4 w-4 rounded border-bolt-elements-borderColor text-bolt-elements-focus focus:ring-bolt-elements-focus"
+                  />
+                  Afficher uniquement les modèles gratuits
+                </label>
               </div>
             </div>
 
