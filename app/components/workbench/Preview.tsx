@@ -6,6 +6,10 @@ import { PortDropdown } from './PortDropdown';
 import { ScreenshotSelector } from './ScreenshotSelector';
 import { FiCornerDownRight } from 'react-icons/fi';
 
+import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
+import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
+
+
 type ResizeSide = 'left' | 'right' | null;
 
 interface WindowSize {
@@ -60,7 +64,6 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const [isPortDropdownOpen, setIsPortDropdownOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPreviewOnly, setIsPreviewOnly] = useState(false);
   const hasSelectedPreview = useRef(false);
   const previews = useStore(workbenchStore.previews);
   const activePreview = previews[activePreviewIndex];
@@ -93,6 +96,8 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
   const [isLandscape, setIsLandscape] = useState(false);
   const [showDeviceFrame, setShowDeviceFrame] = useState(true);
   const [showDeviceFrameInPreview, setShowDeviceFrameInPreview] = useState(false);
+  const expoUrl = useStore(expoUrlAtom);
+  const [isExpoQrModalOpen, setIsExpoQrModalOpen] = useState(false);
 
   useEffect(() => {
     if (!activePreview) {
@@ -572,6 +577,12 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
     }
   };
 
+  const openInNewTab = () => {
+    if (activePreview?.baseUrl) {
+      window.open(activePreview?.baseUrl, '_blank');
+    }
+  };
+
   // Function to get the correct frame padding based on orientation
   const getFramePadding = useCallback(() => {
     if (!selectedWindowSize) {
@@ -605,7 +616,7 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
 
       // No cleanup needed
     };
-     }, [isDeviceModeOn, showDeviceFrameInPreview, getDeviceScale, isLandscape, selectedWindowSize]);
+  }, [isDeviceModeOn, showDeviceFrameInPreview, getDeviceScale, isLandscape, selectedWindowSize]);
 
   // Function to get the frame color based on dark mode
   const getFrameColor = useCallback(() => {
@@ -638,10 +649,7 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
   }, [showDeviceFrameInPreview]);
 
   return (
-    <div
-      ref={containerRef}
-      className={`w-full h-full flex flex-col relative ${isPreviewOnly ? 'fixed inset-0 z-50 bg-white' : ''}`}
-    >
+    <div ref={containerRef} className={`w-full h-full flex flex-col relative`}>
       {isPortDropdownOpen && (
         <div className="z-iframe-overlay w-full h-full absolute" onClick={() => setIsPortDropdownOpen(false)} />
       )}
@@ -695,6 +703,10 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
             title={isDeviceModeOn ? 'Switch to Responsive Mode' : 'Switch to Device Mode'}
           />
 
+          {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" />}
+
+          <ExpoQrModal open={isExpoQrModalOpen} onClose={() => setIsExpoQrModalOpen(false)} />
+
           {isDeviceModeOn && (
             <>
               <IconButton
@@ -711,12 +723,6 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
           )}
 
           <IconButton
-            icon="i-ph:layout-light"
-            onClick={() => setIsPreviewOnly(!isPreviewOnly)}
-            title={isPreviewOnly ? 'Show Full Interface' : 'Show Preview Only'}
-          />
-
-          <IconButton
             icon={isFullscreen ? 'i-ph:arrows-in' : 'i-ph:arrows-out'}
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
@@ -724,15 +730,9 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
 
           <div className="flex items-center relative">
             <IconButton
-              icon="i-ph:arrow-square-out"
-              onClick={() => openInNewWindow(selectedWindowSize)}
-              title={`Open Preview in ${selectedWindowSize.name} Window`}
-            />
-            <IconButton
-              icon="i-ph:caret-down"
+              icon="i-ph:list"
               onClick={() => setIsWindowSizeDropdownOpen(!isWindowSizeDropdownOpen)}
-              className="ml-1"
-              title="Select Window Size"
+              title="New Window Options"
             />
 
             {isWindowSizeDropdownOpen && (
@@ -741,11 +741,51 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
                 <div className="absolute right-0 top-full mt-2 z-50 min-w-[240px] max-h-[400px] overflow-y-auto bg-white dark:bg-black rounded-xl shadow-2xl border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)] overflow-hidden">
                   <div className="p-3 border-b border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-[#111827] dark:text-gray-300">Device Options</span>
+                      <span className="text-sm font-medium text-[#111827] dark:text-gray-300">Window Options</span>
                     </div>
                     <div className="flex flex-col gap-2">
+                      <button
+                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary`}
+                        onClick={() => {
+                          openInNewTab();
+                        }}
+                      >
+                        <span>Open in new tab</span>
+                        <div className="i-ph:arrow-square-out h-5 w-4" />
+                      </button>
+                      <button
+                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary`}
+                        onClick={() => {
+                          if (!activePreview?.baseUrl) {
+                            console.warn('[Preview] No active preview available');
+                            return;
+                          }
+
+                          const match = activePreview.baseUrl.match(
+                            /^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/,
+                          );
+
+                          if (!match) {
+                            console.warn('[Preview] Invalid WebContainer URL:', activePreview.baseUrl);
+                            return;
+                          }
+
+                          const previewId = match[1];
+                          const previewUrl = `/webcontainer/preview/${previewId}`;
+
+                          // Open in a new window with simple parameters
+                          window.open(
+                            previewUrl,
+                            `preview-${previewId}`,
+                            'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes',
+                          );
+                        }}
+                      >
+                        <span>Open in new window</span>
+                        <div className="i-ph:browser h-5 w-4" />
+                      </button>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-[#6B7280] dark:text-gray-400">Show Device Frame</span>
+                        <span className="text-xs text-bolt-elements-textTertiary">Show Device Frame</span>
                         <button
                           className={`w-10 h-5 rounded-full transition-colors duration-200 ${
                             showDeviceFrame ? 'bg-[#6D28D9]' : 'bg-gray-300 dark:bg-gray-700'
@@ -763,7 +803,7 @@ export const Preview = memo(({ source, startingLine, onJumpToLine }: PreviewProp
                         </button>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-[#6B7280] dark:text-gray-400">Landscape Mode</span>
+                        <span className="text-xs text-bolt-elements-textTertiary">Landscape Mode</span>
                         <button
                           className={`w-10 h-5 rounded-full transition-colors duration-200 ${
                             isLandscape ? 'bg-[#6D28D9]' : 'bg-gray-300 dark:bg-gray-700'

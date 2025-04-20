@@ -7,7 +7,6 @@ import { useLocation } from '@remix-run/react';
 import { db, chatId } from '~/lib/persistence/useChatHistory';
 import { forkChat } from '~/lib/persistence/db';
 import { toast } from 'react-toastify';
-import WithTooltip from '~/components/ui/Tooltip';
 import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
 import { forwardRef } from 'react';
@@ -81,33 +80,34 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
         }
       }
     }, [messages, isStreaming]);
-  // Scroll to bottom when streaming or new messages arrive
-  useEffect(() => {
-    if (!isStreaming && messages.length === previousMessagesLengthRef.current) {
-      return;
-    }
-
-    // Don't scroll if user has scrolled up manually
-    if (userScrolledRef.current) {
-      return;
-    }
-
-    // Clear any existing timeouts to prevent rapid scrolling
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    // Use a short timeout to batch scroll events
-    scrollTimeoutRef.current = setTimeout(() => {
-      if (messageContainerRef.current) {
-        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+    
+    // Scroll to bottom when streaming or new messages arrive
+    useEffect(() => {
+      if (!isStreaming && messages.length === previousMessagesLengthRef.current) {
+        return;
       }
 
-      scrollTimeoutRef.current = null;
-    }, 100);
-  }, [isStreaming, messages, previousMessagesLengthRef]);
+      // Don't scroll if user has scrolled up manually
+      if (userScrolledRef.current) {
+        return;
+      }
 
-  // Add scroll detection to detect user scrolling
+      // Clear any existing timeouts to prevent rapid scrolling
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Use a short timeout to batch scroll events
+      scrollTimeoutRef.current = setTimeout(() => {
+        if (messageContainerRef.current) {
+          messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
+
+        scrollTimeoutRef.current = null;
+      }, 100);
+    }, [isStreaming, messages, previousMessagesLengthRef]);
+
+    // Add scroll detection to detect user scrolling
     // Auto-scroll to bottom of new content during streaming
     useEffect(() => {
       const container = messageContainerRef.current;
@@ -115,10 +115,9 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
       // No-op if no container
       if (!container) {
         return;
-      
       }
 
-// Create the event handler
+      // Create the event handler
       const handleScroll = () => {
         // Skip if not streaming
         if (!isStreaming) {
@@ -138,6 +137,11 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
 
       // Add the event listener
       container.addEventListener('scroll', handleScroll, { passive: true });
+      
+      // Return cleanup function
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+      };
     }, [isStreaming]);
 
     // Clean up event handlers on component unmount
@@ -169,6 +173,7 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
       // Return the cleanup function as a normal function to avoid ESLint issues
       return cleanup;
     }, []);
+
     const handleRewind = (messageId: string) => {
       const searchParams = new URLSearchParams(location.search);
       searchParams.set('rewindTo', messageId);
@@ -189,88 +194,65 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
       }
     };
 
-    // Memoize message rendering for better performance
-    const renderMessages = useCallback(() => {
-      return optimizedMessages.map((message, index) => {
-        const { role, content, id: messageId, annotations } = message;
-        const isUserMessage = role === 'user';
-        const isFirst = index === 0;
-        const isLast = index === optimizedMessages.length - 1;
-        const isHidden = annotations?.includes('hidden');
+    return (
+      <div id={id} className={props.className} ref={messageContainerRef}>
+        {optimizedMessages.length > 0
+          ? optimizedMessages.map((message, index) => {
+              const { role, content, id: messageId, annotations } = message;
+              const isUserMessage = role === 'user';
+              const isFirst = index === 0;
+              const isLast = index === optimizedMessages.length - 1;
+              const isHidden = annotations?.includes('hidden');
 
-        if (isHidden) {
-          return <Fragment key={index} />;
-        }
+              if (isHidden) {
+                return <Fragment key={index} />;
+              }
 
-        return (
-          <div
-            key={index}
-            ref={isLast ? lastMessageRef : undefined}
-            className={classNames('flex gap-4 p-6 w-full rounded-[calc(0.75rem-1px)]', {
-              'bg-bolt-elements-messages-background': isUserMessage || !isStreaming || (isStreaming && !isLast),
-              'bg-gradient-to-b from-bolt-elements-messages-background from-30% to-transparent': isStreaming && isLast,
-              'mt-4': !isFirst,
-            })}
-          >
-            {isUserMessage && (
-              <div className="flex items-center justify-center w-[40px] h-[40px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0 self-start">
-                {profile?.avatar ? (
-                  <img
-                    src={profile.avatar}
-                    alt={profile?.username || 'User'}
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    decoding="sync"
-                  />
-                ) : (
-                  <div className="i-ph:user-fill text-2xl" />
-                )}
-              </div>
-            )}
-            <div className="grid grid-col-1 w-full">
-              {isUserMessage ? (
-                <UserMessage content={content} />
-              ) : (
-                <AssistantMessage content={content} annotations={message.annotations} />
-              )}
-            </div>
-            {!isUserMessage && (
-              <div className="flex gap-2 flex-col lg:flex-row">
-                {messageId && (
-                  <WithTooltip tooltip="Revert to this message">
-                    <button
-                      onClick={() => handleRewind(messageId)}
-                      key="i-ph:arrow-u-up-left"
-                      className={classNames(
-                        'i-ph:arrow-u-up-left',
-                        'text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors',
+              return (
+                <div
+                  key={index}
+                  ref={isLast ? lastMessageRef : undefined}
+                  className={classNames('flex gap-4 p-6 py-5 w-full rounded-[calc(0.75rem-1px)]', {
+                    'bg-bolt-elements-messages-background': isUserMessage || !isStreaming || (isStreaming && !isLast),
+                    'bg-gradient-to-b from-bolt-elements-messages-background from-30% to-transparent':
+                      isStreaming && isLast,
+                    'mt-4': !isFirst,
+                  })}
+                >
+                  {isUserMessage && (
+                    <div className="flex items-center justify-center w-[40px] h-[40px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0 self-start">
+                      {profile?.avatar ? (
+                        <img
+                          src={profile.avatar}
+                          alt={profile?.username || 'User'}
+                          className="w-full h-full object-cover"
+                          loading="eager"
+                          decoding="sync"
+                        />
+                      ) : (
+                        <div className="i-ph:user-fill text-2xl" />
                       )}
+                    </div>
+                  )}
+                  <div className="grid grid-col-1 w-full">
+                    {isUserMessage ? (
+                      <UserMessage content={content} />
+                    ) : (
+                      <AssistantMessage
+                        content={content}
+                        annotations={message.annotations}
+                        messageId={messageId}
+                        onRewind={handleRewind}
+                        onFork={handleFork}
                       />
-                      </WithTooltip>
                     )}
-    
-                    <WithTooltip tooltip="Fork chat from this message">
-                      <button
-                        onClick={() => handleFork(messageId)}
-                        key="i-ph:git-fork"
-                        className={classNames(
-                          'i-ph:git-fork',
-                          'text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors',
-                    )}
-                    />
-                    </WithTooltip>
                   </div>
-                )}
-              </div>
-            );
-          });
-        }, [optimizedMessages, isStreaming, profile, handleRewind, handleFork]);
-
-        return (
-<div id={id} className={props.className} ref={messageContainerRef}>            
-  {optimizedMessages.length > 0 ? renderMessages() : null}
+                </div>
+              );
+            })
+          : null}
         {isStreaming && (
-          <div className="text-center w-full text-bolt-elements-textSecondary i-svg-spinners:3-dots-fade text-4xl mt-4"></div>
+          <div className="text-center w-full text-bolt-elements-item-contentAccent i-svg-spinners:3-dots-fade text-4xl mt-4"></div>
         )}
       </div>
     );

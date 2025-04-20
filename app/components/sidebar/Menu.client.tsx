@@ -43,20 +43,22 @@ type DialogContent = { type: 'delete'; item: ChatHistoryItem } | { type: 'delete
 function CurrentDateTime() {
   const [dateTime, setDateTime] = useState(new Date());
 
-  useEffect(() => {
+ useEffect(() => {
+    // Update time every second
     const timer = setInterval(() => {
       setDateTime(new Date());
-    }, 60000);
-
+    }, 1000);
+    
+    // Clean up interval on unmount
     return () => clearInterval(timer);
   }, []);
-
+  
   return (
     <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800/50">
       <div className="h-4 w-4 i-lucide:clock opacity-80" />
       <div className="flex gap-2">
         <span>{dateTime.toLocaleDateString()}</span>
-        <span>{dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <span>{dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
       </div>
     </div>
   );
@@ -212,21 +214,30 @@ export const Menu = () => {
         <div className="h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50">
           <div className="text-gray-900 dark:text-white font-medium"></div>
           <div className="flex items-center gap-3">
-            <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
-              {profile?.username || 'Invité'}
-            </span>
-            <div className="flex items-center justify-center w-[32px] h-[32px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0">
-              {profile?.avatar ? (
-                <img
-                  src={profile.avatar}
-                  alt={profile?.username || 'User'}
-                  className="w-full h-full object-cover"
-                  loading="eager"
-                  decoding="sync"
-                />
-              ) : (
-                <div className="i-ph:user-fill text-lg" />
-              )}
+            <div className="flex items-center gap-2 group">
+              <span 
+                className="font-medium text-sm text-gray-900 dark:text-white truncate max-w-[120px]"
+                title={profile?.username || 'Invité'}
+                aria-label={`Utilisateur: ${profile?.username || 'Invité'}`}
+              >
+                {profile?.username || 'Invité'}
+              </span>
+              <div 
+                className="flex items-center justify-center w-[32px] h-[32px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0 transition-transform duration-200 group-hover:scale-105"
+                aria-hidden="true"
+              >
+                {profile?.avatar ? (
+                  <img
+                    src={profile.avatar}
+                    alt={profile?.username || 'User'}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                    decoding="sync"
+                  />
+                ) : (
+                  <div className="i-ph:user-fill text-lg" />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -411,7 +422,7 @@ export const Menu = () => {
               <button
                 onClick={() => enableContextOptimization(!contextOptimizationEnabled)}
                 className={classNames(
-                  'group relative flex items-center justify-center w-6 h-6 rounded-lg transition-colors',
+                  'group relative flex items-center justify-center w-7 h-7 rounded-lg transition-colors',
                   contextOptimizationEnabled
                     ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
                     : 'bg-gray-100 dark:bg-transparent text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary'
@@ -420,17 +431,31 @@ export const Menu = () => {
               >
               <span className="i-ph-brain-duotone text-xl" />              
               </button>
-              <select
-                value={promptId}
-                onChange={(e) => setPromptId(e.target.value)}
-                className=" bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+              <div className="relative min-w-[140px] focus-within:ring-2 focus-within:ring-purple-400 rounded-lg transition-all"
+                tabIndex={0}
               >
-                {PromptLibrary.getList().map((prompt) => (
-                  <option key={prompt.id} value={prompt.id}>
-                    {prompt.label}
-                  </option>
-                ))}
-              </select>
+                <select
+                  value={promptId}
+                  onChange={(e) => setPromptId(e.target.value)}
+                  className="appearance-none bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 text-gray-600 dark:text-gray-400 rounded-lg pl-2 pr-8 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 transition-colors border border-gray-200 dark:border-gray-700 cursor-pointer w-full"
+                  aria-label="Prompt template selection"
+                  title="Select a prompt template for your new conversation"
+                  disabled={PromptLibrary.getList().length === 0}
+                >
+                  {PromptLibrary.getList().length === 0 ? (
+                    <option value="">No templates available</option>
+                  ) : (
+                    PromptLibrary.getList().map((prompt) => (
+                      <option key={prompt.id} value={prompt.id}>
+                        {prompt.label}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 flex items-center h-full">
+                  <span className="i-ph:caret-down h-4 w-4 text-gray-400" />
+                </div>
+              </div>
               <ThemeSwitch />
             </div>
           </div>
