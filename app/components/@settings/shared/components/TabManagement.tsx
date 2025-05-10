@@ -84,9 +84,11 @@ export const TabManagement = () => {
     }
 
     // Check if tab can be enabled in user mode
-    const canBeEnabled = DEFAULT_USER_TABS.includes(tabId) || OPTIONAL_USER_TABS.includes(tabId);
+    const isDefaultTab = DEFAULT_USER_TABS.includes(tabId);
+    const isOptionalTab = OPTIONAL_USER_TABS.includes(tabId);
+    const isConfigurableTab = isDefaultTab || isOptionalTab;
 
-    if (!canBeEnabled && checked) {
+    if (!isConfigurableTab && checked) {
       toast.error('This tab cannot be enabled in user mode');
       return;
     }
@@ -128,12 +130,8 @@ export const TabManagement = () => {
   // Filter tabs based on search query
   const filteredTabs = allTabs.filter((tab) => TAB_LABELS[tab.id].toLowerCase().includes(searchQuery.toLowerCase()));
 
-  useEffect(() => {
-    // Reset to first tab when component unmounts
-    return () => {
-      setSelectedTab('user'); // Reset to user tab when unmounting
-    };
-  }, [setSelectedTab]);
+  // Pas besoin de réinitialiser l'onglet lors du démontage du composant
+  // car la sélection de l'onglet est gérée par le composant parent
 
   return (
     <div className="space-y-6">
